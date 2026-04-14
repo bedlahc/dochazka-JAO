@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Docházka — Damco Jaroměř</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f6fa;--bg2:#ffffff;--bg3:#f0f2f7;--bg4:#e8ecf4;
+  --b1:rgba(0,0,0,.07);--b2:rgba(0,0,0,.12);--b3:rgba(0,0,0,.22);
+  --tx:#1a1f2e;--tx2:#5a6480;--tx3:#9aa0b8;
+  --acc:#2563eb;
+  /* DAY — vivid blue */
+  --day-bg:#dbeafe;--day-tx:#1d4ed8;--day-bd:#93c5fd;
+  /* NIGHT — clear grey, unmistakably different from day */
+  --ngt-bg:#e2e5ec;--ngt-tx:#374151;--ngt-bd:#9ca3af;
+  /* WEEKEND DAY — green */
+  --wed-bg:#dcfce7;--wed-tx:#15803d;--wed-bd:#86efac;
+  /* WEEKEND NIGHT — darker weekend */
+  --wen-bg:#bbf7d0;--wen-tx:#166534;--wen-bd:#4ade80;
+  /* OFF */
+  --off-bg:#f9fafb;--off-tx:#d1d5db;
+  /* STATUS */
+  --N-bg:#fee2e2;--N-tx:#b91c1c;
+  --D-bg:#dcfce7;--D-tx:#15803d;
+  --P-bg:#ede9fe;--P-tx:#6d28d9;
+  --WE-bg:#dcfce7;--WE-tx:#15803d;
+  --OT:#d97706;--NEG:#dc2626;
+  --br-bg:#f5f3ff;--br-tx:#6d28d9;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);display:flex;flex-direction:column;height:100vh;overflow:hidden}
+/* TOPBAR */
+.topbar{display:flex;align-items:center;gap:12px;padding:10px 20px;background:var(--bg2);border-bottom:1px solid var(--b1);flex-wrap:wrap;flex-shrink:0}
+.logo{font-family:'DM Mono',monospace;font-size:11px;font-weight:500;color:var(--tx3);letter-spacing:.12em;white-space:nowrap}
+.logo b{color:#3b82f6}
+.ptitle{font-size:14px;font-weight:600;color:var(--tx)}
+.ctrls{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-left:auto}
+select,button{height:28px;background:var(--bg3);border:1px solid var(--b2);border-radius:5px;color:var(--tx);font-family:'DM Sans',sans-serif;font-size:12px;padding:0 10px;cursor:pointer}
+select:hover,button:hover{border-color:var(--b3)}
+.badd{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:600}
+.badd:hover{background:#3b82f6}
+/* STATS */
+.sbar{display:flex;background:var(--bg3);border-bottom:1px solid var(--b2);overflow-x:auto;flex-shrink:0}
+.si{flex:1;min-width:95px;background:var(--bg2);padding:8px 14px;border-right:1px solid var(--b2)}
+.sl{font-size:9px;color:var(--tx3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em}
+.sv{font-size:19px;font-weight:600;font-family:'DM Mono',monospace;margin-top:1px}
+/* LEGEND */
+.leg-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:6px 20px;background:var(--bg2);border-bottom:1px solid var(--b1);font-size:10px;color:var(--tx2);flex-shrink:0}
+.li{display:flex;align-items:center;gap:3px}
+.ld{width:22px;height:12px;border-radius:2px;flex-shrink:0}
+.lsep{color:var(--tx3);margin:0 2px}
+/* TABLE */
+.tw{overflow:auto;flex:1;min-height:0}
+table{border-collapse:collapse;width:100%;font-size:11px;min-width:900px}
+thead th{background:var(--bg2);color:var(--tx2);font-family:'DM Mono',monospace;font-size:9px;font-weight:500;text-transform:uppercase;letter-spacing:.05em;padding:6px 2px;text-align:center;border-bottom:2px solid var(--b2);white-space:nowrap;position:sticky;top:0;z-index:10}
+thead th.cn{text-align:left;padding-left:18px;min-width:138px;position:sticky;left:0;top:0;background:var(--bg2);z-index:20;border-right:1px solid var(--b2)}
+thead th.cp{text-align:left;padding-left:4px;min-width:90px;position:sticky;left:138px;top:0;background:var(--bg2);z-index:20}
+td{padding:3px 1px;text-align:center;border-bottom:1px solid var(--b1);font-family:'DM Mono',monospace;min-width:22px}
+td.cn{text-align:left;padding-left:18px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;color:var(--tx);position:sticky;left:0;background:var(--bg2);z-index:5;white-space:nowrap}
+td.cp{text-align:left;padding-left:4px;position:sticky;left:138px;background:var(--bg2);z-index:5;font-family:'DM Sans',sans-serif}
+tr:hover td{filter:brightness(.95)}
+tr:hover td.cn,tr:hover td.cp{filter:none;background:var(--bg4)!important}
+/* SHIFT CELLS — strong contrast */
+.sd{background:#93c5fd;color:#1e3a8a;border:2px solid #1d4ed8;font-weight:700}
+.sn{background:#94a3b8;color:#0f172a;border:2px solid #475569;font-weight:700}
+.swd{background:#93c5fd;color:#1e3a8a;border:1px solid #3b82f6;font-weight:700}
+.swn{background:#94a3b8;color:#0f172a;border:1px solid #64748b;font-weight:700}
+.sof{background:#f1f5f9;color:#cbd5e1;border:1px solid #e2e8f0}
+.sof-we{background:#86efac;color:#14532d;border:1px solid #22c55e;font-weight:500}
+.cSV{background:#fed7aa!important;color:#7c2d12!important;border:1px solid #f97316!important;font-weight:700}
+.cN{background:var(--N-bg)!important;color:var(--N-tx)!important;border-color:#6a1515!important;font-weight:700}
+.cD{background:var(--D-bg)!important;color:var(--D-tx)!important;border-color:#1a5a30!important;font-weight:700}
+.cP{background:var(--P-bg)!important;color:var(--P-tx)!important;border-color:#4a1a80!important;font-weight:700}
+.cWE{background:var(--WE-bg)!important;color:var(--WE-tx)!important;border-color:var(--wed-bd)!important;font-weight:700}
+.cOT{font-weight:700;color:var(--OT)!important}
+.cNEG{font-weight:700;color:var(--NEG)!important}
+.cbr{background:#f5f3ff;color:#6d28d9;border:1px solid #ddd6fe}
+.cbh{background:#ede9fe;color:#5b21b6;border:1px solid #c4b5fd;font-weight:700}
+/* weekend column left border */
+.wcol{border-left:2px solid rgba(22,163,74,.3)!important}
+/* sum cols */
+.ts{background:var(--bg3)!important;border-left:1px solid var(--b2)!important;font-weight:600;font-size:11px}
+/* group rows */
+.gr td{background:var(--bg4);color:var(--tx2);font-family:'DM Sans',sans-serif;font-size:10px;font-weight:700;text-align:left;padding:5px 18px;text-transform:uppercase;letter-spacing:.08em;border-top:2px solid var(--b2)}
+.gd{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px;vertical-align:middle}
+/* total row */
+.tr td{background:var(--bg3)!important;border-top:2px solid var(--b2);font-weight:700}
+.tr td.cn{font-size:9px;font-family:'DM Mono',monospace;letter-spacing:.07em;color:var(--tx3);text-transform:uppercase}
+/* position badges */
+.pos{display:inline-block;font-size:10px;padding:1px 6px;border-radius:3px;font-family:'DM Mono',monospace;font-weight:500;white-space:nowrap}
+.pM{background:#dbeafe;color:#1e40af}
+.pB{background:#dcfce7;color:#166534}
+.pC{background:#f1f5f9;color:#475569}
+.pK{background:#fef3c7;color:#92400e}
+.pW{background:#ede9fe;color:#5b21b6}
+.pBR{background:#f5f3ff;color:#6d28d9}
+.p2{background:#fff7ed;color:#c2410c}
+/* MODAL */
+.mbg{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:1000;backdrop-filter:blur(4px)}
+.md{background:var(--bg2);border:1px solid var(--b2);border-radius:12px;padding:22px;width:390px;max-width:95vw;box-shadow:0 8px 40px rgba(0,0,0,.15)}
+.md h3{font-size:15px;font-weight:700;margin-bottom:12px}
+.msh{display:inline-block;font-size:11px;padding:3px 10px;border-radius:4px;margin-bottom:12px;font-family:'DM Mono',monospace}
+.fr{display:flex;flex-direction:column;gap:3px;margin-bottom:10px}
+.fr label{font-size:10px;color:var(--tx2);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.05em}
+.fr input,.fr select{height:34px;background:#f8fafc;border:1px solid var(--b2);border-radius:6px;color:var(--tx);font-family:'DM Sans',sans-serif;font-size:13px;padding:0 11px}
+.fr input:focus,.fr select:focus{outline:none;border-color:var(--acc)}
+.mbtns{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+.bsv{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:700;height:34px;border-radius:6px;padding:0 16px}
+.bdl{background:#fee2e2;border:1px solid #fca5a5;color:#b91c1c;height:34px;border-radius:6px;padding:0 12px}
+.bcl{background:var(--bg3);border:1px solid var(--b2);color:var(--tx2);height:34px;border-radius:6px;padding:0 12px}
+.note{font-size:11px;color:var(--tx2);padding:6px 9px;background:var(--bg3);border-radius:5px;margin-top:5px;font-family:'DM Mono',monospace}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg3)}
+::-webkit-scrollbar-thumb{background:#c8ccd8;border-radius:3px}
+@media print{
+  body{height:auto;overflow:visible;font-size:9px}
+  .topbar,.sbar,.leg-bar,#loginScreen,.badd,button{display:none!important}
+  .tw{overflow:visible}
+  table{font-size:8px;page-break-inside:auto}
+  tr{page-break-inside:avoid}
+  thead th{background:#e2e8f0!important;color:#1e293b!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .sd{background:#93c5fd!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .sn{background:#94a3b8!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .swd{background:#93c5fd!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .swn{background:#94a3b8!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .sof-we{background:#86efac!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .cN{background:#fecaca!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .cD{background:#bbf7d0!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .cP{background:#ddd6fe!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .cSV{background:#fdba74!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .gr td{background:#e2e8f0!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .ts{background:#f1f5f9!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  @page{size:A3 landscape;margin:8mm}
+}
+/* LOGIN */
+#loginScreen{position:fixed;inset:0;background:linear-gradient(135deg,#1e3a5f 0%,#0f172a 50%,#1a2e4a 100%);display:flex;align-items:center;justify-content:center;z-index:9999;font-family:'DM Sans',sans-serif}
+.login-box{background:rgba(255,255,255,.97);border-radius:16px;padding:40px 44px;width:380px;max-width:92vw;box-shadow:0 24px 64px rgba(0,0,0,.4)}
+.login-logo{text-align:center;margin-bottom:28px}
+.login-logo-text{font-family:'DM Mono',monospace;font-size:13px;font-weight:500;color:#64748b;letter-spacing:.12em}
+.login-logo-text b{color:#1d4ed8}
+.login-title{font-size:22px;font-weight:700;color:#0f172a;margin-bottom:4px;text-align:center}
+.login-sub{font-size:13px;color:#64748b;text-align:center;margin-bottom:28px}
+.login-label{font-size:11px;font-weight:600;color:#374151;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;display:block}
+.login-input{width:100%;height:44px;border:2px solid #e2e8f0;border-radius:8px;font-size:15px;padding:0 14px;font-family:'DM Sans',sans-serif;color:#0f172a;background:#f8fafc;transition:border-color .15s,box-shadow .15s;outline:none;box-sizing:border-box}
+.login-input:focus{border-color:#1d4ed8;box-shadow:0 0 0 3px rgba(29,78,216,.12);background:#fff}
+.login-btn{width:100%;height:46px;background:#1d4ed8;border:none;border-radius:8px;color:#fff;font-size:15px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;margin-top:18px;transition:background .15s,transform .1s}
+.login-btn:hover{background:#1e40af}
+.login-btn:active{transform:scale(.98)}
+.login-error{color:#dc2626;font-size:13px;text-align:center;margin-top:12px;min-height:18px;font-weight:500}
+.login-footer{text-align:center;font-size:11px;color:#94a3b8;margin-top:20px}
+.login-dots{display:flex;justify-content:center;gap:6px;margin-bottom:24px}
+.login-dot{width:8px;height:8px;border-radius:50%;background:#1d4ed8;opacity:.2}
+.login-dot.active{opacity:1}
+.mr-row td{background:#fffbeb;border-top:1px dashed #fde68a}
+.sh-btns{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.sh-btn{flex:1;min-width:80px;height:34px;border-radius:6px;border:2px solid transparent;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
+.sh-btn.day{background:#bfdbfe;color:#1e3a8a;border-color:#3b82f6}
+.sh-btn.night{background:#cbd5e1;color:#0f172a;border-color:#64748b}
+.sh-btn.off{background:#f1f5f9;color:#64748b;border-color:#cbd5e1}
+.sh-btn.active{outline:3px solid #1d4ed8;outline-offset:1px;transform:scale(1.04)}
+.sh-btn.active.night{outline-color:#475569}
+.sh-btn.active.off{outline-color:#94a3b8}
+.sh-divider{font-size:10px;color:var(--tx3);margin:4px 0 8px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.06em}
+.mr-row td.cn{background:#fffbeb;font-weight:600;font-size:11px;color:#92400e}
+.mr-row td.cp{background:#fffbeb;font-size:10px;color:#b45309}
+.mr-row td.mr-cell{cursor:pointer}
+.mr-row td.mr-cell:hover{background:#fef3c7}
+.mr-row td.mr-cell.has-val{background:#fef9c3;color:#78350f;font-weight:700}
+.mr-row td.ts{background:#fef3c7!important;color:#92400e}
+.offwc-row td{background:#eff6ff;border-top:1px dashed #bfdbfe}
+.offwc-row td.cn{background:#eff6ff;font-weight:600;font-size:11px;color:#1e40af}
+.offwc-row td.cp{background:#eff6ff;font-size:10px;color:#3b82f6}
+.offwc-row td.mr-cell{cursor:pointer}
+.offwc-row td.mr-cell:hover{background:#dbeafe}
+.offwc-row td.mr-cell.has-val{background:#dbeafe;color:#1e3a8a;font-weight:700}
+.offwc-row td.ts{background:#dbeafe!important;color:#1e40af}
+.offceln-row td{background:#f0fdf4;border-top:1px dashed #bbf7d0}
+.offceln-row td.cn{background:#f0fdf4;font-weight:600;font-size:11px;color:#14532d}
+.offceln-row td.cp{background:#f0fdf4;font-size:10px;color:#16a34a}
+.offceln-row td.mr-cell{cursor:pointer}
+.offceln-row td.mr-cell:hover{background:#dcfce7}
+.offceln-row td.mr-cell.has-val{background:#dcfce7;color:#14532d;font-weight:700}
+.offceln-row td.ts{background:#dcfce7!important;color:#15803d}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="logo">DAMCO <b>JAROMĚŘ</b></div>
+  <div class="ptitle" id="ptitle">Docházka — Duben 2026</div>
+  <div class="ctrls">
+    <select id="msel" onchange="onMC()">
+      <option value="1">Leden 2026</option><option value="2">Únor 2026</option><option value="3">Březen 2026</option>
+      <option value="4" selected>Duben 2026</option><option value="5">Květen 2026</option><option value="6">Červen 2026</option>
+      <option value="7">Červenec 2026</option><option value="8">Srpen 2026</option><option value="9">Září 2026</option>
+      <option value="10">Říjen 2026</option><option value="11">Listopad 2026</option><option value="12">Prosinec 2026</option>
+    </select>
+    <select id="psel" onchange="onFC()"><option value="all">Všechny provozy</option><option value="4sm">4-směnný</option><option value="2sm">2-směnný</option><option value="brigada">Brigádníci</option></select>
+    <select id="gsel" onchange="onFC()">
+      <option value="all">Všechny skupiny</option>
+      <option value="blue">Modrá sk.</option><option value="black">Černá sk.</option>
+      <option value="green">Zelená sk.</option><option value="red">Červená sk.</option>
+    </select>
+    <input type="search" id="nameSearch" placeholder="🔍 Hledat jméno..." oninput="onFC()" style="height:28px;background:var(--bg3);border:1px solid var(--b2);border-radius:5px;color:var(--tx);font-family:'DM Sans',sans-serif;font-size:12px;padding:0 10px;width:150px">
+    <button class="badd" onclick="openAddEmp()">+ Zaměstnanec</button>
+    <button onclick="doExport()" style="color:var(--tx2)">↓ CSV</button>
+    <button onclick="doExportExcel()" style="color:#166534;background:#dcfce7;border-color:#86efac;font-weight:600">↓ Excel</button>
+    <button onclick="doPrint()" style="color:#1e40af;background:#dbeafe;border-color:#93c5fd;font-weight:600">🖨 Tisk</button>
+  </div>
+</div>
+<div class="sbar" id="sbar"></div>
+<div class="leg-bar">
+  <span class="li"><span class="ld sd"></span>Denní / Ranní (6–18 / 6–14)</span>
+  <span class="li"><span class="ld sn"></span>Noční / Odpolední (18–6 / 14–22)</span>
+  <span class="li"><span class="ld swd"></span>Víkend den (modrá)</span>
+  <span class="li"><span class="ld swn"></span>Víkend noc (šedá)</span>
+  <span class="li"><span class="ld sof-we"></span>Víkend volno</span>
+  <span class="li"><span class="ld cSV"></span>Svátek</span>
+  <span class="lsep">│</span>
+  <span class="li"><span class="ld cN" style="width:14px;height:12px"></span>Nemoc</span>
+  <span class="li"><span class="ld cD" style="width:14px;height:12px"></span>Dovolená</span>
+  <span class="li"><span class="ld cP" style="width:14px;height:12px"></span>Propuska</span>
+  <span class="lsep">│</span>
+  <span class="li"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#3b82f6"></span>Modrá</span>
+  <span class="li"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#475569"></span>Černá</span>
+  <span class="li"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#22c55e"></span>Zelená</span>
+  <span class="li"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ef4444"></span>Červená</span>
+  <span style="color:var(--tx3);font-size:10px;margin-left:4px">│ zelená svislá čára = sobota</span>
+</div>
+<div class="tw"><table><thead id="th"></thead><tbody id="tb"></tbody></table></div>
+
+<!-- CELL MODAL -->
+<div id="cmMod" style="display:none" class="mbg" onclick="if(event.target===this)closeMod()">
+<div class="md">
+  <h3 id="cmT">Upravit den</h3>
+  <div id="cmSh"></div>
+  <div id="cmShOverride" style="display:none">
+    <div class="sh-divider">Přepsat směnu</div>
+    <div class="sh-btns">
+      <button class="sh-btn day" id="shBtnDay" onclick="setShiftOverride('day')">☀ Denní</button>
+      <button class="sh-btn night" id="shBtnNight" onclick="setShiftOverride('night')">🌙 Noční</button>
+      <button class="sh-btn off" id="shBtnOff" onclick="setShiftOverride('off')">✕ Mimo směnu</button>
+    </div>
+    <div class="sh-divider" style="margin-top:4px">Záznam</div>
+  </div>
+  <div id="cmBr" style="display:none">
+    <div class="fr"><label>Hodiny (brigádník)</label><input type="number" id="brH" step="0.5" min="0" placeholder="8"></div>
+    <div class="note">0 nebo prázdné = nepracoval</div>
+  </div>
+  <div id="cmNorm">
+    <div class="fr"><label>Typ</label>
+      <select id="ct" onchange="ctChg()">
+        <option value="">— odpracovaný den —</option>
+        <option value="N">N – nemoc</option>
+        <option value="D">D – dovolená</option>
+        <option value="P">P – propuska / lékař</option>
+        <option value="ot">Přesčas 25% – pracovní den</option>
+        <option value="otso">Přesčas 25% – sobota</option>
+        <option value="otne">Přesčas 50% – neděle</option>
+        <option value="otsv">Přesčas – svátek</option>
+        <option value="sv">Svátek – změna hodin</option>
+        <option value="neg">Mínus hodin</option>
+      </select>
+    </div>
+    <div class="fr" id="rOT" style="display:none"><label>Přesčas 25% – hodin navíc</label><input type="number" id="hOT" step="0.5" min="0.5" placeholder="2"></div>
+    <div class="fr" id="rOTSO" style="display:none"><label>Přesčas So 25% – hodin</label><input type="number" id="hOTSO" step="0.5" min="0.5" placeholder="12"></div>
+    <div class="fr" id="rOTNE" style="display:none"><label>Přesčas Ne 50% – hodin</label><input type="number" id="hOTNE" step="0.5" min="0.5" placeholder="12"></div>
+    <div class="fr" id="rOTSV" style="display:none"><label>Přesčas svátek – hodin</label><input type="number" id="hOTSV" step="0.5" min="0.5" placeholder="11"></div>
+    <div class="fr" id="rSV" style="display:none"><label>Svátek – odpracované hodiny</label><input type="number" id="hSV" step="0.5" min="0" value="11" placeholder="11"></div>
+    <div class="fr" id="rNEG" style="display:none"><label>Mínus – hodin</label><input type="number" id="hNEG" step="0.5" min="0.5" placeholder="3"></div>
+    <div class="fr" id="rP" style="display:none"><label>Hodin propusky</label><input type="number" id="hP" step="0.5" min="0" placeholder="2"></div>
+  </div>
+  <div class="mbtns">
+    <button class="bcl" onclick="closeMod()">Zrušit</button>
+    <button class="bdl" onclick="clearCell()">Smazat</button>
+    <button class="bsv" onclick="saveCell()">Uložit</button>
+  </div>
+</div></div>
+
+<!-- MANUAL CELL MODAL -->
+<div id="manMod" style="display:none" class="mbg" onclick="if(event.target===this)closeManualMod()">
+<div class="md">
+  <h3 id="manT">Zadat hodiny</h3>
+  <div class="fr"><label>Počet hodin</label><input type="number" id="manH" step="0.5" min="0" placeholder="např. 8 nebo 4.5"></div>
+  <div class="note">Prázdné nebo 0 = vymazat</div>
+  <div class="mbtns">
+    <button class="bcl" onclick="closeManualMod()">Zrušit</button>
+    <button class="bsv" onclick="saveManualCell()">Uložit</button>
+  </div>
+</div></div>
+
+<!-- EMP MODAL -->
+<div id="emMod" style="display:none" class="mbg" onclick="if(event.target===this)this.style.display='none'">
+<div class="md">
+  <h3>Přidat zaměstnance</h3>
+  <div class="fr"><label>Jméno</label><input type="text" id="eName" placeholder="Jan Novák"></div>
+  <div class="fr"><label>Pozice</label>
+    <select id="ePos">
+      <option value="Mistr">Mistr</option><option value="Operator B">Operator B</option>
+      <option value="Operator C">Operator C</option><option value="Kontrolor">Kontrolor</option>
+      <option value="2sm">2-směnný provoz</option><option value="Brigádník">Brigádník</option>
+    </select>
+  </div>
+  <div class="fr"><label>Provoz</label>
+    <select id="eProv" onchange="empTC()">
+      <option value="4sm">4-směnný</option>
+      <option value="2sm">2-směnný</option>
+      <option value="brigada">Brigádník</option>
+    </select>
+  </div>
+  <div class="fr" id="eGrpRow"><label>Skupina</label>
+    <select id="eGrp">
+      <option value="blue">Modrá</option><option value="black">Černá</option>
+      <option value="green">Zelená</option><option value="red">Červená</option>
+    </select>
+  </div>
+  <div class="mbtns">
+    <button class="bcl" onclick="document.getElementById('emMod').style.display='none'">Zrušit</button>
+    <button class="bsv" onclick="saveEmp()">Přidat</button>
+  </div>
+</div></div>
+
+<script>
+const MCZ=['','Leden','Únor','Březen','Duben','Květen','Červen','Červenec','Srpen','Září','Říjen','Listopad','Prosinec'];
+const DN=['Ne','Po','Út','St','Čt','Pá','So'];
+const DM=[0,31,28,31,30,31,30,31,31,30,31,30,31];
+const dInM=(m,y)=>m===2&&y%4===0?29:DM[m];
+const dow=(y,m,d)=>new Date(y,m-1,d).getDay();
+const isWE=(y,m,d)=>{const w=dow(y,m,d);return w===0||w===6;};
+const r2=v=>Math.round(v*10)/10;
+
+// Czech public holidays 2026
+const SVATKY={'1-1':'Den obnovy samostatného českého státu','4-3':'Velký pátek','4-6':'Velikonoční pondělí','5-1':'Svátek práce','5-8':'Den vítězství','7-5':'Den slovanských věrozvěstů','7-6':'Den upálení M.J.Husa','9-28':'Den české státnosti','10-28':'Den vzniku Československa','11-17':'Den boje za svobodu','12-24':'Štědrý den','12-25':'1. svátek vánoční','12-26':'2. svátek vánoční'};
+function isSv(m,d){return !!SVATKY[m+'-'+d];}
+function svName(m,d){return SVATKY[m+'-'+d]||'';}
+
+// SCHEDULES extracted from Excel (both sheets identical pattern)
+const SS={"1":{"1":{"den":"red","noc":"dark"},"2":{"den":"blue","noc":"green"},"3":{"den":"blue","noc":"green"},"4":{"den":"blue","noc":"green"},"5":{"den":"dark","noc":"red"},"6":{"den":"dark","noc":"red"},"7":{"den":"green","noc":"blue"},"8":{"den":"green","noc":"blue"},"9":{"den":"red","noc":"dark"},"10":{"den":"red","noc":"dark"},"11":{"den":"red","noc":"dark"},"12":{"den":"blue","noc":"green"},"13":{"den":"blue","noc":"green"},"14":{"den":"dark","noc":"red"},"15":{"den":"dark","noc":"red"},"16":{"den":"green","noc":"blue"},"17":{"den":"green","noc":"blue"},"18":{"den":"green","noc":"blue"},"19":{"den":"red","noc":"dark"},"20":{"den":"red","noc":"dark"},"21":{"den":"blue","noc":"green"},"22":{"den":"blue","noc":"green"},"23":{"den":"dark","noc":"red"},"24":{"den":"dark","noc":"red"},"25":{"den":"dark","noc":"red"},"26":{"den":"green","noc":"blue"},"27":{"den":"green","noc":"blue"},"28":{"den":"red","noc":"dark"},"29":{"den":"red","noc":"dark"},"30":{"den":"blue","noc":"green"},"31":{"den":"blue","noc":"green"}},"2":{"1":{"den":"blue","noc":"green"},"2":{"den":"dark","noc":"red"},"3":{"den":"dark","noc":"red"},"4":{"den":"green","noc":"blue"},"5":{"den":"green","noc":"blue"},"6":{"den":"red","noc":"dark"},"7":{"den":"red","noc":"dark"},"8":{"den":"red","noc":"dark"},"9":{"den":"blue","noc":"green"},"10":{"den":"blue","noc":"green"},"11":{"den":"dark","noc":"red"},"12":{"den":"dark","noc":"red"},"13":{"den":"green","noc":"blue"},"14":{"den":"green","noc":"blue"},"15":{"den":"green","noc":"blue"},"16":{"den":"red","noc":"dark"},"17":{"den":"red","noc":"dark"},"18":{"den":"blue","noc":"green"},"19":{"den":"blue","noc":"green"},"20":{"den":"dark","noc":"red"},"21":{"den":"dark","noc":"red"},"22":{"den":"dark","noc":"red"},"23":{"den":"green","noc":"blue"},"24":{"den":"green","noc":"blue"},"25":{"den":"red","noc":"dark"},"26":{"den":"red","noc":"dark"},"27":{"den":"blue","noc":"green"},"28":{"den":"blue","noc":"green"}},"3":{"1":{"den":"blue","noc":"green"},"2":{"den":"dark","noc":"red"},"3":{"den":"dark","noc":"red"},"4":{"den":"green","noc":"blue"},"5":{"den":"green","noc":"blue"},"6":{"den":"red","noc":"dark"},"7":{"den":"red","noc":"dark"},"8":{"den":"red","noc":"dark"},"9":{"den":"blue","noc":"green"},"10":{"den":"blue","noc":"green"},"11":{"den":"dark","noc":"red"},"12":{"den":"dark","noc":"red"},"13":{"den":"green","noc":"blue"},"14":{"den":"green","noc":"blue"},"15":{"den":"green","noc":"blue"},"16":{"den":"red","noc":"dark"},"17":{"den":"red","noc":"dark"},"18":{"den":"blue","noc":"green"},"19":{"den":"blue","noc":"green"},"20":{"den":"dark","noc":"red"},"21":{"den":"dark","noc":"red"},"22":{"den":"dark","noc":"red"},"23":{"den":"green","noc":"blue"},"24":{"den":"green","noc":"blue"},"25":{"den":"red","noc":"dark"},"26":{"den":"red","noc":"dark"},"27":{"den":"blue","noc":"green"},"28":{"den":"blue","noc":"green"},"29":{"den":"blue","noc":"green"},"30":{"den":"dark","noc":"red"},"31":{"den":"dark","noc":"red"}},"4":{"1":{"den":"green","noc":"blue"},"2":{"den":"green","noc":"blue"},"3":{"den":"red","noc":"dark"},"4":{"den":"red","noc":"dark"},"5":{"den":"red","noc":"dark"},"6":{"den":"blue","noc":"green"},"7":{"den":"blue","noc":"green"},"8":{"den":"dark","noc":"red"},"9":{"den":"dark","noc":"red"},"10":{"den":"green","noc":"blue"},"11":{"den":"green","noc":"blue"},"12":{"den":"green","noc":"blue"},"13":{"den":"red","noc":"dark"},"14":{"den":"red","noc":"dark"},"15":{"den":"blue","noc":"green"},"16":{"den":"blue","noc":"green"},"17":{"den":"dark","noc":"red"},"18":{"den":"dark","noc":"red"},"19":{"den":"dark","noc":"red"},"20":{"den":"green","noc":"blue"},"21":{"den":"green","noc":"blue"},"22":{"den":"red","noc":"dark"},"23":{"den":"red","noc":"dark"},"24":{"den":"blue","noc":"green"},"25":{"den":"blue","noc":"green"},"26":{"den":"blue","noc":"green"},"27":{"den":"dark","noc":"red"},"28":{"den":"dark","noc":"red"},"29":{"den":"green","noc":"blue"},"30":{"den":"green","noc":"blue"}},"5":{"1":{"den":"red","noc":"dark"},"2":{"den":"red","noc":"dark"},"3":{"den":"red","noc":"dark"},"4":{"den":"blue","noc":"green"},"5":{"den":"blue","noc":"green"},"6":{"den":"dark","noc":"red"},"7":{"den":"dark","noc":"red"},"8":{"den":"green","noc":"blue"},"9":{"den":"green","noc":"blue"},"10":{"den":"green","noc":"blue"},"11":{"den":"red","noc":"dark"},"12":{"den":"red","noc":"dark"},"13":{"den":"blue","noc":"green"},"14":{"den":"blue","noc":"green"},"15":{"den":"dark","noc":"red"},"16":{"den":"dark","noc":"red"},"17":{"den":"dark","noc":"red"},"18":{"den":"green","noc":"blue"},"19":{"den":"green","noc":"blue"},"20":{"den":"red","noc":"dark"},"21":{"den":"red","noc":"dark"},"22":{"den":"blue","noc":"green"},"23":{"den":"blue","noc":"green"},"24":{"den":"blue","noc":"green"},"25":{"den":"dark","noc":"red"},"26":{"den":"dark","noc":"red"},"27":{"den":"green","noc":"blue"},"28":{"den":"green","noc":"blue"},"29":{"den":"red","noc":"dark"},"30":{"den":"red","noc":"dark"},"31":{"den":"red","noc":"dark"}},"6":{"1":{"den":"blue","noc":"green"},"2":{"den":"blue","noc":"green"},"3":{"den":"dark","noc":"red"},"4":{"den":"dark","noc":"red"},"5":{"den":"green","noc":"blue"},"6":{"den":"green","noc":"blue"},"7":{"den":"green","noc":"blue"},"8":{"den":"red","noc":"dark"},"9":{"den":"red","noc":"dark"},"10":{"den":"blue","noc":"green"},"11":{"den":"blue","noc":"green"},"12":{"den":"dark","noc":"red"},"13":{"den":"dark","noc":"red"},"14":{"den":"dark","noc":"red"},"15":{"den":"green","noc":"blue"},"16":{"den":"green","noc":"blue"},"17":{"den":"red","noc":"dark"},"18":{"den":"red","noc":"dark"},"19":{"den":"blue","noc":"green"},"20":{"den":"blue","noc":"green"},"21":{"den":"blue","noc":"green"},"22":{"den":"dark","noc":"red"},"23":{"den":"dark","noc":"red"},"24":{"den":"green","noc":"blue"},"25":{"den":"green","noc":"blue"},"26":{"den":"red","noc":"dark"},"27":{"den":"red","noc":"dark"},"28":{"den":"red","noc":"dark"},"29":{"den":"blue","noc":"green"},"30":{"den":"blue","noc":"green"}},"7":{"1":{"den":"dark","noc":"red"},"2":{"den":"dark","noc":"red"},"3":{"den":"green","noc":"blue"},"4":{"den":"green","noc":"blue"},"5":{"den":"green","noc":"blue"},"6":{"den":"red","noc":"dark"},"7":{"den":"red","noc":"dark"},"8":{"den":"blue","noc":"green"},"9":{"den":"blue","noc":"green"},"10":{"den":"dark","noc":"red"},"11":{"den":"dark","noc":"red"},"12":{"den":"dark","noc":"red"},"13":{"den":"green","noc":"blue"},"14":{"den":"green","noc":"blue"},"15":{"den":"red","noc":"dark"},"16":{"den":"red","noc":"dark"},"17":{"den":"blue","noc":"green"},"18":{"den":"blue","noc":"green"},"19":{"den":"blue","noc":"green"},"20":{"den":"dark","noc":"red"},"21":{"den":"dark","noc":"red"},"22":{"den":"green","noc":"blue"},"23":{"den":"green","noc":"blue"},"24":{"den":"red","noc":"dark"},"25":{"den":"red","noc":"dark"},"26":{"den":"red","noc":"dark"},"27":{"den":"blue","noc":"green"},"28":{"den":"blue","noc":"green"},"29":{"den":"dark","noc":"red"},"30":{"den":"dark","noc":"red"},"31":{"den":"green","noc":"blue"}},"8":{"1":{"den":"green","noc":"blue"},"2":{"den":"green","noc":"blue"},"3":{"den":"red","noc":"dark"},"4":{"den":"red","noc":"dark"},"5":{"den":"blue","noc":"green"},"6":{"den":"blue","noc":"green"},"7":{"den":"dark","noc":"red"},"8":{"den":"dark","noc":"red"},"9":{"den":"dark","noc":"red"},"10":{"den":"green","noc":"blue"},"11":{"den":"green","noc":"blue"},"12":{"den":"red","noc":"dark"},"13":{"den":"red","noc":"dark"},"14":{"den":"blue","noc":"green"},"15":{"den":"blue","noc":"green"},"16":{"den":"blue","noc":"green"},"17":{"den":"dark","noc":"red"},"18":{"den":"dark","noc":"red"},"19":{"den":"green","noc":"blue"},"20":{"den":"green","noc":"blue"},"21":{"den":"red","noc":"dark"},"22":{"den":"red","noc":"dark"},"23":{"den":"red","noc":"dark"},"24":{"den":"blue","noc":"green"},"25":{"den":"blue","noc":"green"},"26":{"den":"dark","noc":"red"},"27":{"den":"dark","noc":"red"},"28":{"den":"green","noc":"blue"},"29":{"den":"green","noc":"blue"},"30":{"den":"green","noc":"blue"},"31":{"den":"red","noc":"dark"}},"9":{"1":{"den":"red","noc":"dark"},"2":{"den":"blue","noc":"green"},"3":{"den":"blue","noc":"green"},"4":{"den":"dark","noc":"red"},"5":{"den":"dark","noc":"red"},"6":{"den":"dark","noc":"red"},"7":{"den":"green","noc":"blue"},"8":{"den":"green","noc":"blue"},"9":{"den":"red","noc":"dark"},"10":{"den":"red","noc":"dark"},"11":{"den":"blue","noc":"green"},"12":{"den":"blue","noc":"green"},"13":{"den":"blue","noc":"green"},"14":{"den":"dark","noc":"red"},"15":{"den":"dark","noc":"red"},"16":{"den":"green","noc":"blue"},"17":{"den":"green","noc":"blue"},"18":{"den":"red","noc":"dark"},"19":{"den":"red","noc":"dark"},"20":{"den":"red","noc":"dark"},"21":{"den":"blue","noc":"green"},"22":{"den":"blue","noc":"green"},"23":{"den":"dark","noc":"red"},"24":{"den":"dark","noc":"red"},"25":{"den":"green","noc":"blue"},"26":{"den":"green","noc":"blue"},"27":{"den":"green","noc":"blue"},"28":{"den":"red","noc":"dark"},"29":{"den":"red","noc":"dark"},"30":{"den":"green","noc":"blue"}},"10":{"1":{"den":"green","noc":"blue"},"2":{"den":"red","noc":"dark"},"3":{"den":"red","noc":"dark"},"4":{"den":"red","noc":"dark"},"5":{"den":"blue","noc":"green"},"6":{"den":"blue","noc":"green"},"7":{"den":"dark","noc":"red"},"8":{"den":"dark","noc":"red"},"9":{"den":"green","noc":"blue"},"10":{"den":"green","noc":"blue"},"11":{"den":"green","noc":"blue"},"12":{"den":"red","noc":"dark"},"13":{"den":"red","noc":"dark"},"14":{"den":"blue","noc":"green"},"15":{"den":"blue","noc":"green"},"16":{"den":"dark","noc":"red"},"17":{"den":"dark","noc":"red"},"18":{"den":"dark","noc":"red"},"19":{"den":"green","noc":"blue"},"20":{"den":"green","noc":"blue"},"21":{"den":"red","noc":"dark"},"22":{"den":"red","noc":"dark"},"23":{"den":"blue","noc":"green"},"24":{"den":"blue","noc":"green"},"25":{"den":"blue","noc":"green"},"26":{"den":"dark","noc":"red"},"27":{"den":"dark","noc":"red"},"28":{"den":"green","noc":"blue"},"29":{"den":"green","noc":"blue"},"30":{"den":"red","noc":"dark"},"31":{"den":"red","noc":"dark"}},"11":{"1":{"den":"red","noc":"dark"},"2":{"den":"blue","noc":"green"},"3":{"den":"blue","noc":"green"},"4":{"den":"dark","noc":"red"},"5":{"den":"dark","noc":"red"},"6":{"den":"green","noc":"blue"},"7":{"den":"green","noc":"blue"},"8":{"den":"green","noc":"blue"},"9":{"den":"red","noc":"dark"},"10":{"den":"red","noc":"dark"},"11":{"den":"blue","noc":"green"},"12":{"den":"blue","noc":"green"},"13":{"den":"dark","noc":"red"},"14":{"den":"dark","noc":"red"},"15":{"den":"dark","noc":"red"},"16":{"den":"green","noc":"blue"},"17":{"den":"green","noc":"blue"},"18":{"den":"red","noc":"dark"},"19":{"den":"red","noc":"dark"},"20":{"den":"blue","noc":"green"},"21":{"den":"blue","noc":"green"},"22":{"den":"blue","noc":"green"},"23":{"den":"dark","noc":"red"},"24":{"den":"dark","noc":"red"},"25":{"den":"green","noc":"blue"},"26":{"den":"green","noc":"blue"},"27":{"den":"red","noc":"dark"},"28":{"den":"red","noc":"dark"},"29":{"den":"red","noc":"dark"},"30":{"den":"blue","noc":"green"}},"12":{"1":{"den":"blue","noc":"green"},"2":{"den":"dark","noc":"red"},"3":{"den":"dark","noc":"red"},"4":{"den":"green","noc":"blue"},"5":{"den":"green","noc":"blue"},"6":{"den":"green","noc":"blue"},"7":{"den":"red","noc":"dark"},"8":{"den":"red","noc":"dark"},"9":{"den":"blue","noc":"green"},"10":{"den":"blue","noc":"green"},"11":{"den":"dark","noc":"red"},"12":{"den":"dark","noc":"red"},"13":{"den":"dark","noc":"red"},"14":{"den":"green","noc":"blue"},"15":{"den":"green","noc":"blue"},"16":{"den":"red","noc":"dark"},"17":{"den":"red","noc":"dark"},"18":{"den":"blue","noc":"green"},"19":{"den":"blue","noc":"green"},"20":{"den":"blue","noc":"green"},"21":{"den":"dark","noc":"red"},"22":{"den":"dark","noc":"red"},"23":{"den":"green","noc":"blue"},"24":{"den":"green","noc":"blue"},"25":{"den":"red","noc":"dark"},"26":{"den":"red","noc":"dark"},"27":{"den":"red","noc":"dark"},"28":{"den":"blue","noc":"green"},"29":{"den":"blue","noc":"green"},"30":{"den":"dark","noc":"red"},"31":{"den":"dark","noc":"red"}}};
+
+// Group color key mapping: Excel 'blue'=modrá, 'green'=zelená, 'red'=červená, 'dark'=černá
+// Employee group assignments from user's list
+function getShift(emp,m,d){
+  if(emp.prov==='brigada') return 'br';
+  // Check for manual shift override
+  const ov=emp.shiftOv&&emp.shiftOv[m]&&emp.shiftOv[m][d];
+  const we=isWE(2026,m,d);
+  if(ov){
+    if(ov==='off') return we?'woff':'off';
+    if(ov==='day') return we?'wed':'day';
+    if(ov==='night') return we?'wen':'night';
+  }
+  const s=SS[String(m)]?.[String(d)];
+  if(!s) return we?'sof-we':'sof';
+  const GRP={blue:'blue',green:'green',red:'red',dark:'black'};
+  let type;
+  if(GRP[s.den]===emp.grp) type='day';
+  else if(GRP[s.noc]===emp.grp) type='night';
+  else type='off';
+  if(we) return type==='day'?'wed':type==='night'?'wen':'woff';
+  return type;
+}
+function sCss(t){
+  return{day:'sd',night:'sn',wed:'swd',wen:'swn',off:'sof',woff:'sof-we',br:'cbr'}[t]||'sof';
+}
+function sLabel(t){
+  return{day:'Denní',night:'Noční',wed:'Víkend den',wen:'Víkend noc',off:'Volno',woff:'Volno (víkend)'}[t]||'';
+}
+function isNightT(t){return t==='night'||t==='wen';}
+function isOffT(t){return t==='off'||t==='woff'||t==='sof'||t==='sof-we';}
+function gcol(g){return{blue:'#3b82f6',black:'#64748b',green:'#22c55e',red:'#ef4444',brigada:'#a78bfa'}[g]||'#555';}
+function pCls(p){
+  if(p==='Mistr') return'pM';
+  if(p==='Operator B') return'pB';
+  if(p==='Operator C') return'pC';
+  if(p==='Kontrolor') return'pK';
+  if(p==='Warehouse Manager') return'pW';
+  if(p==='Brigádník') return'pBR';
+  if(p==='2sm') return'p2';
+  return'pC';
+}
+
+let ST={m:4,y:2026,fp:'all',fg:'all',fn:'',emps:[
+  // === 4-SMĚNNÝ ===
+  // MODRÁ: Zilvar Jakub, Hradecký Jaroslav, Base Roman, Rýdzi Jaroslav, Karel Martin
+  {id:1,name:'Zilvar Jakub',pos:'Mistr',prov:'4sm',grp:'blue',data:{}},
+  {id:2,name:'Hradecký Jaroslav',pos:'Operator C',prov:'4sm',grp:'blue',data:{}},
+  {id:3,name:'Base Roman',pos:'Operator C',prov:'4sm',grp:'blue',data:{}},
+  {id:4,name:'Rýdzi Jaroslav',pos:'Operator C',prov:'4sm',grp:'blue',data:{}},
+  {id:5,name:'Karel Martin',pos:'Operator C',prov:'4sm',grp:'blue',data:{}},
+  // ČERNÁ: Vrabel Tomáš, Silvar František, Kilevník Petr, Krejci Martin, Šplíchal Ota
+  {id:6,name:'Vrabel Tomáš',pos:'Mistr',prov:'4sm',grp:'black',data:{}},
+  {id:7,name:'Silvar František',pos:'Operator C',prov:'4sm',grp:'black',data:{}},
+  {id:8,name:'Kilevník Petr',pos:'Operator C',prov:'4sm',grp:'black',data:{}},
+  {id:9,name:'Krejci Martin',pos:'Operator C',prov:'4sm',grp:'black',data:{}},
+  {id:10,name:'Šplíchal Ota',pos:'Operator C',prov:'4sm',grp:'black',data:{}},
+  // ZELENÁ: Bláha Milan, Podmanický Patrik, Horák Zdeněk, Janatka Zbyněk, Vít Matěj
+  {id:11,name:'Bláha Milan',pos:'Mistr',prov:'4sm',grp:'green',data:{}},
+  {id:12,name:'Podmanický Patrik',pos:'Operator C',prov:'4sm',grp:'green',data:{}},
+  {id:13,name:'Horák Zdeněk',pos:'Operator C',prov:'4sm',grp:'green',data:{}},
+  {id:14,name:'Janatka Zbyněk',pos:'Operator C',prov:'4sm',grp:'green',data:{}},
+  {id:15,name:'Vít Matěj',pos:'Operator C',prov:'4sm',grp:'green',data:{}},
+  // ČERVENÁ skupina: Hofman Ludek, Vejnar Jan, Munzar Kamil, Kosek Tomas, Sekera Miroslav
+  {id:16,name:'Hofman Luděk',pos:'Mistr',prov:'4sm',grp:'red',data:{}},
+  {id:17,name:'Vejnar Jan',pos:'Operator C',prov:'4sm',grp:'red',data:{}},
+  {id:18,name:'Munzar Kamil',pos:'Operator C',prov:'4sm',grp:'red',data:{}},
+  {id:19,name:'Kosek Tomáš',pos:'Operator C',prov:'4sm',grp:'red',data:{}},
+  {id:20,name:'Sekera Miroslav',pos:'Operator C',prov:'4sm',grp:'red',data:{}},
+  // === 2-SMĚNNÝ ===
+  {id:21,name:'Čapek Jan',pos:'2sm',prov:'2sm',grp:'none',data:{}},
+  {id:22,name:'Hetfleis Luděk',pos:'2sm',prov:'2sm',grp:'none',data:{}},
+  {id:23,name:'Havlíček Patrik',pos:'Operator B',prov:'2sm',grp:'none',data:{}},
+  {id:24,name:'Hirsl Roman',pos:'Operator B',prov:'2sm',grp:'none',data:{}},
+  {id:25,name:'Křičenský David',pos:'Kontrolor',prov:'2sm',grp:'none',data:{}},
+  {id:26,name:'Potočék Karel',pos:'Operator B',prov:'2sm',grp:'none',data:{}},
+  {id:27,name:'Šejvl Jan',pos:'Operator B',prov:'2sm',grp:'none',data:{}},
+  {id:28,name:'Šplíchal Luděk',pos:'Operator B',prov:'2sm',grp:'none',data:{}},
+  {id:29,name:'Hetfleis Radek',pos:'Operator B',prov:'2sm',grp:'none',data:{}},
+  {id:30,name:'Lajvr Jan',pos:'Operator B',prov:'2sm',grp:'none',data:{}},
+  // === BRIGÁDNÍCI ===
+  {id:31,name:'Vrána Pavel',pos:'Brigádník',prov:'brigada',grp:'brigada',data:{}},
+  {id:32,name:'Hetfleis David',pos:'Brigádník',prov:'brigada',grp:'brigada',data:{}},
+]};
+
+// Manual hour rows (keyed by row ID, value = {day: hours})
+if(!ST.manualRows) ST.manualRows={
+  '4sm':{},
+  '2sm':{},
+  'brigada':{},
+  'offwc':{},
+  'offceln':{}
+};
+
+let ET=null;
+
+// Weekend rule: Sobota 00:00 – Neděle 24:00 (pouze So a Ne)
+function isWeekendShift4sm(y,m,d){
+  const w=dow(y,m,d);
+  return w===6||w===0; // Sat=6, Sun=0 only
+}
+
+function calcSums(emp){
+  const n=dInM(ST.m,ST.y);
+  // days=worked days, nightH=night bonus h, weH=weekend h, otW=OT 25% weekday h,
+  // otSo=OT 25% saturday h, otNe=OT 50% sunday h, otSv=OT holiday h,
+  // negH=minus h, nem=sick days, dov=vacation days, prop=leave h,
+  // svatekH=holiday worked h (auto 11h or manual), brig=brigada total h
+  let days=0,nightH=0,weH=0,otW=0,otSo=0,otNe=0,otSv=0,negH=0,nem=0,dov=0,prop=0,brig=0,svatekH=0;
+  for(let d=1;d<=n;d++){
+    const rec=emp.data[d],t=rec?.t||null;
+    const h=rec?.h||0;
+    if(emp.prov==='brigada'){brig+=typeof rec==='number'&&rec>0?rec:0;continue;}
+    const we=isWE(ST.y,ST.m,d);// Sat or Sun
+    const isSat=dow(ST.y,ST.m,d)===6;
+    const isSun=dow(ST.y,ST.m,d)===0;
+    const sv=isSv(ST.m,d);
+
+    if(emp.prov==='2sm'){
+      // 2sm: no auto-holiday hours, only manual overtime on holiday
+      if(t==='N'){nem++;continue;}
+      if(t==='D'){dov++;if(!we)days++;continue;}
+      if(t==='P'){prop+=h;if(!we)days++;continue;}
+      if(t==='ot'){// weekday OT 25%
+        otW+=h;if(!we)days++;continue;}
+      if(t==='otso'){weH+=h;otSo+=h;continue;}// So OT 25% → also weH
+      if(t==='otne'){weH+=h;otNe+=h;continue;}// Ne OT 50% → also weH
+      if(t==='otsv'){otSv+=h;if(sv)svatekH+=h;continue;}// svátek OT
+      if(t==='sv'){// shouldn't happen for 2sm but handle
+        if(sv)svatekH+=h;continue;}
+      if(t==='neg'){negH+=h;if(!we)days++;continue;}
+      if(!we)days++;
+      continue;
+    }
+
+    // 4-směnný
+    const sh=getShift(emp,ST.m,d);
+    const night=isNightT(sh),off=isOffT(sh);
+    const isWknd=we; // Sat or Sun
+    if(t==='N'){nem++;continue;}
+    if(t==='D'){dov++;if(!off){days++;if(night)nightH+=8;if(isWknd)weH+=12;}continue;}
+    if(t==='P'){prop+=h;if(!off){days++;if(night)nightH+=8;if(isWknd)weH+=12;}continue;}
+    if(t==='ot'){// weekday OT 25%
+      otW+=h;if(!off){days++;if(night)nightH+=8;}continue;}
+    if(t==='otso'){// Saturday OT 25% → weH + otSo
+      weH+=h;otSo+=h;if(!off&&night)nightH+=8;continue;}
+    if(t==='otne'){// Sunday OT 50% → weH + otNe
+      weH+=h;otNe+=h;if(!off&&night)nightH+=8;continue;}
+    if(t==='otsv'){// Holiday OT → otSv + svatekH
+      otSv+=h;if(sv)svatekH+=h;continue;}
+    if(t==='sv'){// Manual holiday hours (4sm only)
+      const svh=h||11;svatekH+=svh;days++;if(night)nightH+=8;if(isWknd)weH+=12;continue;}
+    if(t==='neg'){negH+=h;if(!off){days++;if(night)nightH+=8;}continue;}
+    if(!off){
+      days++;if(night)nightH+=8;if(isWknd)weH+=12;
+      if(sv){// auto 11h on holiday for 4sm (no special record = worked normally)
+        svatekH+=11;
+      }
+    }
+  }
+  return{days,nightH:r2(nightH),weH:r2(weH),otW:r2(otW),otSo:r2(otSo),otNe:r2(otNe),otSv:r2(otSv),negH:r2(negH),nem,dov,prop:r2(prop),brig:r2(brig),svatekH:r2(svatekH)};
+}
+
+function cellCls(emp,d,rec){
+  if(emp.prov==='brigada') return typeof rec==='number'&&rec>0?'cbh':'cbr';
+  const t=rec?.t||null;
+  if(t==='N') return'cN';if(t==='D') return'cD';if(t==='P') return'cP';if(t==='we') return'cWE';
+  const sv=isSv(ST.m,d);
+  if(emp.prov==='2sm'){
+    const we=isWE(ST.y,ST.m,d);
+    if(sv&&t!=='N'&&t!=='D') return'cSV';
+    if(we) return t?'swd':'sof-we'; // weekend: shift color if has record, green if empty
+    return'sd';
+  }
+  const sh=getShift(emp,ST.m,d);
+  // Svátek: orange if employee has a shift (not off)
+  if(sv&&!isOffT(sh)&&t!=='N'&&t!=='D') return'cSV';
+  if(t==='sv') return'cSV';
+  let base=sCss(sh);
+  if(t==='ot'||t==='otso'||t==='otne'||t==='otsv') return base+' cOT';
+  if(t==='neg') return base+' cNEG';
+  return base;
+}
+function cellDisp(emp,d,rec){
+  if(emp.prov==='brigada') return typeof rec==='number'&&rec>0?rec:null;
+  const t=rec?.t||null;const h=rec?.h||0;
+  // Auto-display 11h on svátek if employee has shift and no special record
+  if(!t&&isSv(ST.m,d)){
+    if(emp.prov==='2sm') return 11;
+    const sh=getShift(emp,ST.m,d);
+    if(!isOffT(sh)) return 11;
+  }
+  if(!t) return null;
+  if(t==='N') return'N';if(t==='D') return'D';if(t==='P') return(h||'')+'/P';
+  if(t==='ot') return h||'';if(t==='neg') return'-'+(h||'');
+  if(t==='otso') return h||'';if(t==='otne') return h||'';
+  if(t==='otsv') return h||'';if(t==='sv') return h||11;
+  return null;
+}
+
+function renderManualRow(rowKey,label,sublabel,rowCls,n,autoData){
+  // autoData: if provided, per-day values are auto-computed (not clickable)
+  const data=autoData||ST.manualRows[rowKey]||{};
+  const isAuto=!!autoData;
+  let total=0;
+  for(let d=1;d<=n;d++) total+=(typeof data[d]==='number'&&data[d]>0?data[d]:0);
+  total=r2(total);
+  let html=`<tr class="${rowCls}">`;
+  html+=`<td class="cn">${label}</td>`;
+  html+=`<td class="cp" style="font-size:10px;opacity:.7">${sublabel}</td>`;
+  for(let d=1;d<=n;d++){
+    const v=data[d];
+    const hasCls=typeof v==='number'&&v>0?'has-val':'';
+    const disp=typeof v==='number'&&v>0?v:'';
+    const w=dow(ST.y,ST.m,d);const wbl=w===6?'border-left:3px solid #16a34a;':'';
+    if(isAuto){
+      html+=`<td class="mr-cell ${hasCls}" style="${wbl};cursor:default">${disp||'<span style="color:#d1d5db">·</span>'}</td>`;
+    } else {
+      html+=`<td class="mr-cell ${hasCls}" onclick="openManualCell('${rowKey}',${d})" style="cursor:pointer;${wbl}">${disp||'<span style="color:#d1d5db">·</span>'}</td>`;
+    }
+  }
+  // 8 summary cols (Dny, Noční h, Víkend h, Přesčas, Mínus, N, D, P h) — show dashes
+  for(let i=0;i<13;i++) html+=`<td class="ts" style="color:var(--tx3)">—</td>`;
+  // CELKEM h column — show month total
+  html+=`<td class="ts" style="font-size:12px;font-weight:700;color:#1d4ed8;background:#dbeafe!important;border-left:2px solid #93c5fd!important">${total>0?total:'—'}</td>`;
+  html+=`</tr>`;
+  return html;
+}
+
+let manualEditTarget=null;
+
+function openManualCell(rowKey,day){
+  manualEditTarget={rowKey,day};
+  const data=ST.manualRows[rowKey]||{};
+  const v=data[day];
+  const labels={'4sm':'4-směnný — ruční hodiny','2sm':'2-směnný — ruční hodiny','brigada':'Brigádníci — ruční hodiny','offwc':'Office WC','offceln':'Office Celní'};
+  document.getElementById('manT').textContent=`${labels[rowKey]} — den ${day}. ${ST.m}. ${ST.y}`;
+  document.getElementById('manH').value=typeof v==='number'?v:'';
+  document.getElementById('manMod').style.display='flex';
+}
+
+function closeManualMod(){document.getElementById('manMod').style.display='none';manualEditTarget=null;}
+
+function saveManualCell(){
+  if(!manualEditTarget)return;
+  const h=parseFloat(document.getElementById('manH').value);
+  if(!ST.manualRows[manualEditTarget.rowKey]) ST.manualRows[manualEditTarget.rowKey]={};
+  if(!h||h<=0) delete ST.manualRows[manualEditTarget.rowKey][manualEditTarget.day];
+  else ST.manualRows[manualEditTarget.rowKey][manualEditTarget.day]=h;
+  closeManualMod();render();
+}
+
+function render(){
+  const n=dInM(ST.m,ST.y);
+  document.getElementById('ptitle').textContent=`Docházka — ${MCZ[ST.m]} ${ST.y}`;
+  let emps=ST.emps.filter(e=>ST.fp==='all'||e.prov===ST.fp);
+  if(ST.fg!=='all') emps=emps.filter(e=>e.grp===ST.fg);
+  if(ST.fn) emps=emps.filter(e=>e.name.toLowerCase().includes(ST.fn));
+
+  // HEAD
+  let ths=`<tr><th class="cn">Jméno</th><th class="cp">Pozice</th>`;
+  for(let d=1;d<=n;d++){
+    const w=dow(ST.y,ST.m,d);const isSat=w===6,isSun=w===0;
+    const wbl=isSat?'border-left:3px solid #16a34a;':'';
+    const sv=isSv(ST.m,d);
+    const wbg=sv?'background:#fed7aa;color:#7c2d12;':isSat?'background:#86efac;color:#14532d;':isSun?'background:#bbf7d0;color:#166534;':'';
+    const svTitle=sv?` title="${svName(ST.m,d)}"` :'';
+    ths+=`<th style="${wbg}${wbl}"${svTitle}><div style="font-size:11px;font-weight:600">${d}</div><div style="font-size:9px;opacity:.7">${DN[w]}</div></th>`;
+  }
+  ths+=`<th style="color:var(--day-tx);min-width:32px">Dny</th>`;
+  ths+=`<th style="color:var(--ngt-tx);min-width:36px">Noční h</th>`;
+  ths+=`<th style="color:var(--wed-tx);min-width:36px">Víkend h</th>`;
+  ths+=`<th style="color:#d97706;min-width:36px;font-size:9px">Přesčas 25%</th>`;
+  ths+=`<th style="color:#b45309;background:#fef3c7;min-width:36px;font-size:9px">Přesčas So 25%</th>`;
+  ths+=`<th style="color:#92400e;background:#fde68a;min-width:36px;font-size:9px">Přesčas Ne 50%</th>`;
+  ths+=`<th style="color:#7c2d12;background:#fed7aa;min-width:36px;font-size:9px">Přesčas sv</th>`;
+  ths+=`<th style="color:var(--NEG);min-width:30px">Mínus</th>`;
+  ths+=`<th style="color:var(--N-tx);min-width:22px">N</th>`;
+  ths+=`<th style="color:var(--D-tx);min-width:22px">D</th>`;
+  ths+=`<th style="color:var(--P-tx);min-width:28px">P h</th>`;
+  ths+=`<th style="color:#7c2d12;background:#fed7aa;min-width:38px;font-size:9px">Svátek h</th>`;
+  ths+=`<th style="color:#1d4ed8;background:#dbeafe;min-width:44px;font-size:10px">CELKEM h</th>`;
+  ths+=`</tr>`;
+  document.getElementById('th').innerHTML=ths;
+
+  const G4=['blue','black','green','red'];
+  const GL={blue:'Modrá skupina',black:'Černá skupina',green:'Zelená skupina',red:'Červená skupina'};
+  const GD={blue:'Den=modrá 6–18h / Noc=šedá 18–6h',black:'Den=modrá 6–18h / Noc=šedá 18–6h',green:'Den=modrá 6–18h / Noc=šedá 18–6h',red:'Den=modrá 6–18h / Noc=šedá 18–6h'};
+
+  let html='';
+  const doGrp=(list,label,gc,sub)=>{
+    if(!list.length) return;
+    const dot=`<span class="gd" style="background:${gc}"></span>`;
+    const subtitle=sub?` <span style="opacity:.5;font-weight:400;font-size:9px;letter-spacing:.04em">${sub}</span>`:'';
+    html+=`<tr class="gr"><td colspan="${n+11}">${dot}${label}${subtitle}</td></tr>`;
+    list.forEach(emp=>{
+      const s=calcSums(emp);const isBr=emp.prov==='brigada';const is2=emp.prov==='2sm';
+      html+=`<tr><td class="cn">${emp.name}</td>`;
+      html+=`<td class="cp"><span class="pos ${pCls(emp.pos)}">${emp.pos}</span></td>`;
+      for(let d=1;d<=n;d++){
+        const rec=emp.data[d];
+        const cls=cellCls(emp,d,rec);
+        const disp=cellDisp(emp,d,rec);
+        const w=dow(ST.y,ST.m,d);
+        const wbl=w===6?'border-left:3px solid #16a34a;':'';
+        html+=`<td class="${cls}" onclick="openCell(${emp.id},${d})" style="cursor:pointer;${wbl}">${disp||'<span style="color:#d1d5db">·</span>'}</td>`;
+      }
+      if(isBr){
+        for(let i=0;i<12;i++) html+=`<td class="ts" style="color:${i===7?'var(--br-tx)':'var(--tx3)'}">${i===7&&s.brig>0?s.brig:'—'}</td>`;
+        html+=`<td class="ts" style="background:#fff7ed!important">—</td>`;
+        html+=`<td class="ts" style="background:#f8fafc!important"></td>`;
+      } else {
+        html+=`<td class="ts" style="color:var(--day-tx)">${s.days||''}</td>`;
+        html+=`<td class="ts" style="color:var(--ngt-tx)">${!is2&&s.nightH>0?s.nightH:is2?'':''}</td>`;
+        html+=`<td class="ts" style="color:var(--wed-tx)">${s.weH>0?s.weH:''}</td>`;
+        html+=`<td class="ts" style="color:#d97706">${s.otW>0?'+'+s.otW:''}</td>`;
+        html+=`<td class="ts" style="color:#b45309;background:#fef9c3!important">${s.otSo>0?'+'+s.otSo:''}</td>`;
+        html+=`<td class="ts" style="color:#92400e;background:#fef08a!important">${s.otNe>0?'+'+s.otNe:''}</td>`;
+        html+=`<td class="ts" style="color:#7c2d12;background:#ffedd5!important">${s.otSv>0?'+'+s.otSv:''}</td>`;
+        html+=`<td class="ts" style="color:var(--NEG)">${s.negH>0?'-'+s.negH:''}</td>`;
+        html+=`<td class="ts" style="color:var(--N-tx)">${s.nem||''}</td>`;
+        html+=`<td class="ts" style="color:var(--D-tx)">${s.dov||''}</td>`;
+        html+=`<td class="ts" style="color:var(--P-tx)">${s.prop||''}</td>`;
+        html+=`<td class="ts" style="color:#7c2d12;background:#fff7ed!important">${s.svatekH>0?s.svatekH:''}</td>`;
+        html+=`<td class="ts" style="background:#f8fafc!important"></td>`;
+      }
+      html+=`</tr>`;
+    });
+  };
+
+  const f4=emps.filter(e=>e.prov==='4sm');
+  const f2=emps.filter(e=>e.prov==='2sm');
+  const fB=emps.filter(e=>e.prov==='brigada');
+
+  G4.forEach(g=>{
+    doGrp(f4.filter(e=>e.grp===g),`4-SMĚNNÝ — ${GL[g]}`,gcol(g),GD[g]);
+  });
+  if(ST.fp==='all'||ST.fp==='4sm') html+=renderManualRow('4sm','Ruční hodiny','4-směnný provoz','mr-row',n);
+  if(f2.length) doGrp(f2,'2-SMĚNNÝ PROVOZ','#fb923c','Ranní 6–14h / Odpolední 14–22h');
+  if(ST.fp==='all'||ST.fp==='2sm') html+=renderManualRow('2sm','Ruční hodiny','2-směnný provoz','mr-row',n);
+  if(fB.length) doGrp(fB,'BRIGÁDNÍCI',gcol('brigada'));
+  if(ST.fp==='all'||ST.fp==='brigada'){
+    // Auto-sum brigada employee hours per day
+    const brigDayTotals={};
+    for(let d=1;d<=n;d++){
+      let s=0;
+      ST.emps.filter(e=>e.prov==='brigada').forEach(e=>{
+        const v=e.data[d];if(typeof v==='number'&&v>0)s+=v;
+      });
+      if(s>0) brigDayTotals[d]=r2(s);
+    }
+    html+=renderManualRow('brigada','Brigádníci součet','automaticky ze zadání','mr-row',n,brigDayTotals);
+    html+=renderManualRow('offwc','Office WC','ruční zadání hodin','offwc-row',n);
+    html+=renderManualRow('offceln','Office Celní','ruční zadání hodin','offceln-row',n);
+  }
+
+  // TOTALS row — per day: manual row sums; end: sum of all 5 manual rows + grand total
+  {
+    let tD=0,tN=0,tW=0,tOtW=0,tOtSo=0,tOtNe=0,tOtSv=0,tM=0,tNem=0,tDov=0,tPr=0;
+    emps.forEach(e=>{
+      const s=calcSums(e);
+      if(e.prov!=='brigada'){tD+=s.days;tN+=s.nightH;tW+=s.weH;tOtW+=s.otW||0;tOtSo+=s.otSo||0;tOtNe+=s.otNe||0;tOtSv+=s.otSv||0;tM+=s.negH;tNem+=s.nem;tDov+=s.dov;tPr+=s.prop;}
+    });
+
+    // Per-day manual sums (4sm + 2sm + brigada_auto + offwc + offceln)
+    const manKeys=['4sm','2sm','offwc','offceln'];
+    // brigada auto = sum of brigada employee hours per day
+    const brigDayH={};
+    for(let d=1;d<=n;d++){
+      let bs=0;
+      ST.emps.filter(e=>e.prov==='brigada').forEach(e=>{
+        const v=e.data[d];if(typeof v==='number'&&v>0)bs+=v;
+      });
+      brigDayH[d]=r2(bs);
+    }
+    const manDayTotals={};
+    for(let d=1;d<=n;d++){
+      let s=brigDayH[d]||0;
+      manKeys.forEach(k=>{const v=ST.manualRows[k]?.[d];if(typeof v==='number'&&v>0)s+=v;});
+      manDayTotals[d]=r2(s);
+    }
+
+    // Month totals per manual row
+    const man4sm=r2(Object.values(ST.manualRows['4sm']||{}).reduce((a,v)=>a+(v>0?v:0),0));
+    const man2sm=r2(Object.values(ST.manualRows['2sm']||{}).reduce((a,v)=>a+(v>0?v:0),0));
+    const manBrig=r2(Object.values(brigDayH).reduce((a,v)=>a+v,0));
+    const manWC=r2(Object.values(ST.manualRows['offwc']||{}).reduce((a,v)=>a+(v>0?v:0),0));
+    const manCeln=r2(Object.values(ST.manualRows['offceln']||{}).reduce((a,v)=>a+(v>0?v:0),0));
+    const manGrand=r2(man4sm+man2sm+manBrig+manWC+manCeln);
+
+    html+=`<tr class="tr"><td class="cn" colspan="2" style="font-size:10px;color:var(--tx2)">CELKEM</td>`;
+    for(let d=1;d<=n;d++){
+      const w=dow(ST.y,ST.m,d);
+      const wbl=w===6?'border-left:3px solid #16a34a;':'';
+      const mv=manDayTotals[d];
+      html+=`<td class="ts" style="${wbl};font-size:10px;font-weight:600;color:${mv>0?'#1d4ed8':'var(--tx3)'}">${mv>0?mv+'h':''}</td>`;
+    }
+    // 8 summary cols
+    html+=`<td class="ts" style="color:var(--day-tx)">${tD||''}</td>`;
+    html+=`<td class="ts" style="color:var(--ngt-tx)">${tN>0?r2(tN):''}</td>`;
+    html+=`<td class="ts" style="color:var(--wed-tx)">${tW>0?r2(tW):''}</td>`;
+    html+=`<td class="ts" style="color:#d97706">${tOtW>0?'+'+r2(tOtW):''}</td>`;
+    html+=`<td class="ts" style="color:#b45309;background:#fef9c3!important">${tOtSo>0?'+'+r2(tOtSo):''}</td>`;
+    html+=`<td class="ts" style="color:#92400e;background:#fef08a!important">${tOtNe>0?'+'+r2(tOtNe):''}</td>`;
+    html+=`<td class="ts" style="color:#7c2d12;background:#ffedd5!important">${tOtSv>0?'+'+r2(tOtSv):''}</td>`;
+    html+=`<td class="ts" style="color:var(--NEG)">${tM>0?'-'+r2(tM):''}</td>`;
+    html+=`<td class="ts" style="color:var(--N-tx)">${tNem||''}</td>`;
+    html+=`<td class="ts" style="color:var(--D-tx)">${tDov||''}</td>`;
+    // CELKEM h: sum of all 5 manual rows as tooltip breakdown + grand total
+    const breakdown=`4sm:${man4sm}h | 2sm:${man2sm}h | Brig:${manBrig}h | WC:${manWC}h | Celní:${manCeln}h`;
+    let tSv=0;emps.forEach(e=>{const s=calcSums(e);tSv+=s.svatekH||0;});tSv=r2(tSv);
+    html+=`<td class="ts" style="color:#7c2d12;background:#fff7ed!important">${tSv>0?tSv+'h':''}</td>`;
+    html+=`<td class="ts" style="font-size:12px;font-weight:700;color:#1d4ed8;background:#dbeafe!important;border-left:2px solid #93c5fd!important;cursor:help" title="${breakdown}">${manGrand>0?manGrand:'—'}</td>`;
+    html+=`</tr>`;
+  }
+  document.getElementById('tb').innerHTML=html;
+
+  // STATS
+  let tD=0,tN=0,tW=0,tOT=0,tNeg=0,tNem=0,tDov=0,tBr=0,tSv=0;
+  ST.emps.forEach(e=>{const s=calcSums(e);if(e.prov==='brigada')tBr+=s.brig;else{tD+=s.days;tN+=s.nightH;tW+=s.weH;tOT+=r2((s.otW||0)+(s.otSo||0)+(s.otNe||0)+(s.otSv||0));tNeg+=s.negH;tNem+=s.nem;tDov+=s.dov;tSv+=s.svatekH||0;}});
+  document.getElementById('sbar').innerHTML=`
+    <div class="si"><div class="sl">Odprac. dny</div><div class="sv" style="color:var(--day-tx)">${tD}</div></div>
+    <div class="si"><div class="sl">Noční hodiny</div><div class="sv" style="color:var(--ngt-tx)">${r2(tN)}</div></div>
+    <div class="si"><div class="sl">Víkend hodiny</div><div class="sv" style="color:var(--wed-tx)">${r2(tW)}</div></div>
+    <div class="si"><div class="sl">Přesčas celkem</div><div class="sv" style="color:var(--OT)">${r2(tOT)>0?'+'+r2(tOT):0}</div></div>
+    <div class="si"><div class="sl">Svátek hodin</div><div class="sv" style="color:#9a3412">${r2(tSv)||0}</div></div>
+    <div class="si"><div class="sl">Dní nemoc</div><div class="sv" style="color:var(--N-tx)">${tNem}</div></div>
+    <div class="si"><div class="sl">Brigádníci h</div><div class="sv" style="color:var(--br-tx)">${r2(tBr)}</div></div>
+  `;
+}
+
+// onMC redefined above in monthData section
+function onFC(){ST.fp=document.getElementById('psel').value;ST.fg=document.getElementById('gsel').value;ST.fn=(document.getElementById('nameSearch').value||'').trim().toLowerCase();render();}
+
+function openCell(empId,day){
+  ET={empId,day};
+  const emp=ST.emps.find(e=>e.id===empId);
+  const rec=emp.data[day],isBr=emp.prov==='brigada';
+  const sh=getShift(emp,ST.m,day);
+  const w=dow(ST.y,ST.m,day);
+  document.getElementById('cmT').textContent=`${emp.name} — ${day}. ${ST.m}. ${ST.y} (${DN[w]})`;
+  const shBadge=document.getElementById('cmSh');
+  if(!isBr){
+    const night=isNightT(sh);
+    const bg=sh==='day'?'var(--day-bg)':sh==='night'?'var(--ngt-bg)':sh==='wed'?'var(--wed-bg)':sh==='wen'?'var(--wen-bg)':'var(--bg3)';
+    const tx=sh==='day'?'var(--day-tx)':sh==='night'?'var(--ngt-tx)':sh==='wed'?'var(--wed-tx)':sh==='wen'?'var(--wen-tx)':'var(--tx2)';
+    shBadge.innerHTML=`<div class="msh" style="background:${bg};color:${tx}">${sLabel(sh)||'Pracovní den'}${night?' · +8h noční příplatek':''}</div>`;
+  } else { shBadge.innerHTML=''; document.getElementById('cmShOverride').style.display='none'; }
+  document.getElementById('cmBr').style.display=isBr?'block':'none';
+  document.getElementById('cmNorm').style.display=isBr?'none':'block';
+  if(isBr){document.getElementById('brH').value=typeof rec==='number'&&rec>0?rec:'';}
+  else{
+    const sel=document.getElementById('ct');
+    ['hOT','hOTSO','hOTNE','hOTSV','hSV','hNEG','hP'].forEach(id=>document.getElementById(id).value='');
+    if(!rec?.t)sel.value='';
+    else if(rec.t==='N')sel.value='N';else if(rec.t==='D')sel.value='D';
+    else if(rec.t==='P'){sel.value='P';document.getElementById('hP').value=rec.h||'';}
+    else if(rec.t==='ot'){sel.value='ot';document.getElementById('hOT').value=rec.h||'';}
+    else if(rec.t==='otso'){sel.value='otso';document.getElementById('hOTSO').value=rec.h||'';}
+    else if(rec.t==='otne'){sel.value='otne';document.getElementById('hOTNE').value=rec.h||'';}
+    else if(rec.t==='otsv'){sel.value='otsv';document.getElementById('hOTSV').value=rec.h||'';}
+    else if(rec.t==='sv'){sel.value='sv';document.getElementById('hSV').value=rec.h||11;}
+    else if(rec.t==='neg'){sel.value='neg';document.getElementById('hNEG').value=rec.h||'';}
+    ctChg();
+  }
+  document.getElementById('cmMod').style.display='flex';
+}
+function ctChg(){
+  const t=document.getElementById('ct').value;
+  ['rOT','rOTSO','rOTNE','rOTSV','rSV','rNEG','rP'].forEach(id=>document.getElementById(id).style.display='none');
+  if(t==='ot')document.getElementById('rOT').style.display='flex';
+  else if(t==='otso')document.getElementById('rOTSO').style.display='flex';
+  else if(t==='otne')document.getElementById('rOTNE').style.display='flex';
+  else if(t==='otsv')document.getElementById('rOTSV').style.display='flex';
+  else if(t==='sv'){document.getElementById('rSV').style.display='flex';}
+  else if(t==='neg')document.getElementById('rNEG').style.display='flex';
+  else if(t==='P')document.getElementById('rP').style.display='flex';
+}
+function setShiftOverride(type){
+  if(!ET) return;
+  const emp=ST.emps.find(e=>e.id===ET.empId);
+  if(!emp.shiftOv) emp.shiftOv={};
+  if(!emp.shiftOv[ST.m]) emp.shiftOv[ST.m]={};
+  // Get base shift without override
+  const origOv=emp.shiftOv[ST.m][ET.day];
+  delete emp.shiftOv[ST.m][ET.day];
+  const baseSh=getShift(emp,ST.m,ET.day);
+  const baseType=isOffT(baseSh)?'off':isNightT(baseSh)?'night':'day';
+  if(type===baseType){
+    // Same as original — remove override
+    delete emp.shiftOv[ST.m][ET.day];
+  } else {
+    emp.shiftOv[ST.m][ET.day]=type;
+  }
+  // Update active button
+  ['shBtnDay','shBtnNight','shBtnOff'].forEach(id=>document.getElementById(id).classList.remove('active'));
+  const newSh=getShift(emp,ST.m,ET.day);
+  const newBase=isOffT(newSh)?'off':isNightT(newSh)?'night':'day';
+  if(newBase==='day') document.getElementById('shBtnDay').classList.add('active');
+  else if(newBase==='night') document.getElementById('shBtnNight').classList.add('active');
+  else document.getElementById('shBtnOff').classList.add('active');
+  // Update badge
+  const updSh=getShift(emp,ST.m,ET.day);
+  const bg2=updSh==='day'||updSh==='wed'?'var(--day-bg)':updSh==='night'||updSh==='wen'?'var(--ngt-bg)':'var(--bg3)';
+  const tx2=updSh==='day'||updSh==='wed'?'var(--day-tx)':updSh==='night'||updSh==='wen'?'var(--ngt-tx)':'var(--tx2)';
+  const hasOv=emp.shiftOv[ST.m][ET.day];
+  document.getElementById('cmSh').querySelector('.msh').style.background=bg2;
+  document.getElementById('cmSh').querySelector('.msh').style.color=tx2;
+  document.getElementById('cmSh').querySelector('.msh').textContent=sLabel(updSh)||(hasOv?'Mimo směnu':'Pracovní den');
+  render();
+}
+function closeMod(){document.getElementById('cmMod').style.display='none';ET=null;}
+function clearCell(){if(!ET)return;delete ST.emps.find(e=>e.id===ET.empId).data[ET.day];closeMod();render();}
+function saveCell(){
+  if(!ET)return;
+  const emp=ST.emps.find(e=>e.id===ET.empId);
+  if(emp.prov==='brigada'){const h=parseFloat(document.getElementById('brH').value);if(!h||h<=0)delete emp.data[ET.day];else emp.data[ET.day]=h;}
+  else{
+    const t=document.getElementById('ct').value;
+    if(!t)delete emp.data[ET.day];
+    else if(t==='N')emp.data[ET.day]={t:'N'};else if(t==='D')emp.data[ET.day]={t:'D'};
+    else if(t==='P')emp.data[ET.day]={t:'P',h:parseFloat(document.getElementById('hP').value)||0};
+    else if(t==='ot')emp.data[ET.day]={t:'ot',h:parseFloat(document.getElementById('hOT').value)||0};
+    else if(t==='otso')emp.data[ET.day]={t:'otso',h:parseFloat(document.getElementById('hOTSO').value)||0};
+    else if(t==='otne')emp.data[ET.day]={t:'otne',h:parseFloat(document.getElementById('hOTNE').value)||0};
+    else if(t==='otsv')emp.data[ET.day]={t:'otsv',h:parseFloat(document.getElementById('hOTSV').value)||0};
+    else if(t==='sv')emp.data[ET.day]={t:'sv',h:parseFloat(document.getElementById('hSV').value)||11};
+    else if(t==='neg')emp.data[ET.day]={t:'neg',h:parseFloat(document.getElementById('hNEG').value)||0};
+  }
+  closeMod();render();
+}
+function empTC(){
+  const p=document.getElementById('eProv').value;
+  document.getElementById('eGrpRow').style.display=p==='brigada'||p==='2sm'?'none':'flex';
+}
+function openAddEmp(){document.getElementById('emMod').style.display='flex';}
+function saveEmp(){
+  const name=document.getElementById('eName').value.trim();if(!name)return;
+  const prov=document.getElementById('eProv').value;
+  const grp=prov==='brigada'||prov==='2sm'?'none':document.getElementById('eGrp').value;
+  const pos=document.getElementById('ePos').value;
+  ST.emps.push({id:Date.now(),name,pos,prov,grp,data:{}});
+  document.getElementById('emMod').style.display='none';document.getElementById('eName').value='';render();
+}
+function doPrint(){
+  window.print();
+}
+
+function doExportExcel(){
+  const n=dInM(ST.m,ST.y);
+  const DN2=['Ne','Po','Út','St','Čt','Pá','So'];
+  // Build HTML table that Excel can open
+  let rows=[];
+  // Header row 1: month title
+  rows.push(`<tr><td colspan="${n+14}" style="font-weight:bold;font-size:14px;background:#1d4ed8;color:white">Docházka — ${MCZ[ST.m]} ${ST.y} — Damco Jaroměř</td></tr>`);
+  // Header row 2: columns
+  let hdr=`<tr style="background:#e2e8f0;font-weight:bold"><td>Jméno</td><td>Pozice</td>`;
+  for(let d=1;d<=n;d++){
+    const w=dow(ST.y,ST.m,d);
+    const isWknd=(w===6||w===0);
+    const sv=isSv(ST.m,d);
+    const bg=sv?'background:#fed7aa':isWknd?'background:#86efac':'';
+    hdr+=`<td style="text-align:center;${bg}">${d}<br>${DN2[w]}</td>`;
+  }
+  hdr+=`<td>Dny</td><td>Noční h</td><td>Víkend h</td><td>Př 25%</td><td>Př So</td><td>Př Ne</td><td>Př sv</td><td>Mínus</td><td>N</td><td>D</td><td>P h</td><td>Svátek h</td></tr>`;
+  rows.push(hdr);
+
+  // Group labels + employee rows
+  const G4=['blue','black','green','red'];
+  const GL={blue:'MODRÁ',black:'ČERNÁ',green:'ZELENÁ',red:'ČERVENÁ'};
+  const gcols={blue:'#93c5fd',black:'#94a3b8',green:'#86efac',red:'#fca5a5'};
+  let emps=ST.emps;
+
+  const addGrpRow=(label,bg)=>{
+    rows.push(`<tr><td colspan="${n+14}" style="background:${bg};font-weight:bold;font-size:11px">${label}</td></tr>`);
+  };
+  const addEmpRow=(emp)=>{
+    const s=calcSums(emp);
+    const isBr=emp.prov==='brigada';
+    let row=`<tr><td style="font-weight:500">${emp.name}</td><td style="color:#64748b;font-size:10px">${emp.pos||''}</td>`;
+    for(let d=1;d<=n;d++){
+      const rec=emp.data[d];
+      const disp=cellDisp(emp,d,rec);
+      const cls=cellCls(emp,d,rec);
+      // Map class to background color
+      const bgMap={sd:'#93c5fd',sn:'#94a3b8',swd:'#93c5fd',swn:'#94a3b8','sof-we':'#86efac',
+        cN:'#fecaca',cD:'#bbf7d0',cP:'#ddd6fe',cSV:'#fdba74',cbh:'#ede9fe',cbr:'#f5f3ff'};
+      let bg='';
+      for(const[k,v] of Object.entries(bgMap)){if(cls.includes(k)){bg=`background:${v}`;break;}}
+      const w=dow(ST.y,ST.m,d);
+      if(!bg&&(w===6||w===0)) bg='background:#f0fdf4';
+      row+=`<td style="text-align:center;${bg}">${disp!==null?disp:''}</td>`;
+    }
+    if(isBr){
+      row+=`<td colspan="11" style="text-align:center;color:#6d28d9">${s.brig>0?s.brig:''}</td><td></td>`;
+    } else {
+      row+=`<td style="text-align:center">${s.days||''}</td>`;
+      row+=`<td style="text-align:center">${s.nightH>0?s.nightH:''}</td>`;
+      row+=`<td style="text-align:center">${s.weH>0?s.weH:''}</td>`;
+      row+=`<td style="text-align:center">${s.otW>0?s.otW:''}</td>`;
+      row+=`<td style="text-align:center">${s.otSo>0?s.otSo:''}</td>`;
+      row+=`<td style="text-align:center">${s.otNe>0?s.otNe:''}</td>`;
+      row+=`<td style="text-align:center">${s.otSv>0?s.otSv:''}</td>`;
+      row+=`<td style="text-align:center;color:#dc2626">${s.negH>0?'-'+s.negH:''}</td>`;
+      row+=`<td style="text-align:center">${s.nem||''}</td>`;
+      row+=`<td style="text-align:center">${s.dov||''}</td>`;
+      row+=`<td style="text-align:center">${s.prop||''}</td>`;
+      row+=`<td style="text-align:center;background:#fff7ed">${s.svatekH>0?s.svatekH:''}</td>`;
+    }
+    row+='</tr>';
+    rows.push(row);
+  };
+
+  G4.forEach(g=>{
+    const list=emps.filter(e=>e.prov==='4sm'&&e.grp===g);
+    if(!list.length)return;
+    addGrpRow(`4-SMĚNNÝ — ${GL[g]}`,gcols[g]||'#e2e8f0');
+    list.forEach(addEmpRow);
+    // Manual row 4sm
+    const mr=ST.manualRows['4sm']||{};
+    let mrRow=`<tr style="background:#fffbeb"><td style="font-weight:600;font-size:10px">Ruční hodiny</td><td></td>`;
+    for(let d=1;d<=n;d++) mrRow+=`<td style="text-align:center">${mr[d]||''}</td>`;
+    mrRow+=`<td colspan="12"></td></tr>`;
+    rows.push(mrRow);
+  });
+
+  // 2sm
+  const f2=emps.filter(e=>e.prov==='2sm');
+  if(f2.length){
+    addGrpRow('2-SMĚNNÝ PROVOZ','#fed7aa');
+    f2.forEach(addEmpRow);
+    const mr2=ST.manualRows['2sm']||{};
+    let mrRow2=`<tr style="background:#fffbeb"><td style="font-weight:600;font-size:10px">Ruční hodiny</td><td></td>`;
+    for(let d=1;d<=n;d++) mrRow2+=`<td style="text-align:center">${mr2[d]||''}</td>`;
+    mrRow2+=`<td colspan="12"></td></tr>`;
+    rows.push(mrRow2);
+  }
+
+  // brigada
+  const fB=emps.filter(e=>e.prov==='brigada');
+  if(fB.length){
+    addGrpRow('BRIGÁDNÍCI','#ede9fe');
+    fB.forEach(addEmpRow);
+    // Office WC + Celní
+    ['offwc','offceln'].forEach((key,i)=>{
+      const mr=ST.manualRows[key]||{};
+      const lbl=i===0?'Office WC':'Office Celní';
+      let mrRow=`<tr style="background:${i===0?'#eff6ff':'#f0fdf4'}"><td style="font-weight:600;font-size:10px">${lbl}</td><td></td>`;
+      for(let d=1;d<=n;d++) mrRow+=`<td style="text-align:center">${mr[d]||''}</td>`;
+      mrRow+=`<td colspan="12"></td></tr>`;
+      rows.push(mrRow);
+    });
+  }
+
+  const html=`<html><head><meta charset="UTF-8">
+<style>body{font-family:Arial,sans-serif;font-size:10px}
+table{border-collapse:collapse;width:100%}
+td,th{border:1px solid #cbd5e1;padding:2px 4px;white-space:nowrap}
+</style></head><body><table>${rows.join('')}</table></body></html>`;
+
+  const blob=new Blob([html],{type:'application/vnd.ms-excel;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=`dochazka_${ST.y}_${ST.m}.xls`;a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+
+function doExport(){
+  const n=dInM(ST.m,ST.y);
+  let csv='Jméno,Pozice,Provoz,Skupina';
+  for(let d=1;d<=n;d++)csv+=','+d+'.';
+  csv+=',Dny,Noční h,Víkend h,Přesčas h,Mínus h,Nemoc,Dovolená,Propuska h\n';
+  ST.emps.forEach(emp=>{
+    const s=calcSums(emp);
+    csv+=`"${emp.name}","${emp.pos||''}",${emp.prov},${emp.grp}`;
+    for(let d=1;d<=n;d++) csv+=','+(cellDisp(emp,d,emp.data[d])||getShift(emp,ST.m,d));
+    if(emp.prov==='brigada')csv+=`,,,,,,,,${s.brig}`;
+    else csv+=`,${s.days},${s.nightH},${s.weH},${s.otH>0?'+'+s.otH:''},${s.negH>0?'-'+s.negH:''},${s.nem},${s.dov},${s.prop}`;
+    csv+='\n';
+  });
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
+  a.download=`dochazka_damco_${ST.y}_${ST.m}.csv`;a.click();
+}
+render();
+// ── MONTHLY DATA STORE ──
+// Each month's attendance data is stored separately.
+// When switching months, emp.data is swapped from this store.
+ST.monthData = ST.monthData || {};
+
+function loadMonthData(m){
+  // Save current month data back to store
+  ST.emps.forEach(e=>{
+    if(!ST.monthData[ST.m]) ST.monthData[ST.m]={};
+    ST.monthData[ST.m][e.id] = Object.assign({}, e.data);
+  });
+  // Load target month data (or empty)
+  ST.emps.forEach(e=>{
+    e.data = (ST.monthData[m] && ST.monthData[m][e.id]) ? Object.assign({}, ST.monthData[m][e.id]) : {};
+    // shiftOv is keyed by month already, no need to swap
+  });
+  ST.m = m;
+}
+
+// Override month change to use loadMonthData
+function onMC(){
+  const newM = parseInt(document.getElementById('msel').value);
+  loadMonthData(newM);
+  render();
+}
+
+// ── IMPORTED FROM EXCEL: DUBEN 2026 ──
+(function importApril(){
+  // Clear all emp data first, then set April data
+  ST.emps.forEach(e=>e.data={});
+  const se=(id,day,rec)=>{const e=ST.emps.find(x=>x.id===id);if(e)e.data[day]=rec;};
+  se(1,10,{t:'D'});
+  se(1,11,{t:'D'});
+  se(1,12,{t:'D'});
+  se(3,5,{t:'otne',h:7});
+  se(5,2,{t:'D'});
+  se(5,25,{t:'D'});
+  se(7,17,{t:'D'});
+  se(7,18,{t:'D'});
+  se(7,19,{t:'D'});
+  se(8,2,{t:'ot',h:7});
+  se(8,4,{t:'D'});
+  se(8,5,{t:'D'});
+  se(8,10,{t:'ot',h:8});
+  se(8,14,{t:'D'});
+  se(11,24,{t:'N'});
+  se(11,25,{t:'D'});
+  se(13,1,{t:'N'});
+  se(13,2,{t:'N'});
+  se(13,6,{t:'N'});
+  se(13,7,{t:'N'});
+  se(13,10,{t:'N'});
+  se(13,11,{t:'N'});
+  se(13,12,{t:'N'});
+  se(13,15,{t:'N'});
+  se(13,16,{t:'N'});
+  se(14,24,{t:'D'});
+  se(15,3,{t:'otsv',h:8});
+  se(15,4,{t:'otso',h:8});
+  se(15,5,{t:'otne',h:7});
+  se(16,4,{t:'neg',h:3});
+  se(17,14,{t:'D'});
+  se(18,12,{t:'ot',h:8});
+  se(18,24,{t:'N'});
+  se(20,6,{t:'otsv',h:8});
+  se(22,1,{t:'neg',h:1.5});
+  se(22,7,{t:'ot',h:2});
+  se(22,13,{t:'neg',h:0.5});
+  se(22,27,{t:'N'});
+  se(22,28,{t:'N'});
+  se(22,29,{t:'N'});
+  se(22,30,{t:'N'});
+  se(23,1,{t:'neg',h:2});
+  se(23,3,{t:'otsv',h:8});
+  se(23,4,{t:'otso',h:8});
+  se(23,6,{t:'otsv',h:8});
+  se(23,7,{t:'ot',h:2});
+  se(23,8,{t:'P',h:2});
+  se(23,11,{t:'ot',h:8});
+  se(23,12,{t:'ot',h:8});
+  se(23,13,{t:'ot',h:2});
+  se(25,7,{t:'ot',h:4});
+  se(25,8,{t:'ot',h:4});
+  se(25,9,{t:'ot',h:4});
+  se(25,13,{t:'ot',h:2});
+  se(26,7,{t:'N'});
+  se(26,8,{t:'N'});
+  se(26,9,{t:'N'});
+  se(26,10,{t:'N'});
+  se(26,13,{t:'N'});
+  se(26,14,{t:'N'});
+  se(26,15,{t:'N'});
+  se(26,16,{t:'N'});
+  se(27,2,{t:'D'});
+  se(28,7,{t:'ot',h:4});
+  se(28,8,{t:'ot',h:3});
+  se(28,10,{t:'ot',h:2});
+  se(30,15,{t:'D'});
+  se(30,16,{t:'D'});
+  se(30,17,{t:'D'});
+  se(31,7,6);
+  se(31,8,6);
+  se(31,11,10);
+  se(31,13,4.5);
+  se(32,1,10);
+  se(32,2,2);
+  se(32,7,8);
+  se(32,8,8);
+  se(32,9,8);
+  se(32,13,9.5);
+  render();
+})();
+
+</script>
+<!-- LOGIN SCREEN -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="login-logo-text">DAMCO <b>JAROMĚŘ</b></div>
+    </div>
+    <div class="login-dots">
+      <div class="login-dot active"></div>
+      <div class="login-dot active"></div>
+      <div class="login-dot active"></div>
+    </div>
+    <div class="login-title">Docházkový systém</div>
+    <div class="login-sub">Přihlaste se pro přístup k docházce</div>
+    <div>
+      <label class="login-label">Heslo</label>
+      <input class="login-input" type="password" id="loginPwd" placeholder="Zadejte heslo..." onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="login-btn" onclick="doLogin()">Přihlásit se</button>
+    <div class="login-error" id="loginErr"></div>
+    <div class="login-footer">Damco Jaroměř &nbsp;·&nbsp; 2026</div>
+  </div>
+</div>
+
+<script>
+// ── LOGIN ──
+// Change password here:
+const APP_PWD = 'Damco2026';
+
+function doLogin(){
+  const val = document.getElementById('loginPwd').value;
+  if(val === APP_PWD){
+    document.getElementById('loginScreen').style.display='none';
+    sessionStorage.setItem('dochazka_auth','1');
+  } else {
+    const err = document.getElementById('loginErr');
+    err.textContent = 'Nesprávné heslo. Zkuste znovu.';
+    document.getElementById('loginPwd').value='';
+    document.getElementById('loginPwd').focus();
+    setTimeout(()=>err.textContent='', 3000);
+  }
+}
+
+// Auto-login if already authenticated in this session
+if(sessionStorage.getItem('dochazka_auth')==='1'){
+  document.getElementById('loginScreen').style.display='none';
+}
+
+// Focus password input
+document.getElementById('loginPwd').focus();
+</script>
+</body>
+</html>
