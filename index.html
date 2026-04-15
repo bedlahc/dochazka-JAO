@@ -215,7 +215,9 @@ tr:hover td.cn,tr:hover td.cp{filter:none;background:var(--bg4)!important}
       <option value="blue">Modrá sk.</option><option value="black">Černá sk.</option>
       <option value="green">Zelená sk.</option><option value="red">Červená sk.</option>
     </select>
-    <input type="search" id="nameSearch" placeholder="🔍 Hledat jméno..." oninput="onFC()" style="height:28px;background:var(--bg3);border:1px solid var(--b2);border-radius:5px;color:var(--tx);font-family:'DM Sans',sans-serif;font-size:12px;padding:0 10px;width:150px">
+    <select id="nameSearch" onchange="onFC()" style="height:28px;background:var(--bg3);border:1px solid var(--b2);border-radius:5px;color:var(--tx);font-family:'DM Sans',sans-serif;font-size:12px;padding:0 8px;min-width:160px">
+      <option value="">— Všichni zaměstnanci —</option>
+    </select>
     <button class="badd" onclick="openAddEmp()">+ Zaměstnanec</button>
     <button onclick="doExport()" style="color:var(--tx2)">↓ CSV</button>
     <button onclick="doExportExcel()" style="color:#166534;background:#dcfce7;border-color:#86efac;font-weight:600">↓ Excel</button>
@@ -679,7 +681,7 @@ function render(){
   document.getElementById('ptitle').textContent=`Docházka — ${MCZ[ST.m]} ${ST.y}`;
   let emps=ST.emps.filter(e=>ST.fp==='all'||e.prov===ST.fp);
   if(ST.fg!=='all') emps=emps.filter(e=>e.grp===ST.fg);
-  if(ST.fn) emps=emps.filter(e=>e.name.toLowerCase().includes(ST.fn));
+  if(ST.fn) emps=emps.filter(e=>String(e.id)===String(ST.fn));
 
   // HEAD
   let ths=`<tr><th class="cn">Jméno</th><th class="cp">Pozice</th>`;
@@ -877,7 +879,47 @@ function render(){
 }
 
 // onMC redefined above in monthData section
-function onFC(){ST.fp=document.getElementById('psel').value;ST.fg=document.getElementById('gsel').value;ST.fn=(document.getElementById('nameSearch').value||'').trim().toLowerCase();render();}
+function onFC(){
+  ST.fp=document.getElementById('psel').value;
+  ST.fg=document.getElementById('gsel').value;
+  ST.fn=document.getElementById('nameSearch').value||'';
+  updateNameDropdown();
+  render();
+}
+function updateNameDropdown(){
+  const sel=document.getElementById('nameSearch');
+  const cur=sel.value;
+  // Filter employees based on current provoz/group filters
+  let filtered=ST.emps.filter(e=>ST.fp==='all'||e.prov===ST.fp);
+  if(ST.fg!=='all') filtered=filtered.filter(e=>e.grp===ST.fg);
+  // Rebuild options
+  sel.innerHTML='<option value="">— Všichni zaměstnanci —</option>';
+  // Group by provoz
+  const groups=[
+    {label:'4-směnný — Modrá',emps:filtered.filter(e=>e.prov==='4sm'&&e.grp==='blue')},
+    {label:'4-směnný — Černá',emps:filtered.filter(e=>e.prov==='4sm'&&e.grp==='black')},
+    {label:'4-směnný — Zelená',emps:filtered.filter(e=>e.prov==='4sm'&&e.grp==='green')},
+    {label:'4-směnný — Červená',emps:filtered.filter(e=>e.prov==='4sm'&&e.grp==='red')},
+    {label:'2-směnný provoz',emps:filtered.filter(e=>e.prov==='2sm')},
+    {label:'Brigádníci',emps:filtered.filter(e=>e.prov==='brigada')},
+  ];
+  groups.forEach(g=>{
+    if(!g.emps.length) return;
+    const og=document.createElement('optgroup');
+    og.label=g.label;
+    g.emps.forEach(e=>{
+      const o=document.createElement('option');
+      o.value=e.id;
+      o.textContent=e.name;
+      if(String(e.id)===String(cur)) o.selected=true;
+      og.appendChild(o);
+    });
+    sel.appendChild(og);
+  });
+  // Restore selection if still valid
+  if(cur&&![...sel.options].some(o=>o.value===cur)) sel.value='';
+  ST.fn=sel.value||'';
+}
 
 function openCell(empId,day){
   ET={empId,day};
@@ -1227,6 +1269,7 @@ function doExport(){
   a.download=`dochazka_damco_${ST.y}_${ST.m}.csv`;a.click();
 }
 render();
+updateNameDropdown();
 // ── MONTHLY DATA STORE ──
 // Each month's attendance data is stored separately.
 // When switching months, emp.data is swapped from this store.
