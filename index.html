@@ -258,7 +258,21 @@ tr:hover td.cn,tr:hover td.cp{filter:none;background:var(--bg4)!important}
     <div class="sh-divider" style="margin-top:4px">Záznam</div>
   </div>
   <div id="cmBr" style="display:none">
-    <div class="fr"><label>Hodiny (brigádník)</label><input type="number" id="brH" step="0.5" min="0" placeholder="8"></div>
+    <div class="fr"><label>Hodiny</label><input type="number" id="brH" step="0.5" min="0" placeholder="8"></div>
+    <div style="display:flex;flex-direction:column;gap:6px;margin:8px 0">
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:#dcfce7;border:1px solid #86efac;border-radius:7px;cursor:pointer" onclick="brToggle('brSo')">
+        <input type="checkbox" id="brSo" style="width:16px;height:16px;accent-color:#16a34a;cursor:pointer">
+        <label for="brSo" style="font-size:13px;font-weight:600;color:#15803d;cursor:pointer">🟢 Práce v sobotu</label>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:#bbf7d0;border:1px solid #4ade80;border-radius:7px;cursor:pointer" onclick="brToggle('brNe')">
+        <input type="checkbox" id="brNe" style="width:16px;height:16px;accent-color:#15803d;cursor:pointer">
+        <label for="brNe" style="font-size:13px;font-weight:600;color:#14532d;cursor:pointer">🟢 Práce v neděli</label>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:#fed7aa;border:1px solid #fb923c;border-radius:7px;cursor:pointer" onclick="brToggle('brSv')">
+        <input type="checkbox" id="brSv" style="width:16px;height:16px;accent-color:#ea580c;cursor:pointer">
+        <label for="brSv" style="font-size:13px;font-weight:600;color:#7c2d12;cursor:pointer">🟠 Práce ve svátek</label>
+      </div>
+    </div>
     <div class="note">0 nebo prázdné = nepracoval</div>
   </div>
   <div id="cmNorm">
@@ -462,7 +476,21 @@ function calcSums(emp){
   for(let d=1;d<=n;d++){
     const rec=emp.data[d],t=rec?.t||null;
     const h=rec?.h||0;
-    if(emp.prov==='brigada'){brig+=typeof rec==='number'&&rec>0?rec:0;continue;}
+    if(emp.prov==='brigada'){
+      const bv=typeof rec==='object'&&rec!==null?rec.h:(typeof rec==='number'?rec:0);
+      const bSo=typeof rec==='object'&&rec!==null&&rec.so;
+      const bNe=typeof rec==='object'&&rec!==null&&rec.ne;
+      const bSv=typeof rec==='object'&&rec!==null&&rec.sv;
+      if(typeof bv==='number'){
+        if(bv>0){
+          brig+=bv;
+          if(bSo||bNe) weH+=bv;   // práce o víkendu → víkend h
+          if(bSv) svatekH+=bv;     // práce ve svátek → svátek h
+        }
+        else if(bv<0) negH+=Math.abs(bv);
+      }
+      continue;
+    }
     const we=isWE(ST.y,ST.m,d);// Sat or Sun
     const isSat=dow(ST.y,ST.m,d)===6;
     const isSun=dow(ST.y,ST.m,d)===0;
@@ -514,7 +542,19 @@ function calcSums(emp){
 }
 
 function cellCls(emp,d,rec){
-  if(emp.prov==='brigada') return typeof rec==='number'&&rec>0?'cbh':'cbr';
+  if(emp.prov==='brigada'){
+    const bv=typeof rec==='object'&&rec!==null?rec.h:(typeof rec==='number'?rec:0);
+    const bSo=typeof rec==='object'&&rec!==null&&rec.so;
+    const bNe=typeof rec==='object'&&rec!==null&&rec.ne;
+    const bSv=typeof rec==='object'&&rec!==null&&rec.sv;
+    if(bv<0) return'cNEG cbr';
+    if(bv>0){
+      if(bSv) return'cSV';          // svátek → oranžová
+      if(bSo||bNe) return'swd';     // víkend → zelená
+      return'cbh';                   // normální → fialová
+    }
+    return'cbr';
+  }
   const t=rec?.t||null;
   if(t==='N') return'cN';if(t==='D') return'cD';if(t==='P') return'cP';if(t==='we') return'cWE';
   const sv=isSv(ST.m,d);
@@ -534,7 +574,16 @@ function cellCls(emp,d,rec){
   return base;
 }
 function cellDisp(emp,d,rec){
-  if(emp.prov==='brigada') return typeof rec==='number'&&rec>0?rec:null;
+  if(emp.prov==='brigada'){
+    const bv=typeof rec==='object'&&rec!==null?rec.h:(typeof rec==='number'?rec:null);
+    const bSo=typeof rec==='object'&&rec!==null&&rec.so;
+    const bNe=typeof rec==='object'&&rec!==null&&rec.ne;
+    const bSv=typeof rec==='object'&&rec!==null&&rec.sv;
+    if(bv===null||bv===0) return null;
+    if(bSv) return bv; // svátek — cell is already orange
+    if(bSo||bNe) return bv; // víkend — cell already green
+    return bv;
+  }
   const t=rec?.t||null;const h=rec?.h||0;
   // Auto-display 11h on svátek if employee has shift and no special record
   if(!t&&isSv(ST.m,d)){
@@ -683,9 +732,21 @@ function render(){
         html+=`<td class="${cls}" onclick="openCell(${emp.id},${d})" style="cursor:pointer;${wbl}">${disp||'<span style="color:#d1d5db">·</span>'}</td>`;
       }
       if(isBr){
-        for(let i=0;i<12;i++) html+=`<td class="ts" style="color:${i===7?'var(--br-tx)':'var(--tx3)'}">${i===7&&s.brig>0?s.brig:'—'}</td>`;
-        html+=`<td class="ts" style="background:#fff7ed!important">—</td>`;
-        html+=`<td class="ts" style="background:#f8fafc!important"></td>`;
+        // brigada columns match header: Dny|Noční|Víkend|Př25%|PřSo|PřNe|PřSv|Mínus|N|D|Ph|Svátek|CELKEM
+        // Dny | Noční | Víkend | Př25% | PřSo | PřNe | PřSv | Mínus | N | D | Ph | Svátek | CELKEM
+        // Dny | Noční | Víkend | Př25% | PřSo | PřNe | PřSv | Mínus | N | D | Ph | Svátek | CELKEM
+        html+=`<td class="ts">—</td>`;
+        html+=`<td class="ts">—</td>`;
+        html+=`<td class="ts" style="color:var(--wed-tx);font-weight:700">${s.weH>0?s.weH:''}</td>`;// Víkend h
+        html+=`<td class="ts">—</td>`;
+        html+=`<td class="ts">—</td>`;
+        html+=`<td class="ts">—</td>`;
+        html+=`<td class="ts">—</td>`;
+        html+=`<td class="ts" style="color:var(--NEG);font-weight:700">${s.negH>0?'-'+s.negH:''}</td>`;
+        html+=`<td class="ts">—</td><td class="ts">—</td><td class="ts">—</td>`;
+        html+=`<td class="ts" style="color:#7c2d12;background:#fff7ed!important;font-weight:700">${s.svatekH>0?s.svatekH:''}</td>`;
+        const brigCelkem=r2(s.brig-s.negH);
+        html+=`<td class="ts" style="font-size:12px;font-weight:700;color:#6d28d9;background:#ede9fe!important;border-left:2px solid #c4b5fd!important">${brigCelkem>0?brigCelkem:''}</td>`;
       } else {
         html+=`<td class="ts" style="color:var(--day-tx)">${s.days||''}</td>`;
         html+=`<td class="ts" style="color:var(--ngt-tx)">${!is2&&s.nightH>0?s.nightH:is2?'':''}</td>`;
@@ -729,9 +790,11 @@ function render(){
     for(let d=1;d<=n;d++){
       let s=0;
       ST.emps.filter(e=>e.prov==='brigada').forEach(e=>{
-        const v=e.data[d];if(typeof v==='number'&&v>0)s+=v;
+        const v=e.data[d];
+        const bv=typeof v==='object'&&v!==null?v.h:(typeof v==='number'?v:0);
+        if(bv!==0)s+=bv;
       });
-      if(s>0) brigDayTotals[d]=r2(s);
+      if(s!==0) brigDayTotals[d]=r2(s);
     }
     html+=renderManualRow('brigada','Brigádníci součet','automaticky ze zadání','mr-row',n,brigDayTotals);
     html+=renderManualRow('offwc','Office WC','ruční zadání hodin','offwc-row',n);
@@ -844,7 +907,20 @@ function openCell(empId,day){
   } else { shBadge.innerHTML=''; document.getElementById('cmShOverride').style.display='none'; }
   document.getElementById('cmBr').style.display=isBr?'block':'none';
   document.getElementById('cmNorm').style.display=isBr?'none':'block';
-  if(isBr){document.getElementById('brH').value=typeof rec==='number'&&rec>0?rec:'';}
+  if(isBr){
+    const brVal=typeof rec==='object'&&rec!==null?rec.h:(typeof rec==='number'?rec:0);
+    document.getElementById('brH').value=brVal>0?brVal:'';
+    document.getElementById('brSo').checked=typeof rec==='object'&&rec!==null?!!rec.so:false;
+    document.getElementById('brNe').checked=typeof rec==='object'&&rec!==null?!!rec.ne:false;
+    document.getElementById('brSv').checked=typeof rec==='object'&&rec!==null?!!rec.sv:false;
+    // Auto-check based on day of week
+    const w=dow(ST.y,ST.m,day);
+    if(!rec){
+      document.getElementById('brSo').checked=w===6;
+      document.getElementById('brNe').checked=w===0;
+      document.getElementById('brSv').checked=isSv(ST.m,day);
+    }
+  }
   else{
     const sel=document.getElementById('ct');
     ['hOT','hOTSO','hOTNE','hOTSV','hSV','hNEG','hP'].forEach(id=>document.getElementById(id).value='');
@@ -906,12 +982,26 @@ function setShiftOverride(type){
   shBadgeEl.innerHTML=badge;
   render();
 }
+function brToggle(id){
+  const cb=document.getElementById(id);
+  if(event.target.tagName!=='INPUT') cb.checked=!cb.checked;
+  // mutually exclusive: So and Ne can't both be checked (different days)
+  // but Sv can be combined with So or Ne
+}
 function closeMod(){document.getElementById('cmMod').style.display='none';ET=null;}
 function clearCell(){if(!ET)return;delete ST.emps.find(e=>e.id===ET.empId).data[ET.day];closeMod();render();}
 function saveCell(){
   if(!ET)return;
   const emp=ST.emps.find(e=>e.id===ET.empId);
-  if(emp.prov==='brigada'){const h=parseFloat(document.getElementById('brH').value);if(!h||h<=0)delete emp.data[ET.day];else emp.data[ET.day]=h;}
+  if(emp.prov==='brigada'){
+    const h=parseFloat(document.getElementById('brH').value);
+    const so=document.getElementById('brSo').checked;
+    const ne=document.getElementById('brNe').checked;
+    const sv=document.getElementById('brSv').checked;
+    if(!h||h<=0) delete emp.data[ET.day];
+    else if(so||ne||sv) emp.data[ET.day]={h,so,ne,sv};
+    else emp.data[ET.day]=h;
+  }
   else{
     const t=document.getElementById('ct').value;
     if(!t)delete emp.data[ET.day];
