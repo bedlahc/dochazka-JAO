@@ -225,6 +225,9 @@ tr:hover td.cn,tr:hover td.cp{filter:none;background:var(--bg4)!important}
     <button onclick="doExportExcel()" style="color:#166534;background:#dcfce7;border-color:#86efac;font-weight:600">↓ Excel</button>
     <button onclick="doPrint()" style="color:#1e40af;background:#dbeafe;border-color:#93c5fd;font-weight:600">🖨 Tisk</button>
     <button onclick="uploadToFirebase()" style="color:#fff;background:#f97316;border-color:#ea580c;font-weight:700">☁ Uložit do cloudu</button>
+    <button onclick="doBackup()" style="color:#1e40af;background:#eff6ff;border-color:#93c5fd;font-weight:600">⬇ Záloha JSON</button>
+    <button onclick="document.getElementById('restoreInput').click()" style="color:#5b21b6;background:#f5f3ff;border-color:#c4b5fd;font-weight:600">⬆ Obnovit zálohu</button>
+    <input type="file" id="restoreInput" accept=".json" style="display:none" onchange="doRestore(event)">
   </div>
 </div>
 <div class="sbar" id="sbar"></div>
@@ -882,7 +885,29 @@ function render(){
   `;
 }
 
-// onMC redefined above in monthData section
+// ── MONTH SWITCHING ──
+function loadMonthData(m){
+  // Save current month data to store
+  if(!ST.monthData) ST.monthData={};
+  if(!ST.monthData[ST.m]) ST.monthData[ST.m]={};
+  ST.emps.forEach(e=>{
+    ST.monthData[ST.m][e.id] = Object.assign({}, e.data);
+  });
+  // Load target month data (or empty)
+  ST.emps.forEach(e=>{
+    const saved = ST.monthData[m] && ST.monthData[m][e.id];
+    e.data = saved ? Object.assign({}, saved) : {};
+  });
+  ST.m = m;
+  if(window.fbSave) fbSave();
+}
+
+function onMC(){
+  const newM = parseInt(document.getElementById('msel').value);
+  loadMonthData(newM);
+  render();
+}
+
 function onFC(){
   ST.fp=document.getElementById('psel').value;
   ST.fg=document.getElementById('gsel').value;
@@ -1284,6 +1309,76 @@ function uploadToFirebase(){
       btn.disabled = false;
     }, 2000);
   }, 1000);
+}
+
+function doBackup(){
+  // Save current month to monthData first
+  if(!ST.monthData) ST.monthData={};
+  if(!ST.monthData[ST.m]) ST.monthData[ST.m]={};
+  ST.emps.forEach(e=>{
+    ST.monthData[ST.m][e.id] = Object.assign({}, e.data);
+  });
+  const backup = {
+    version: 2,
+    date: new Date().toISOString(),
+    monthData: ST.monthData,
+    manualRows: ST.manualRows,
+    emps_shiftOv: {}
+  };
+  ST.emps.forEach(e=>{
+    if(e.shiftOv && Object.keys(e.shiftOv).length>0)
+      backup.emps_shiftOv[String(e.id)] = e.shiftOv;
+  });
+  const json = JSON.stringify(backup, null, 2);
+  const blob = new Blob([json], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const d = new Date();
+  const ds = d.getFullYear()+'-'+(d.getMonth()+1).toString().padStart(2,'0')+'-'+d.getDate().toString().padStart(2,'0');
+  a.href=url; a.download=`dochazka_zaloha_${ds}.json`; a.click();
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+}
+
+function doRestore(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  if(!confirm(`Obnovit zálohu ze souboru "${file.name}"?\nVšechna aktuální data budou přepsána!`)) {
+    event.target.value=''; return;
+  }
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      const backup = JSON.parse(e.target.result);
+      if(!backup.monthData && !backup.manualRows){
+        alert('Neplatný zálohovací soubor.'); return;
+      }
+      // Restore data
+      if(backup.monthData)  ST.monthData  = backup.monthData;
+      if(backup.manualRows) ST.manualRows = backup.manualRows;
+      // Restore current month into emps
+      const cm = String(ST.m);
+      ST.emps.forEach(e=>{
+        const saved = ST.monthData?.[cm]?.[String(e.id)] || ST.monthData?.[cm]?.[e.id];
+        e.data = saved ? Object.assign({}, saved) : {};
+      });
+      // Restore shiftOv
+      if(backup.emps_shiftOv){
+        ST.emps.forEach(e=>{
+          const ov = backup.emps_shiftOv[String(e.id)];
+          if(ov) e.shiftOv = ov;
+        });
+      }
+      render();
+      updateNameDropdown();
+      // Also push to Firebase
+      if(window.fbSave) fbSave();
+      alert('✓ Záloha úspěšně obnovena!\nData byla nahrána i do cloudu.');
+    } catch(err){
+      alert('Chyba při načítání zálohy: ' + err.message);
+    }
+    event.target.value='';
+  };
+  reader.readAsText(file);
 }
 
 function doExport(){
