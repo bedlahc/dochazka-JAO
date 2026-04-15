@@ -198,106 +198,9 @@ tr:hover td.cn,tr:hover td.cp{filter:none;background:var(--bg4)!important}
 .offceln-row td.ts{background:#dcfce7!important;color:#15803d}
 </style>
 
-<!-- Firebase compat (no module syntax needed) -->
+<!-- Firebase compat -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script>
-(function(){
-  const firebaseConfig = {
-    apiKey: "AIzaSyADtN_1sfMlmpY6nelwIF4PYTHO_Ssi7Ag",
-    authDomain: "dochazka-jao.firebaseapp.com",
-    databaseURL: "https://dochazka-jao-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "dochazka-jao",
-    storageBucket: "dochazka-jao.firebasestorage.app",
-    messagingSenderId: "84150481057",
-    appId: "1:84150481057:web:9e69a9643b5cf6ccfa40e0"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
-
-  function showSyncStatus(msg, color){
-    const el = document.getElementById('syncStatus');
-    if(!el) return;
-    el.textContent = msg;
-    el.style.color = color;
-    el.style.opacity = '1';
-    clearTimeout(el._t);
-    el._t = setTimeout(()=>{ el.style.opacity='0.4'; }, 3000);
-  }
-
-  function serializeState(){
-    const data = { monthData:{}, manualRows: ST.manualRows||{}, emps_shiftOv:{} };
-    // Save all monthData
-    Object.keys(ST.monthData||{}).forEach(m=>{
-      data.monthData[m] = ST.monthData[m];
-    });
-    // Save current month
-    const cm = String(ST.m);
-    if(!data.monthData[cm]) data.monthData[cm] = {};
-    ST.emps.forEach(e=>{ data.monthData[cm][String(e.id)] = e.data||{}; });
-    // shiftOv
-    ST.emps.forEach(e=>{
-      if(e.shiftOv && Object.keys(e.shiftOv).length>0)
-        data.emps_shiftOv[String(e.id)] = e.shiftOv;
-    });
-    return data;
-  }
-
-  function restoreState(data){
-    if(!data) return;
-    if(data.manualRows) ST.manualRows = data.manualRows;
-    if(data.monthData)  ST.monthData  = data.monthData;
-    const cm = String(ST.m);
-    ST.emps.forEach(e=>{
-      const saved = data.monthData?.[cm]?.[String(e.id)];
-      e.data = saved ? Object.assign({}, saved) : {};
-    });
-    if(data.emps_shiftOv){
-      ST.emps.forEach(e=>{
-        const ov = data.emps_shiftOv[String(e.id)];
-        if(ov) e.shiftOv = ov;
-      });
-    }
-  }
-
-  // Debounced save
-  let saveTimer = null;
-  let localChange = false;
-  window.fbSave = function(){
-    localChange = true;
-    clearTimeout(saveTimer);
-    showSyncStatus('⏳ Ukládání...', '#d97706');
-    saveTimer = setTimeout(()=>{
-      db.ref('dochazka2026').set(serializeState())
-        .then(()=>{ showSyncStatus('✓ Uloženo', '#16a34a'); })
-        .catch(e=>{ showSyncStatus('✗ '+e.message, '#dc2626'); localChange=false; });
-    }, 700);
-  };
-
-  // Listen for changes from other users
-  db.ref('dochazka2026').on('value', snapshot=>{
-    if(localChange){ localChange=false; return; }
-    const data = snapshot.val();
-    if(data){
-      restoreState(data);
-      if(typeof render==='function') render();
-      if(typeof updateNameDropdown==='function') updateNameDropdown();
-      showSyncStatus('↺ Synchronizováno', '#2563eb');
-    }
-  });
-
-  // Initial load
-  db.ref('dochazka2026').once('value').then(snapshot=>{
-    const data = snapshot.val();
-    if(data){
-      restoreState(data);
-      if(typeof render==='function'){ render(); updateNameDropdown && updateNameDropdown(); }
-    }
-    showSyncStatus('● Online', '#16a34a');
-  }).catch(()=>{ showSyncStatus('○ Offline', '#dc2626'); });
-
-})();
-</script>
 </head>
 <body>
 <div class="topbar">
@@ -324,6 +227,7 @@ tr:hover td.cn,tr:hover td.cp{filter:none;background:var(--bg4)!important}
     <button onclick="doExport()" style="color:var(--tx2)">↓ CSV</button>
     <button onclick="doExportExcel()" style="color:#166534;background:#dcfce7;border-color:#86efac;font-weight:600">↓ Excel</button>
     <button onclick="doPrint()" style="color:#1e40af;background:#dbeafe;border-color:#93c5fd;font-weight:600">🖨 Tisk</button>
+    <button onclick="uploadToFirebase()" style="color:#fff;background:#f97316;border-color:#ea580c;font-weight:700">☁ Uložit do cloudu</button>
   </div>
 </div>
 <div class="sbar" id="sbar"></div>
@@ -1357,6 +1261,34 @@ td,th{border:1px solid #cbd5e1;padding:2px 4px;white-space:nowrap}
   setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 
+function uploadToFirebase(){
+  if(!window.fbSave){
+    alert('Firebase není připojeno. Zkontroluj připojení k internetu.');
+    return;
+  }
+  // Force save current month data to monthData store first
+  if(!ST.monthData[ST.m]) ST.monthData[ST.m]={};
+  ST.emps.forEach(e=>{
+    ST.monthData[ST.m][e.id] = Object.assign({}, e.data);
+  });
+  // Then push to Firebase
+  fbSave();
+  // Show confirmation
+  const btn = event.target;
+  const orig = btn.textContent;
+  btn.textContent = '⏳ Ukládám...';
+  btn.disabled = true;
+  setTimeout(()=>{
+    btn.textContent = '✓ Uloženo!';
+    btn.style.background = '#16a34a';
+    setTimeout(()=>{
+      btn.textContent = orig;
+      btn.style.background = '#f97316';
+      btn.disabled = false;
+    }, 2000);
+  }, 1000);
+}
+
 function doExport(){
   const n=dInM(ST.m,ST.y);
   let csv='Jméno,Pozice,Provoz,Skupina';
@@ -1374,8 +1306,149 @@ function doExport(){
   a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
   a.download=`dochazka_damco_${ST.y}_${ST.m}.csv`;a.click();
 }
+// ── IMPORTOVANÁ DATA: DUBEN 2026 ──
+// Tato data se použijí POUZE pokud Firebase je prázdná
+(function importApril(){
+  // Check if data already set (e.g. from previous session)
+  const hasData = ST.emps.some(e=>Object.keys(e.data||{}).length>0);
+  if(hasData) return; // Already have data, skip import
+  ST.emps.forEach(e=>e.data={});
+  const se=(id,day,rec)=>{const e=ST.emps.find(x=>x.id===id);if(e)e.data[day]=rec;};
+  se(1,10,{t:'D'});se(1,11,{t:'D'});se(1,12,{t:'D'});
+  se(3,5,{t:'otne',h:7});
+  se(5,2,{t:'D'});se(5,25,{t:'D'});
+  se(7,17,{t:'D'});se(7,18,{t:'D'});se(7,19,{t:'D'});
+  se(8,2,{t:'ot',h:7});se(8,4,{t:'D'});se(8,5,{t:'D'});se(8,10,{t:'ot',h:8});se(8,14,{t:'D'});
+  se(11,24,{t:'N'});se(11,25,{t:'D'});
+  se(13,1,{t:'N'});se(13,2,{t:'N'});se(13,6,{t:'N'});se(13,7,{t:'N'});
+  se(13,10,{t:'N'});se(13,11,{t:'N'});se(13,12,{t:'N'});se(13,15,{t:'N'});se(13,16,{t:'N'});
+  se(14,24,{t:'D'});
+  se(15,3,{t:'otsv',h:8});se(15,4,{t:'otso',h:8});se(15,5,{t:'otne',h:7});
+  se(16,4,{t:'neg',h:3});
+  se(17,14,{t:'D'});
+  se(18,12,{t:'ot',h:8});se(18,24,{t:'N'});
+  se(20,6,{t:'otsv',h:8});
+  se(22,1,{t:'neg',h:1.5});se(22,7,{t:'ot',h:2});se(22,13,{t:'neg',h:0.5});
+  se(22,27,{t:'N'});se(22,28,{t:'N'});se(22,29,{t:'N'});se(22,30,{t:'N'});
+  se(23,1,{t:'neg',h:2});se(23,3,{t:'otsv',h:8});se(23,4,{t:'otso',h:8});
+  se(23,6,{t:'otsv',h:8});se(23,7,{t:'ot',h:2});se(23,8,{t:'P',h:2});
+  se(23,11,{t:'ot',h:8});se(23,12,{t:'ot',h:8});se(23,13,{t:'ot',h:2});
+  se(25,7,{t:'ot',h:4});se(25,8,{t:'ot',h:4});se(25,9,{t:'ot',h:4});se(25,13,{t:'ot',h:2});
+  se(26,7,{t:'N'});se(26,8,{t:'N'});se(26,9,{t:'N'});se(26,10,{t:'N'});
+  se(26,13,{t:'N'});se(26,14,{t:'N'});se(26,15,{t:'N'});se(26,16,{t:'N'});
+  se(27,2,{t:'D'});
+  se(28,7,{t:'ot',h:4});se(28,8,{t:'ot',h:3});se(28,10,{t:'ot',h:2});
+  se(30,15,{t:'D'});se(30,16,{t:'D'});se(30,17,{t:'D'});
+  se(31,7,6);se(31,8,6);se(31,11,10);se(31,13,4.5);
+  se(32,1,10);se(32,2,2);se(32,7,8);se(32,8,8);se(32,9,8);se(32,13,9.5);
+  // Save into monthData
+  ST.monthData = ST.monthData || {};
+  if(!ST.monthData[4]) ST.monthData[4]={};
+  ST.emps.forEach(e=>{ ST.monthData[4][e.id]=Object.assign({},e.data); });
+})();
+
 render();
 updateNameDropdown();
+
+// ── FIREBASE INIT (runs after ST and render are defined) ──
+(function initFirebase(){
+  if(typeof firebase === 'undefined'){
+    console.warn('Firebase not loaded');
+    return;
+  }
+  const firebaseConfig = {
+    apiKey: "AIzaSyADtN_1sfMlmpY6nelwIF4PYTHO_Ssi7Ag",
+    authDomain: "dochazka-jao.firebaseapp.com",
+    databaseURL: "https://dochazka-jao-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "dochazka-jao",
+    storageBucket: "dochazka-jao.firebasestorage.app",
+    messagingSenderId: "84150481057",
+    appId: "1:84150481057:web:9e69a9643b5cf6ccfa40e0"
+  };
+  if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  function showSyncStatus(msg, color){
+    const el = document.getElementById('syncStatus');
+    if(!el) return;
+    el.textContent = msg;
+    el.style.color = color;
+    el.style.opacity = '1';
+    clearTimeout(el._t);
+    el._t = setTimeout(()=>{ el.style.opacity='0.5'; }, 3000);
+  }
+
+  function serializeState(){
+    const data = { monthData:{}, manualRows: ST.manualRows||{}, emps_shiftOv:{} };
+    Object.keys(ST.monthData||{}).forEach(m=>{ data.monthData[m] = ST.monthData[m]; });
+    const cm = String(ST.m);
+    if(!data.monthData[cm]) data.monthData[cm] = {};
+    ST.emps.forEach(e=>{ data.monthData[cm][String(e.id)] = e.data||{}; });
+    ST.emps.forEach(e=>{
+      if(e.shiftOv && Object.keys(e.shiftOv).length>0)
+        data.emps_shiftOv[String(e.id)] = e.shiftOv;
+    });
+    return data;
+  }
+
+  function restoreState(data){
+    if(!data) return;
+    if(data.manualRows) ST.manualRows = data.manualRows;
+    if(data.monthData)  ST.monthData  = data.monthData;
+    const cm = String(ST.m);
+    ST.emps.forEach(e=>{
+      const saved = data.monthData?.[cm]?.[String(e.id)];
+      e.data = saved ? Object.assign({}, saved) : {};
+    });
+    if(data.emps_shiftOv){
+      ST.emps.forEach(e=>{
+        const ov = data.emps_shiftOv[String(e.id)];
+        if(ov) e.shiftOv = ov;
+      });
+    }
+  }
+
+  let saveTimer = null;
+  let localChange = false;
+  window.fbSave = function(){
+    localChange = true;
+    clearTimeout(saveTimer);
+    showSyncStatus('⏳ Ukládání...', '#d97706');
+    saveTimer = setTimeout(()=>{
+      db.ref('dochazka2026').set(serializeState())
+        .then(()=>{ showSyncStatus('✓ Uloženo', '#16a34a'); })
+        .catch(e=>{ showSyncStatus('✗ '+e.message, '#dc2626'); localChange=false; });
+    }, 700);
+  };
+
+  // Listen for changes from other users
+  db.ref('dochazka2026').on('value', snapshot=>{
+    if(localChange){ localChange=false; return; }
+    const data = snapshot.val();
+    if(data && (data.monthData || data.manualRows)){
+      restoreState(data);
+      render();
+      updateNameDropdown();
+      showSyncStatus('↺ Sync', '#2563eb');
+    }
+  });
+
+  // Initial load
+  db.ref('dochazka2026').once('value').then(snapshot=>{
+    const data = snapshot.val();
+    if(data && (data.monthData || data.manualRows)){
+      restoreState(data);
+      render();
+      updateNameDropdown();
+      showSyncStatus('● Online', '#16a34a');
+    } else {
+      // Firebase empty — save local import data
+      showSyncStatus('● Online', '#16a34a');
+      setTimeout(()=>{ if(window.fbSave) fbSave(); }, 1000);
+    }
+  }).catch(()=>{ showSyncStatus('○ Offline', '#dc2626'); });
+
+})();
 </script>
 
 <!-- PRINT SELECTION MODAL -->
