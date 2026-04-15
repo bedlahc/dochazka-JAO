@@ -114,6 +114,18 @@ tr:hover td.cn,tr:hover td.cp{filter:none;background:var(--bg4)!important}
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:var(--bg3)}
 ::-webkit-scrollbar-thumb{background:#c8ccd8;border-radius:3px}
+/* PRINT MODAL */
+#printMod .md{width:460px}
+.print-opts{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.print-opt{display:flex;align-items:center;gap:10px;padding:10px 12px;border:2px solid var(--b2);border-radius:8px;cursor:pointer;transition:border-color .15s,background .15s}
+.print-opt:hover{border-color:var(--acc);background:#eff6ff}
+.print-opt input[type=checkbox]{width:16px;height:16px;accent-color:var(--acc);cursor:pointer;flex-shrink:0}
+.print-opt label{font-size:13px;font-weight:500;cursor:pointer;flex:1}
+.print-opt .po-sub{font-size:11px;color:var(--tx3);margin-left:auto}
+.print-section-head{font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.07em;margin:10px 0 6px;font-family:'DM Mono',monospace}
+.print-grp{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.print-grp-btn{padding:5px 12px;border-radius:5px;border:1px solid var(--b2);font-size:12px;font-weight:500;cursor:pointer;background:var(--bg3);color:var(--tx2);transition:all .15s}
+.print-grp-btn.sel{border-color:var(--acc);background:#dbeafe;color:#1d4ed8;font-weight:700}
 @media print{
   body{height:auto;overflow:visible;font-size:9px}
   .topbar,.sbar,.leg-bar,#loginScreen,.badd,button{display:none!important}
@@ -154,6 +166,7 @@ tr:hover td.cn,tr:hover td.cp{filter:none;background:var(--bg4)!important}
 .login-dot{width:8px;height:8px;border-radius:50%;background:#1d4ed8;opacity:.2}
 .login-dot.active{opacity:1}
 .mr-row td{background:#fffbeb;border-top:1px dashed #fde68a}
+.sub-hdr td{border-top:3px solid var(--b2);border-bottom:2px solid var(--b2)}
 .sh-btns{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
 .sh-btn{flex:1;min-width:80px;height:34px;border-radius:6px;border:2px solid transparent;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
 .sh-btn.day{background:#bfdbfe;color:#1e3a8a;border-color:#3b82f6}
@@ -458,8 +471,8 @@ function calcSums(emp){
     if(emp.prov==='2sm'){
       // 2sm: no auto-holiday hours, only manual overtime on holiday
       if(t==='N'){nem++;continue;}
-      if(t==='D'){dov++;if(!we)days++;continue;}
-      if(t==='P'){prop+=h;if(!we)days++;continue;}
+      if(t==='D'){dov++;continue;}// Dovolená: jen dov++
+      if(t==='P'){prop+=h;continue;}// Propuska: jen hodiny
       if(t==='ot'){// weekday OT 25%
         otW+=h;if(!we)days++;continue;}
       if(t==='otso'){weH+=h;otSo+=h;continue;}// So OT 25% → also weH
@@ -477,8 +490,8 @@ function calcSums(emp){
     const night=isNightT(sh),off=isOffT(sh);
     const isWknd=we; // Sat or Sun
     if(t==='N'){nem++;continue;}
-    if(t==='D'){dov++;if(!off){days++;if(night)nightH+=8;if(isWknd)weH+=12;}continue;}
-    if(t==='P'){prop+=h;if(!off){days++;if(night)nightH+=8;if(isWknd)weH+=12;}continue;}
+    if(t==='D'){dov++;continue;}// Dovolená: počítá se jen den D, žádné hodiny
+    if(t==='P'){prop+=h;continue;}// Propuska: jen hodiny propusky, žádné jiné
     if(t==='ot'){// weekday OT 25%
       otW+=h;if(!off){days++;if(night)nightH+=8;}continue;}
     if(t==='otso'){// Saturday OT 25% → weH + otSo
@@ -544,7 +557,8 @@ function renderManualRow(rowKey,label,sublabel,rowCls,n,autoData){
   let total=0;
   for(let d=1;d<=n;d++) total+=(typeof data[d]==='number'&&data[d]>0?data[d]:0);
   total=r2(total);
-  let html=`<tr class="${rowCls}">`;
+  const mrProv=rowKey==='offwc'||rowKey==='offceln'?'office':rowKey==='brigada'?'brigada':rowKey;
+  let html=`<tr class="${rowCls}" data-prov="${mrProv}">`;
   html+=`<td class="cn">${label}</td>`;
   html+=`<td class="cp" style="font-size:10px;opacity:.7">${sublabel}</td>`;
   for(let d=1;d<=n;d++){
@@ -589,6 +603,28 @@ function saveManualCell(){
   closeManualMod();render();
 }
 
+function makeSubHeader(n,prov){
+  const DN2=['Ne','Po','Út','St','Čt','Pá','So'];
+  let row=`<tr class="sub-hdr" data-prov="${prov||'4sm'}"><td class="cn" style="font-size:9px;color:var(--tx3);font-family:'DM Mono',monospace;letter-spacing:.06em;text-transform:uppercase">Jméno</td>`;
+  row+=`<td class="cp" style="font-size:9px;color:var(--tx3);font-family:'DM Mono',monospace">Pozice</td>`;
+  for(let d=1;d<=n;d++){
+    const w=dow(ST.y,ST.m,d);
+    const isSat=w===6,isSun=w===0;
+    const sv=isSv(ST.m,d);
+    const wbl=isSat?'border-left:3px solid #16a34a;':'';
+    const wbg=sv?'background:#fed7aa;color:#7c2d12;':isSat?'background:#86efac;color:#14532d;':isSun?'background:#bbf7d0;color:#166534;':'background:var(--bg3);color:var(--tx3);';
+    row+=`<td style="${wbg}${wbl};text-align:center;font-size:9px;font-weight:700;padding:4px 1px;font-family:'DM Mono',monospace"><div>${d}</div><div style="opacity:.7">${DN2[w]}</div></td>`;
+  }
+  // summary col headers
+  const sumCols=['Dny','Noční h','Víkend h','Př 25%','Př So','Př Ne','Př sv','Mínus','N','D','P h','Svátek','CELKEM'];
+  sumCols.forEach((lbl,i)=>{
+    const bg=i===12?'background:#dbeafe;color:#1d4ed8;':i===11?'background:#fff7ed;color:#7c2d12;':'background:var(--bg3);color:var(--tx3);';
+    row+=`<td style="${bg};text-align:center;font-size:8px;font-weight:700;padding:3px 1px;font-family:'DM Mono',monospace;white-space:nowrap">${lbl}</td>`;
+  });
+  row+=`</tr>`;
+  return row;
+}
+
 function render(){
   const n=dInM(ST.m,ST.y);
   document.getElementById('ptitle').textContent=`Docházka — ${MCZ[ST.m]} ${ST.y}`;
@@ -631,10 +667,12 @@ function render(){
     if(!list.length) return;
     const dot=`<span class="gd" style="background:${gc}"></span>`;
     const subtitle=sub?` <span style="opacity:.5;font-weight:400;font-size:9px;letter-spacing:.04em">${sub}</span>`:'';
-    html+=`<tr class="gr"><td colspan="${n+11}">${dot}${label}${subtitle}</td></tr>`;
+    html+=`<tr class="gr" data-prov="${list[0]?.prov||'4sm'}" data-grp="${list[0]?.grp||''}"><td colspan="${n+15}">${dot}${label}${subtitle}</td></tr>`;
     list.forEach(emp=>{
       const s=calcSums(emp);const isBr=emp.prov==='brigada';const is2=emp.prov==='2sm';
-      html+=`<tr><td class="cn">${emp.name}</td>`;
+      const grpColor=gcol(emp.grp);
+      const grpBg=emp.grp==='blue'?'rgba(59,130,246,.07)':emp.grp==='black'?'rgba(100,116,139,.07)':emp.grp==='green'?'rgba(34,197,94,.07)':emp.grp==='red'?'rgba(239,68,68,.07)':'';
+      html+=`<tr data-prov="${emp.prov}" data-grp="${emp.grp}"><td class="cn" style="border-left:3px solid ${grpColor};${grpBg?'background:'+grpBg:''}">${emp.name}</td>`;
       html+=`<td class="cp"><span class="pos ${pCls(emp.pos)}">${emp.pos}</span></td>`;
       for(let d=1;d<=n;d++){
         const rec=emp.data[d];
@@ -652,10 +690,10 @@ function render(){
         html+=`<td class="ts" style="color:var(--day-tx)">${s.days||''}</td>`;
         html+=`<td class="ts" style="color:var(--ngt-tx)">${!is2&&s.nightH>0?s.nightH:is2?'':''}</td>`;
         html+=`<td class="ts" style="color:var(--wed-tx)">${s.weH>0?s.weH:''}</td>`;
-        html+=`<td class="ts" style="color:#d97706">${s.otW>0?'+'+s.otW:''}</td>`;
-        html+=`<td class="ts" style="color:#b45309;background:#fef9c3!important">${s.otSo>0?'+'+s.otSo:''}</td>`;
-        html+=`<td class="ts" style="color:#92400e;background:#fef08a!important">${s.otNe>0?'+'+s.otNe:''}</td>`;
-        html+=`<td class="ts" style="color:#7c2d12;background:#ffedd5!important">${s.otSv>0?'+'+s.otSv:''}</td>`;
+        html+=`<td class="ts" style="color:#d97706">${s.otW>0?s.otW:''}</td>`;
+        html+=`<td class="ts" style="color:#b45309;background:#fef9c3!important">${s.otSo>0?s.otSo:''}</td>`;
+        html+=`<td class="ts" style="color:#92400e;background:#fef08a!important">${s.otNe>0?s.otNe:''}</td>`;
+        html+=`<td class="ts" style="color:#7c2d12;background:#ffedd5!important">${s.otSv>0?s.otSv:''}</td>`;
         html+=`<td class="ts" style="color:var(--NEG)">${s.negH>0?'-'+s.negH:''}</td>`;
         html+=`<td class="ts" style="color:var(--N-tx)">${s.nem||''}</td>`;
         html+=`<td class="ts" style="color:var(--D-tx)">${s.dov||''}</td>`;
@@ -675,9 +713,16 @@ function render(){
     doGrp(f4.filter(e=>e.grp===g),`4-SMĚNNÝ — ${GL[g]}`,gcol(g),GD[g]);
   });
   if(ST.fp==='all'||ST.fp==='4sm') html+=renderManualRow('4sm','Ruční hodiny','4-směnný provoz','mr-row',n);
-  if(f2.length) doGrp(f2,'2-SMĚNNÝ PROVOZ','#fb923c','Ranní 6–14h / Odpolední 14–22h');
+  if(f2.length){
+    // Repeat date header row above 2-shift section
+    html+=makeSubHeader(n,'2sm');
+    doGrp(f2,'2-SMĚNNÝ PROVOZ','#fb923c','Ranní 6–14h / Odpolední 14–22h');
+  }
   if(ST.fp==='all'||ST.fp==='2sm') html+=renderManualRow('2sm','Ruční hodiny','2-směnný provoz','mr-row',n);
-  if(fB.length) doGrp(fB,'BRIGÁDNÍCI',gcol('brigada'));
+  if(fB.length){
+    html+=makeSubHeader(n,'brigada');
+    doGrp(fB,'BRIGÁDNÍCI',gcol('brigada'));
+  }
   if(ST.fp==='all'||ST.fp==='brigada'){
     // Auto-sum brigada employee hours per day
     const brigDayTotals={};
@@ -727,7 +772,7 @@ function render(){
     const manCeln=r2(Object.values(ST.manualRows['offceln']||{}).reduce((a,v)=>a+(v>0?v:0),0));
     const manGrand=r2(man4sm+man2sm+manBrig+manWC+manCeln);
 
-    html+=`<tr class="tr"><td class="cn" colspan="2" style="font-size:10px;color:var(--tx2)">CELKEM</td>`;
+    html+=`<tr class="tr" data-prov="sum"><td class="cn" colspan="2" style="font-size:10px;color:var(--tx2)">CELKEM</td>`;
     for(let d=1;d<=n;d++){
       const w=dow(ST.y,ST.m,d);
       const wbl=w===6?'border-left:3px solid #16a34a;':'';
@@ -738,10 +783,10 @@ function render(){
     html+=`<td class="ts" style="color:var(--day-tx)">${tD||''}</td>`;
     html+=`<td class="ts" style="color:var(--ngt-tx)">${tN>0?r2(tN):''}</td>`;
     html+=`<td class="ts" style="color:var(--wed-tx)">${tW>0?r2(tW):''}</td>`;
-    html+=`<td class="ts" style="color:#d97706">${tOtW>0?'+'+r2(tOtW):''}</td>`;
-    html+=`<td class="ts" style="color:#b45309;background:#fef9c3!important">${tOtSo>0?'+'+r2(tOtSo):''}</td>`;
-    html+=`<td class="ts" style="color:#92400e;background:#fef08a!important">${tOtNe>0?'+'+r2(tOtNe):''}</td>`;
-    html+=`<td class="ts" style="color:#7c2d12;background:#ffedd5!important">${tOtSv>0?'+'+r2(tOtSv):''}</td>`;
+    html+=`<td class="ts" style="color:#d97706">${tOtW>0?r2(tOtW):''}</td>`;
+    html+=`<td class="ts" style="color:#b45309;background:#fef9c3!important">${tOtSo>0?r2(tOtSo):''}</td>`;
+    html+=`<td class="ts" style="color:#92400e;background:#fef08a!important">${tOtNe>0?r2(tOtNe):''}</td>`;
+    html+=`<td class="ts" style="color:#7c2d12;background:#ffedd5!important">${tOtSv>0?r2(tOtSv):''}</td>`;
     html+=`<td class="ts" style="color:var(--NEG)">${tM>0?'-'+r2(tM):''}</td>`;
     html+=`<td class="ts" style="color:var(--N-tx)">${tNem||''}</td>`;
     html+=`<td class="ts" style="color:var(--D-tx)">${tDov||''}</td>`;
@@ -761,7 +806,7 @@ function render(){
     <div class="si"><div class="sl">Odprac. dny</div><div class="sv" style="color:var(--day-tx)">${tD}</div></div>
     <div class="si"><div class="sl">Noční hodiny</div><div class="sv" style="color:var(--ngt-tx)">${r2(tN)}</div></div>
     <div class="si"><div class="sl">Víkend hodiny</div><div class="sv" style="color:var(--wed-tx)">${r2(tW)}</div></div>
-    <div class="si"><div class="sl">Přesčas celkem</div><div class="sv" style="color:var(--OT)">${r2(tOT)>0?'+'+r2(tOT):0}</div></div>
+    <div class="si"><div class="sl">Přesčas celkem</div><div class="sv" style="color:var(--OT)">${r2(tOT)||0}</div></div>
     <div class="si"><div class="sl">Svátek hodin</div><div class="sv" style="color:#9a3412">${r2(tSv)||0}</div></div>
     <div class="si"><div class="sl">Dní nemoc</div><div class="sv" style="color:var(--N-tx)">${tNem}</div></div>
     <div class="si"><div class="sl">Brigádníci h</div><div class="sv" style="color:var(--br-tx)">${r2(tBr)}</div></div>
@@ -783,7 +828,19 @@ function openCell(empId,day){
     const night=isNightT(sh);
     const bg=sh==='day'?'var(--day-bg)':sh==='night'?'var(--ngt-bg)':sh==='wed'?'var(--wed-bg)':sh==='wen'?'var(--wen-bg)':'var(--bg3)';
     const tx=sh==='day'?'var(--day-tx)':sh==='night'?'var(--ngt-tx)':sh==='wed'?'var(--wed-tx)':sh==='wen'?'var(--wen-tx)':'var(--tx2)';
-    shBadge.innerHTML=`<div class="msh" style="background:${bg};color:${tx}">${sLabel(sh)||'Pracovní den'}${night?' · +8h noční příplatek':''}</div>`;
+    // Build badge
+    let badge=`<div class="msh" style="background:${bg};color:${tx}">${sLabel(sh)||'Pracovní den'}${night?' · +8h noční příplatek':''}</div>`;
+    const svDay=isSv(ST.m,day);
+    if(svDay) badge+=`<div class="msh" style="background:#fed7aa;color:#7c2d12;margin-left:4px">${svName(ST.m,day)}</div>`;
+    shBadge.innerHTML=badge;
+    // Show shift override panel
+    document.getElementById('cmShOverride').style.display='block';
+    // Set active button
+    const baseShift=isOffT(sh)?'off':isNightT(sh)?'night':'day';
+    ['shBtnDay','shBtnNight','shBtnOff'].forEach(id=>document.getElementById(id).classList.remove('active'));
+    if(baseShift==='day') document.getElementById('shBtnDay').classList.add('active');
+    else if(baseShift==='night') document.getElementById('shBtnNight').classList.add('active');
+    else document.getElementById('shBtnOff').classList.add('active');
   } else { shBadge.innerHTML=''; document.getElementById('cmShOverride').style.display='none'; }
   document.getElementById('cmBr').style.display=isBr?'block':'none';
   document.getElementById('cmNorm').style.display=isBr?'none':'block';
@@ -838,14 +895,15 @@ function setShiftOverride(type){
   if(newBase==='day') document.getElementById('shBtnDay').classList.add('active');
   else if(newBase==='night') document.getElementById('shBtnNight').classList.add('active');
   else document.getElementById('shBtnOff').classList.add('active');
-  // Update badge
+  // Rebuild badge
   const updSh=getShift(emp,ST.m,ET.day);
-  const bg2=updSh==='day'||updSh==='wed'?'var(--day-bg)':updSh==='night'||updSh==='wen'?'var(--ngt-bg)':'var(--bg3)';
-  const tx2=updSh==='day'||updSh==='wed'?'var(--day-tx)':updSh==='night'||updSh==='wen'?'var(--ngt-tx)':'var(--tx2)';
-  const hasOv=emp.shiftOv[ST.m][ET.day];
-  document.getElementById('cmSh').querySelector('.msh').style.background=bg2;
-  document.getElementById('cmSh').querySelector('.msh').style.color=tx2;
-  document.getElementById('cmSh').querySelector('.msh').textContent=sLabel(updSh)||(hasOv?'Mimo směnu':'Pracovní den');
+  const bg2=updSh==='day'||updSh==='wed'?'#dbeafe':updSh==='night'||updSh==='wen'?'#e2e8f0':isOffT(updSh)?'#f1f5f9':'#f1f5f9';
+  const tx2=updSh==='day'||updSh==='wed'?'#1e3a8a':updSh==='night'||updSh==='wen'?'#1e293b':'#64748b';
+  const hasOv=emp.shiftOv&&emp.shiftOv[ST.m]&&emp.shiftOv[ST.m][ET.day];
+  const shBadgeEl=document.getElementById('cmSh');
+  let badge=`<div class="msh" style="background:${bg2};color:${tx2}">${sLabel(updSh)||(hasOv?'Mimo směnu (ručně)':'Pracovní den')}</div>`;
+  if(isSv(ST.m,ET.day)) badge+=`<div class="msh" style="background:#fed7aa;color:#7c2d12;margin-left:4px">${svName(ST.m,ET.day)}</div>`;
+  shBadgeEl.innerHTML=badge;
   render();
 }
 function closeMod(){document.getElementById('cmMod').style.display='none';ET=null;}
@@ -881,8 +939,65 @@ function saveEmp(){
   ST.emps.push({id:Date.now(),name,pos,prov,grp,data:{}});
   document.getElementById('emMod').style.display='none';document.getElementById('eName').value='';render();
 }
+// Print selection state
+let printSel={provoz:{_4sm:true,_2sm:true,brig:true},groups:{blue:true,black:true,green:true,red:true},sum:true};
+
 function doPrint(){
-  window.print();
+  document.getElementById('printMod').style.display='flex';
+}
+function closePrintMod(){
+  document.getElementById('printMod').style.display='none';
+}
+function togglePO(id){
+  const cb=document.getElementById(id);
+  // clicking the div toggles checkbox
+  if(event.target.tagName!=='INPUT') cb.checked=!cb.checked;
+}
+function togglePG(grp,btn){
+  btn.classList.toggle('sel');
+  printSel.groups[grp]=btn.classList.contains('sel');
+}
+function executePrint(){
+  // Read selections
+  const show4sm=document.getElementById('po4sm').checked;
+  const show2sm=document.getElementById('po2sm').checked;
+  const showBrig=document.getElementById('pobrig').checked;
+  const showSum=document.getElementById('posum').checked;
+  const fmt=document.getElementById('printFormat').value;
+  const grps={
+    blue:document.getElementById('pgBlue').classList.contains('sel'),
+    black:document.getElementById('pgBlack').classList.contains('sel'),
+    green:document.getElementById('pgGreen').classList.contains('sel'),
+    red:document.getElementById('pgRed').classList.contains('sel'),
+  };
+
+  // Set print CSS page size
+  let existStyle=document.getElementById('printPageStyle');
+  if(!existStyle){existStyle=document.createElement('style');existStyle.id='printPageStyle';document.head.appendChild(existStyle);}
+  const sizes={A3L:'A3 landscape',A4L:'A4 landscape',A4P:'A4 portrait'};
+  existStyle.textContent=`@media print{@page{size:${sizes[fmt]};margin:6mm}}`;
+
+  // Mark rows to hide/show using print-hide class
+  document.querySelectorAll('tr[data-prov]').forEach(tr=>{
+    const prov=tr.dataset.prov;
+    const grp=tr.dataset.grp||'';
+    let hide=false;
+    if(prov==='4sm'&&(!show4sm||!grps[grp])) hide=true;
+    if(prov==='2sm'&&!show2sm) hide=true;
+    if(prov==='brigada'&&!showBrig) hide=true;
+    if(prov==='office'&&!showBrig) hide=true;
+    if(prov==='sum'&&!showSum) hide=true;
+    tr.style.display=hide?'none':'';
+  });
+
+  closePrintMod();
+  setTimeout(()=>{
+    window.print();
+    // Restore all rows after print
+    setTimeout(()=>{
+      document.querySelectorAll('tr[data-prov]').forEach(tr=>tr.style.display='');
+    },500);
+  },100);
 }
 
 function doExportExcel(){
@@ -1136,6 +1251,53 @@ function onMC(){
 })();
 
 </script>
+<!-- PRINT SELECTION MODAL -->
+<div id="printMod" style="display:none" class="mbg" onclick="if(event.target===this)closePrintMod()">
+<div class="md">
+  <h3>🖨 Tisk — výběr</h3>
+  <div class="print-section-head">Co tisknout</div>
+  <div class="print-opts">
+    <div class="print-opt" onclick="togglePO('po4sm')">
+      <input type="checkbox" id="po4sm" checked>
+      <label for="po4sm">4-směnný provoz</label>
+      <span class="po-sub">20 lidí</span>
+    </div>
+    <div class="print-opt" onclick="togglePO('po2sm')">
+      <input type="checkbox" id="po2sm" checked>
+      <label for="po2sm">2-směnný provoz</label>
+      <span class="po-sub">10 lidí</span>
+    </div>
+    <div class="print-opt" onclick="togglePO('pobrig')">
+      <input type="checkbox" id="pobrig" checked>
+      <label for="pobrig">Brigádníci + Office</label>
+      <span class="po-sub">2 brigádníci</span>
+    </div>
+    <div class="print-opt" onclick="togglePO('posum')">
+      <input type="checkbox" id="posum" checked>
+      <label for="posum">Řádek CELKEM</label>
+    </div>
+  </div>
+  <div class="print-section-head">Skupiny (4-směnný)</div>
+  <div class="print-grp">
+    <button class="print-grp-btn sel" id="pgBlue" onclick="togglePG('blue',this)">🔵 Modrá</button>
+    <button class="print-grp-btn sel" id="pgBlack" onclick="togglePG('black',this)">⚫ Černá</button>
+    <button class="print-grp-btn sel" id="pgGreen" onclick="togglePG('green',this)">🟢 Zelená</button>
+    <button class="print-grp-btn sel" id="pgRed" onclick="togglePG('red',this)">🔴 Červená</button>
+  </div>
+  <div class="print-section-head">Formát</div>
+  <div style="display:flex;gap:8px;margin-bottom:14px">
+    <select id="printFormat" style="flex:1;height:34px;background:var(--bg3);border:1px solid var(--b2);border-radius:6px;color:var(--tx);font-family:'DM Sans',sans-serif;font-size:13px;padding:0 10px">
+      <option value="A3L">A3 na šířku (doporučeno)</option>
+      <option value="A4L">A4 na šířku</option>
+      <option value="A4P">A4 na výšku</option>
+    </select>
+  </div>
+  <div class="mbtns">
+    <button class="bcl" onclick="closePrintMod()">Zrušit</button>
+    <button class="bsv" onclick="executePrint()">🖨 Tisknout</button>
+  </div>
+</div></div>
+
 <!-- LOGIN SCREEN -->
 <div id="loginScreen">
   <div class="login-box">
