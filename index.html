@@ -197,10 +197,112 @@ tr:hover td.cn,tr:hover td.cp{filter:none;background:var(--bg4)!important}
 .offceln-row td.mr-cell.has-val{background:#dcfce7;color:#14532d;font-weight:700}
 .offceln-row td.ts{background:#dcfce7!important;color:#15803d}
 </style>
+
+<!-- Firebase compat (no module syntax needed) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+(function(){
+  const firebaseConfig = {
+    apiKey: "AIzaSyADtN_1sfMlmpY6nelwIF4PYTHO_Ssi7Ag",
+    authDomain: "dochazka-jao.firebaseapp.com",
+    databaseURL: "https://dochazka-jao-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "dochazka-jao",
+    storageBucket: "dochazka-jao.firebasestorage.app",
+    messagingSenderId: "84150481057",
+    appId: "1:84150481057:web:9e69a9643b5cf6ccfa40e0"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  function showSyncStatus(msg, color){
+    const el = document.getElementById('syncStatus');
+    if(!el) return;
+    el.textContent = msg;
+    el.style.color = color;
+    el.style.opacity = '1';
+    clearTimeout(el._t);
+    el._t = setTimeout(()=>{ el.style.opacity='0.4'; }, 3000);
+  }
+
+  function serializeState(){
+    const data = { monthData:{}, manualRows: ST.manualRows||{}, emps_shiftOv:{} };
+    // Save all monthData
+    Object.keys(ST.monthData||{}).forEach(m=>{
+      data.monthData[m] = ST.monthData[m];
+    });
+    // Save current month
+    const cm = String(ST.m);
+    if(!data.monthData[cm]) data.monthData[cm] = {};
+    ST.emps.forEach(e=>{ data.monthData[cm][String(e.id)] = e.data||{}; });
+    // shiftOv
+    ST.emps.forEach(e=>{
+      if(e.shiftOv && Object.keys(e.shiftOv).length>0)
+        data.emps_shiftOv[String(e.id)] = e.shiftOv;
+    });
+    return data;
+  }
+
+  function restoreState(data){
+    if(!data) return;
+    if(data.manualRows) ST.manualRows = data.manualRows;
+    if(data.monthData)  ST.monthData  = data.monthData;
+    const cm = String(ST.m);
+    ST.emps.forEach(e=>{
+      const saved = data.monthData?.[cm]?.[String(e.id)];
+      e.data = saved ? Object.assign({}, saved) : {};
+    });
+    if(data.emps_shiftOv){
+      ST.emps.forEach(e=>{
+        const ov = data.emps_shiftOv[String(e.id)];
+        if(ov) e.shiftOv = ov;
+      });
+    }
+  }
+
+  // Debounced save
+  let saveTimer = null;
+  let localChange = false;
+  window.fbSave = function(){
+    localChange = true;
+    clearTimeout(saveTimer);
+    showSyncStatus('⏳ Ukládání...', '#d97706');
+    saveTimer = setTimeout(()=>{
+      db.ref('dochazka2026').set(serializeState())
+        .then(()=>{ showSyncStatus('✓ Uloženo', '#16a34a'); })
+        .catch(e=>{ showSyncStatus('✗ '+e.message, '#dc2626'); localChange=false; });
+    }, 700);
+  };
+
+  // Listen for changes from other users
+  db.ref('dochazka2026').on('value', snapshot=>{
+    if(localChange){ localChange=false; return; }
+    const data = snapshot.val();
+    if(data){
+      restoreState(data);
+      if(typeof render==='function') render();
+      if(typeof updateNameDropdown==='function') updateNameDropdown();
+      showSyncStatus('↺ Synchronizováno', '#2563eb');
+    }
+  });
+
+  // Initial load
+  db.ref('dochazka2026').once('value').then(snapshot=>{
+    const data = snapshot.val();
+    if(data){
+      restoreState(data);
+      if(typeof render==='function'){ render(); updateNameDropdown && updateNameDropdown(); }
+    }
+    showSyncStatus('● Online', '#16a34a');
+  }).catch(()=>{ showSyncStatus('○ Offline', '#dc2626'); });
+
+})();
+</script>
 </head>
 <body>
 <div class="topbar">
   <div class="logo">DAMCO <b>JAROMĚŘ</b></div>
+  <div id="syncStatus" style="font-size:11px;font-family:'DM Mono',monospace;color:#94a3b8;transition:opacity .5s;margin-left:4px">● Připojování...</div>
   <div class="ptitle" id="ptitle">Docházka — Duben 2026</div>
   <div class="ctrls">
     <select id="msel" onchange="onMC()">
@@ -651,6 +753,7 @@ function saveManualCell(){
   if(!ST.manualRows[manualEditTarget.rowKey]) ST.manualRows[manualEditTarget.rowKey]={};
   if(!h||h<=0) delete ST.manualRows[manualEditTarget.rowKey][manualEditTarget.day];
   else ST.manualRows[manualEditTarget.rowKey][manualEditTarget.day]=h;
+  if(window.fbSave) fbSave();
   closeManualMod();render();
 }
 
@@ -1013,6 +1116,7 @@ function setShiftOverride(type){
   if(newBase==='day') document.getElementById('shBtnDay').classList.add('active');
   else if(newBase==='night') document.getElementById('shBtnNight').classList.add('active');
   else document.getElementById('shBtnOff').classList.add('active');
+  if(window.fbSave) fbSave();
   // Rebuild badge
   const updSh=getShift(emp,ST.m,ET.day);
   const bg2=updSh==='day'||updSh==='wed'?'#dbeafe':updSh==='night'||updSh==='wen'?'#e2e8f0':isOffT(updSh)?'#f1f5f9':'#f1f5f9';
@@ -1031,7 +1135,7 @@ function brToggle(id){
   // but Sv can be combined with So or Ne
 }
 function closeMod(){document.getElementById('cmMod').style.display='none';ET=null;}
-function clearCell(){if(!ET)return;delete ST.emps.find(e=>e.id===ET.empId).data[ET.day];closeMod();render();}
+function clearCell(){if(!ET)return;delete ST.emps.find(e=>e.id===ET.empId).data[ET.day];if(window.fbSave)fbSave();closeMod();render();}
 function saveCell(){
   if(!ET)return;
   const emp=ST.emps.find(e=>e.id===ET.empId);
@@ -1056,6 +1160,7 @@ function saveCell(){
     else if(t==='sv')emp.data[ET.day]={t:'sv',h:parseFloat(document.getElementById('hSV').value)||11};
     else if(t==='neg')emp.data[ET.day]={t:'neg',h:parseFloat(document.getElementById('hNEG').value)||0};
   }
+  if(window.fbSave) fbSave();
   closeMod();render();
 }
 function empTC(){
@@ -1069,6 +1174,7 @@ function saveEmp(){
   const grp=prov==='brigada'||prov==='2sm'?'none':document.getElementById('eGrp').value;
   const pos=document.getElementById('ePos').value;
   ST.emps.push({id:Date.now(),name,pos,prov,grp,data:{}});
+  if(window.fbSave)fbSave();
   document.getElementById('emMod').style.display='none';document.getElementById('eName').value='';render();
 }
 // Print selection state
@@ -1261,7 +1367,7 @@ function doExport(){
     csv+=`"${emp.name}","${emp.pos||''}",${emp.prov},${emp.grp}`;
     for(let d=1;d<=n;d++) csv+=','+(cellDisp(emp,d,emp.data[d])||getShift(emp,ST.m,d));
     if(emp.prov==='brigada')csv+=`,,,,,,,,${s.brig}`;
-    else csv+=`,${s.days},${s.nightH},${s.weH},${s.otH>0?'+'+s.otH:''},${s.negH>0?'-'+s.negH:''},${s.nem},${s.dov},${s.prop}`;
+    else csv+=`,${s.days},${s.nightH},${s.weH},${r2((s.otW||0)+(s.otSo||0)+(s.otNe||0)+(s.otSv||0))},${s.negH>0?'-'+s.negH:''},${s.nem},${s.dov},${s.prop}`;
     csv+='\n';
   });
   const a=document.createElement('a');
@@ -1270,120 +1376,8 @@ function doExport(){
 }
 render();
 updateNameDropdown();
-// ── MONTHLY DATA STORE ──
-// Each month's attendance data is stored separately.
-// When switching months, emp.data is swapped from this store.
-ST.monthData = ST.monthData || {};
-
-function loadMonthData(m){
-  // Save current month data back to store
-  ST.emps.forEach(e=>{
-    if(!ST.monthData[ST.m]) ST.monthData[ST.m]={};
-    ST.monthData[ST.m][e.id] = Object.assign({}, e.data);
-  });
-  // Load target month data (or empty)
-  ST.emps.forEach(e=>{
-    e.data = (ST.monthData[m] && ST.monthData[m][e.id]) ? Object.assign({}, ST.monthData[m][e.id]) : {};
-    // shiftOv is keyed by month already, no need to swap
-  });
-  ST.m = m;
-}
-
-// Override month change to use loadMonthData
-function onMC(){
-  const newM = parseInt(document.getElementById('msel').value);
-  loadMonthData(newM);
-  render();
-}
-
-// ── IMPORTED FROM EXCEL: DUBEN 2026 ──
-(function importApril(){
-  // Clear all emp data first, then set April data
-  ST.emps.forEach(e=>e.data={});
-  const se=(id,day,rec)=>{const e=ST.emps.find(x=>x.id===id);if(e)e.data[day]=rec;};
-  se(1,10,{t:'D'});
-  se(1,11,{t:'D'});
-  se(1,12,{t:'D'});
-  se(3,5,{t:'otne',h:7});
-  se(5,2,{t:'D'});
-  se(5,25,{t:'D'});
-  se(7,17,{t:'D'});
-  se(7,18,{t:'D'});
-  se(7,19,{t:'D'});
-  se(8,2,{t:'ot',h:7});
-  se(8,4,{t:'D'});
-  se(8,5,{t:'D'});
-  se(8,10,{t:'ot',h:8});
-  se(8,14,{t:'D'});
-  se(11,24,{t:'N'});
-  se(11,25,{t:'D'});
-  se(13,1,{t:'N'});
-  se(13,2,{t:'N'});
-  se(13,6,{t:'N'});
-  se(13,7,{t:'N'});
-  se(13,10,{t:'N'});
-  se(13,11,{t:'N'});
-  se(13,12,{t:'N'});
-  se(13,15,{t:'N'});
-  se(13,16,{t:'N'});
-  se(14,24,{t:'D'});
-  se(15,3,{t:'otsv',h:8});
-  se(15,4,{t:'otso',h:8});
-  se(15,5,{t:'otne',h:7});
-  se(16,4,{t:'neg',h:3});
-  se(17,14,{t:'D'});
-  se(18,12,{t:'ot',h:8});
-  se(18,24,{t:'N'});
-  se(20,6,{t:'otsv',h:8});
-  se(22,1,{t:'neg',h:1.5});
-  se(22,7,{t:'ot',h:2});
-  se(22,13,{t:'neg',h:0.5});
-  se(22,27,{t:'N'});
-  se(22,28,{t:'N'});
-  se(22,29,{t:'N'});
-  se(22,30,{t:'N'});
-  se(23,1,{t:'neg',h:2});
-  se(23,3,{t:'otsv',h:8});
-  se(23,4,{t:'otso',h:8});
-  se(23,6,{t:'otsv',h:8});
-  se(23,7,{t:'ot',h:2});
-  se(23,8,{t:'P',h:2});
-  se(23,11,{t:'ot',h:8});
-  se(23,12,{t:'ot',h:8});
-  se(23,13,{t:'ot',h:2});
-  se(25,7,{t:'ot',h:4});
-  se(25,8,{t:'ot',h:4});
-  se(25,9,{t:'ot',h:4});
-  se(25,13,{t:'ot',h:2});
-  se(26,7,{t:'N'});
-  se(26,8,{t:'N'});
-  se(26,9,{t:'N'});
-  se(26,10,{t:'N'});
-  se(26,13,{t:'N'});
-  se(26,14,{t:'N'});
-  se(26,15,{t:'N'});
-  se(26,16,{t:'N'});
-  se(27,2,{t:'D'});
-  se(28,7,{t:'ot',h:4});
-  se(28,8,{t:'ot',h:3});
-  se(28,10,{t:'ot',h:2});
-  se(30,15,{t:'D'});
-  se(30,16,{t:'D'});
-  se(30,17,{t:'D'});
-  se(31,7,6);
-  se(31,8,6);
-  se(31,11,10);
-  se(31,13,4.5);
-  se(32,1,10);
-  se(32,2,2);
-  se(32,7,8);
-  se(32,8,8);
-  se(32,9,8);
-  se(32,13,9.5);
-  render();
-})();
-
 </script>
+
 <!-- PRINT SELECTION MODAL -->
 <div id="printMod" style="display:none" class="mbg" onclick="if(event.target===this)closePrintMod()">
 <div class="md">
@@ -1456,29 +1450,23 @@ function onMC(){
 
 <script>
 // ── LOGIN ──
-// Change password here:
 const APP_PWD = 'Damco2026';
-
 function doLogin(){
-  const val = document.getElementById('loginPwd').value;
-  if(val === APP_PWD){
+  const val=document.getElementById('loginPwd').value;
+  if(val===APP_PWD){
     document.getElementById('loginScreen').style.display='none';
     sessionStorage.setItem('dochazka_auth','1');
   } else {
-    const err = document.getElementById('loginErr');
-    err.textContent = 'Nesprávné heslo. Zkuste znovu.';
+    const err=document.getElementById('loginErr');
+    err.textContent='Nesprávné heslo. Zkuste znovu.';
     document.getElementById('loginPwd').value='';
     document.getElementById('loginPwd').focus();
-    setTimeout(()=>err.textContent='', 3000);
+    setTimeout(()=>err.textContent='',3000);
   }
 }
-
-// Auto-login if already authenticated in this session
 if(sessionStorage.getItem('dochazka_auth')==='1'){
   document.getElementById('loginScreen').style.display='none';
 }
-
-// Focus password input
 document.getElementById('loginPwd').focus();
 </script>
 </body>
