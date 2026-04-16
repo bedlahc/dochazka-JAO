@@ -112,6 +112,8 @@ tr:hover td.cn,tr:hover td.cp{filter:none;background:var(--bg4)!important}
 .bcl{background:var(--bg3);border:1px solid var(--b2);color:var(--tx2);height:34px;border-radius:6px;padding:0 12px}
 .note{font-size:11px;color:var(--tx2);padding:6px 9px;background:var(--bg3);border-radius:5px;margin-top:5px;font-family:'DM Mono',monospace}
 ::-webkit-scrollbar{width:5px;height:5px}
+.today-col{background:rgba(251,191,36,.08)!important}
+.today-col-hdr{background:#fbbf24!important;color:#78350f!important;font-weight:800!important}
 /* WEEKLY REPORT */
 .wr-wrap{background:var(--bg2);border:1px solid var(--b2);border-radius:10px;overflow:hidden}
 .wr-title{padding:10px 16px;background:var(--bg3);border-bottom:1px solid var(--b2);font-size:12px;font-weight:700;color:var(--tx2);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:flex;align-items:center;gap:8px}
@@ -473,13 +475,15 @@ let ST={m:4,y:2026,fp:'all',fg:'all',fn:'',emps:[
 ]};
 
 // Manual hour rows (keyed by row ID, value = {day: hours})
-if(!ST.manualRows) ST.manualRows={
-  '4sm':{},
-  '2sm':{},
-  'brigada':{},
-  'offwc':{},
-  'offceln':{}
-};
+if(!ST.monthManualRows) ST.monthManualRows={};
+// Get manualRows for current month (creates empty if not exists)
+function getManualRows(m){
+  const key=m||ST.m;
+  if(!ST.monthManualRows[key]) ST.monthManualRows[key]={'4sm':{},'2sm':{},'brigada':{},'offwc':{},'offceln':{}};
+  return ST.monthManualRows[key];
+}
+// Backwards compat: ST.manualRows always points to current month
+Object.defineProperty(ST,'manualRows',{get:()=>getManualRows(ST.m),set:(v)=>{ST.monthManualRows[ST.m]=v;}});
 
 let ET=null;
 
@@ -608,9 +612,9 @@ function cellDisp(emp,d,rec){
     return bv;
   }
   const t=rec?.t||null;const h=rec?.h||0;
-  // Auto-display 11h on svátek if employee has shift and no special record
+  // Auto-display 11h on svátek only for 4sm (2sm shows nothing unless OT manually entered)
   if(!t&&isSv(ST.m,d)){
-    if(emp.prov==='2sm') return 11;
+    if(emp.prov==='2sm') return null; // 2sm: no auto 11h
     const sh=getShift(emp,ST.m,d);
     if(!isOffT(sh)) return 11;
   }
@@ -638,10 +642,12 @@ function renderManualRow(rowKey,label,sublabel,rowCls,n,autoData){
     const hasCls=typeof v==='number'&&v>0?'has-val':'';
     const disp=typeof v==='number'&&v>0?v:'';
     const w=dow(ST.y,ST.m,d);const wbl=w===6?'border-left:3px solid #16a34a;':'';
+    const _nt=new Date();const _isT=ST.y===_nt.getFullYear()&&ST.m===(_nt.getMonth()+1)&&d===_nt.getDate();
+    const _tt=_isT?'outline:2px solid #fbbf24;outline-offset:-2px;':'';
     if(isAuto){
-      html+=`<td class="mr-cell ${hasCls}" style="${wbl};cursor:default">${disp||'<span style="color:#d1d5db">·</span>'}</td>`;
+      html+=`<td class="mr-cell ${hasCls}" style="${wbl}${_tt};cursor:default">${disp||'<span style="color:#d1d5db">·</span>'}</td>`;
     } else {
-      html+=`<td class="mr-cell ${hasCls}" onclick="openManualCell('${rowKey}',${d})" style="cursor:pointer;${wbl}">${disp||'<span style="color:#d1d5db">·</span>'}</td>`;
+      html+=`<td class="mr-cell ${hasCls}" onclick="openManualCell('${rowKey}',${d})" style="cursor:pointer;${wbl}${_tt}">${disp||'<span style="color:#d1d5db">·</span>'}</td>`;
     }
   }
   // 8 summary cols (Dny, Noční h, Víkend h, Přesčas, Mínus, N, D, P h) — show dashes
@@ -854,9 +860,12 @@ function render(){
     const w=dow(ST.y,ST.m,d);const isSat=w===6,isSun=w===0;
     const wbl=isSat?'border-left:3px solid #16a34a;':'';
     const sv=isSv(ST.m,d);
-    const wbg=sv?'background:#fed7aa;color:#7c2d12;':isSat?'background:#86efac;color:#14532d;':isSun?'background:#bbf7d0;color:#166534;':'';
+    const today=new Date();
+    const isToday=ST.y===today.getFullYear()&&ST.m===(today.getMonth()+1)&&d===today.getDate();
+    const wbg=isToday?'background:#fbbf24;color:#78350f;':sv?'background:#fed7aa;color:#7c2d12;':isSat?'background:#86efac;color:#14532d;':isSun?'background:#bbf7d0;color:#166534;':'';
     const svTitle=sv?` title="${svName(ST.m,d)}"` :'';
-    ths+=`<th style="${wbg}${wbl}"${svTitle}><div style="font-size:11px;font-weight:600">${d}</div><div style="font-size:9px;opacity:.7">${DN[w]}</div></th>`;
+    const todayCls=isToday?' class="today-col-hdr"':'';
+    ths+=`<th${todayCls} style="${wbg}${wbl}font-weight:${isToday?'800':'600'}"${svTitle}><div style="font-size:11px;font-weight:${isToday?'800':'600'}">${d}${isToday?'◀':''}</div><div style="font-size:9px;opacity:.7">${DN[w]}</div></th>`;
   }
   ths+=`<th style="color:var(--day-tx);min-width:32px">Dny</th>`;
   ths+=`<th style="color:var(--ngt-tx);min-width:36px">Noční h</th>`;
@@ -890,13 +899,17 @@ function render(){
       const grpBg=emp.grp==='blue'?'rgba(59,130,246,.07)':emp.grp==='black'?'rgba(100,116,139,.07)':emp.grp==='green'?'rgba(34,197,94,.07)':emp.grp==='red'?'rgba(239,68,68,.07)':'';
       html+=`<tr data-prov="${emp.prov}" data-grp="${emp.grp}"><td class="cn" style="border-left:3px solid ${grpColor};${grpBg?'background:'+grpBg:''}">${emp.name}</td>`;
       html+=`<td class="cp"><span class="pos ${pCls(emp.pos)}">${emp.pos}</span></td>`;
+      const _today=new Date();
+      const _todayD=ST.y===_today.getFullYear()&&ST.m===(_today.getMonth()+1)?_today.getDate():-1;
       for(let d=1;d<=n;d++){
         const rec=emp.data[d];
         const cls=cellCls(emp,d,rec);
         const disp=cellDisp(emp,d,rec);
         const w=dow(ST.y,ST.m,d);
         const wbl=w===6?'border-left:3px solid #16a34a;':'';
-        html+=`<td class="${cls}" onclick="openCell(${emp.id},${d})" style="cursor:pointer;${wbl}">${disp||'<span style="color:#d1d5db">·</span>'}</td>`;
+        const isToday=d===_todayD;
+        const todayTint=isToday?'outline:2px solid #fbbf24;outline-offset:-2px;':'';
+        html+=`<td class="${cls}" onclick="openCell(${emp.id},${d})" style="cursor:pointer;${wbl}${todayTint}">${disp||'<span style="color:#d1d5db">·</span>'}</td>`;
       }
       if(isBr){
         // brigada columns match header: Dny|Noční|Víkend|Př25%|PřSo|PřNe|PřSv|Mínus|N|D|Ph|Svátek|CELKEM
@@ -1451,6 +1464,8 @@ function uploadToFirebase(){
   ST.emps.forEach(e=>{
     ST.monthData[ST.m][e.id] = Object.assign({}, e.data);
   });
+  // Ensure current month manualRows are initialized
+  getManualRows(ST.m);
   // Then push to Firebase
   fbSave();
   // Show confirmation
@@ -1480,7 +1495,7 @@ function doBackup(){
     version: 2,
     date: new Date().toISOString(),
     monthData: ST.monthData,
-    manualRows: ST.manualRows,
+    monthManualRows: ST.monthManualRows,
     emps_shiftOv: {}
   };
   ST.emps.forEach(e=>{
@@ -1512,7 +1527,8 @@ function doRestore(event){
       }
       // Restore data
       if(backup.monthData)  ST.monthData  = backup.monthData;
-      if(backup.manualRows) ST.manualRows = backup.manualRows;
+      if(backup.monthManualRows) ST.monthManualRows = backup.monthManualRows;
+      else if(backup.manualRows) ST.monthManualRows[ST.m] = backup.manualRows;
       // Restore current month into emps
       const cm = String(ST.m);
       ST.emps.forEach(e=>{
@@ -1599,6 +1615,48 @@ function doExport(){
 
 render();
 updateNameDropdown();
+// ── IMPORT: KVĚTEN + ČERVEN 2026 ──
+(function importMayJun(){
+  const se=(id,m,day,rec)=>{
+    const e=ST.emps.find(x=>x.id===id);
+    if(!e)return;
+    if(!ST.monthData[m])ST.monthData[m]={};
+    if(!ST.monthData[m][id])ST.monthData[m][id]={};
+    ST.monthData[m][id][day]=rec;
+  };
+  se(11,5,4,{t:'D'});
+  se(11,5,13,{t:'D'});
+  se(15,5,23,{t:'D'});
+  se(16,5,7,{t:'D'});
+  se(16,5,29,{t:'D'});
+  se(16,5,30,{t:'D'});
+  se(16,5,31,{t:'D'});
+  se(17,5,25,{t:'D'});
+  se(17,5,26,{t:'D'});
+  se(22,5,2,{t:'N'});
+  se(22,5,5,{t:'N'});
+  se(22,5,6,{t:'N'});
+  se(22,5,7,{t:'N'});
+  se(22,5,8,{t:'N'});
+  se(22,5,9,{t:'N'});
+  se(22,5,12,{t:'N'});
+  se(22,5,13,{t:'N'});
+  se(29,5,16,{t:'D'});
+  se(30,5,9,{t:'N'});
+  se(7,6,9,{t:'D'});
+  se(7,6,12,{t:'D'});
+  se(7,6,13,{t:'D'});
+  se(7,6,14,{t:'D'});
+  se(10,6,22,{t:'D'});
+  se(10,6,23,{t:'D'});
+  se(19,6,18,{t:'D'});
+  se(19,6,22,{t:'D'});
+  se(19,6,23,{t:'D'});
+  se(19,6,26,{t:'D'});
+  se(19,6,27,{t:'D'});
+  se(19,6,28,{t:'D'});
+})();
+
 
 // ── FIREBASE INIT ──
 function loadScript(src){
@@ -1635,7 +1693,7 @@ function loadScript(src){
   }
 
   function serializeState(){
-    const data = { monthData:{}, manualRows: ST.manualRows||{}, emps_shiftOv:{} };
+    const data = { monthData:{}, monthManualRows: ST.monthManualRows||{}, emps_shiftOv:{} };
     Object.keys(ST.monthData||{}).forEach(m=>{ data.monthData[m] = ST.monthData[m]; });
     const cm = String(ST.m);
     if(!data.monthData[cm]) data.monthData[cm] = {};
@@ -1649,7 +1707,8 @@ function loadScript(src){
 
   function restoreState(data){
     if(!data) return;
-    if(data.manualRows) ST.manualRows = data.manualRows;
+    if(data.monthManualRows) ST.monthManualRows = data.monthManualRows;
+    else if(data.manualRows) ST.monthManualRows[ST.m] = data.manualRows;// backwards compat
     if(data.monthData)  ST.monthData  = data.monthData;
     const cm = String(ST.m);
     ST.emps.forEach(e=>{
