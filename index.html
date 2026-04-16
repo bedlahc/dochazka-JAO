@@ -1615,6 +1615,8 @@ function doExport(){
 
 
 // ── IMPORT: KVĚTEN + ČERVEN 2026 ──
+// Store local import data for Firebase merge
+window._localImport = window._localImport || {};
 (function importMayJun(){
   if(!ST.monthData) ST.monthData={};
   const se=(id,m,day,rec)=>{
@@ -1664,6 +1666,9 @@ function doExport(){
   se(19,6,26,{t:'D'});
   se(19,6,27,{t:'D'});
   se(19,6,28,{t:'D'});
+  // Save to _localImport for Firebase merge
+  window._localImport[5] = ST.monthData[5] ? Object.assign({}, ST.monthData[5]) : {};
+  window._localImport[6] = ST.monthData[6] ? Object.assign({}, ST.monthData[6]) : {};
 })();
 
 render();
@@ -1764,6 +1769,25 @@ function loadScript(src){
     const data = snapshot.val();
     if(data && (data.monthData || data.manualRows)){
       restoreState(data);
+      // Merge local import data for months not yet in Firebase
+      let needsSave = false;
+      [5,6].forEach(m=>{
+        if(!ST.monthData[m] || Object.keys(ST.monthData[m]).length===0){
+          // Month missing in Firebase — copy from local import
+          const localMonth = data.monthData?.[m];
+          if(!localMonth){
+            // Check if we have local import data for this month
+            const importData = window._localImport?.[m];
+            if(importData && Object.keys(importData).length>0){
+              ST.monthData[m] = importData;
+              needsSave = true;
+            }
+          }
+        }
+      });
+      if(needsSave){
+        setTimeout(()=>{ if(window.fbSave) fbSave(); showSyncStatus('☁ Nová data uložena', '#16a34a'); }, 800);
+      }
       render();
       updateNameDropdown();
       showSyncStatus('● Online', '#16a34a');
