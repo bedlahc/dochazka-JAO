@@ -1613,13 +1613,12 @@ function doExport(){
   ST.emps.forEach(e=>{ ST.monthData[4][e.id]=Object.assign({},e.data); });
 })();
 
-render();
-updateNameDropdown();
+
 // ── IMPORT: KVĚTEN + ČERVEN 2026 ──
 (function importMayJun(){
+  if(!ST.monthData) ST.monthData={};
   const se=(id,m,day,rec)=>{
-    const e=ST.emps.find(x=>x.id===id);
-    if(!e)return;
+    const e=ST.emps.find(x=>x.id===id);if(!e)return;
     if(!ST.monthData[m])ST.monthData[m]={};
     if(!ST.monthData[m][id])ST.monthData[m][id]={};
     ST.monthData[m][id][day]=rec;
@@ -1633,16 +1632,26 @@ updateNameDropdown();
   se(16,5,31,{t:'D'});
   se(17,5,25,{t:'D'});
   se(17,5,26,{t:'D'});
-  se(22,5,2,{t:'N'});
+  se(22,5,4,{t:'N'});
   se(22,5,5,{t:'N'});
   se(22,5,6,{t:'N'});
   se(22,5,7,{t:'N'});
-  se(22,5,8,{t:'N'});
-  se(22,5,9,{t:'N'});
+  se(22,5,11,{t:'N'});
   se(22,5,12,{t:'N'});
   se(22,5,13,{t:'N'});
-  se(29,5,16,{t:'D'});
-  se(30,5,9,{t:'N'});
+  se(22,5,14,{t:'N'});
+  se(22,5,15,{t:'N'});
+  se(22,5,18,{t:'N'});
+  se(22,5,19,{t:'N'});
+  se(22,5,20,{t:'N'});
+  se(22,5,21,{t:'N'});
+  se(22,5,22,{t:'N'});
+  se(22,5,25,{t:'D'});
+  se(22,5,26,{t:'D'});
+  se(22,5,27,{t:'D'});
+  se(22,5,28,{t:'D'});
+  se(22,5,29,{t:'D'});
+  se(29,5,15,{t:'D'});
   se(7,6,9,{t:'D'});
   se(7,6,12,{t:'D'});
   se(7,6,13,{t:'D'});
@@ -1657,6 +1666,8 @@ updateNameDropdown();
   se(19,6,28,{t:'D'});
 })();
 
+render();
+updateNameDropdown();
 
 // ── FIREBASE INIT ──
 function loadScript(src){
