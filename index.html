@@ -508,7 +508,7 @@ function calcSums(emp){
       // 2sm: no auto-holiday hours, only manual overtime on holiday
       if(t==='N'){nem++;continue;}
       if(t==='D'){dov++;continue;}// Dovolená: jen dov++
-      if(t==='P'){prop+=h;continue;}// Propuska: jen hodiny
+      if(t==='P'){prop+=h;if(!we)days++;continue;}// Propuska: odprac. den + hodiny propusky
       if(t==='ot'){// weekday OT 25%
         otW+=h;if(!we)days++;continue;}
       if(t==='otso'){weH+=h;otSo+=h;continue;}// So OT 25% → also weH
@@ -527,7 +527,7 @@ function calcSums(emp){
     const isWknd=we; // Sat or Sun
     if(t==='N'){nem++;continue;}
     if(t==='D'){dov++;continue;}// Dovolená: počítá se jen den D, žádné hodiny
-    if(t==='P'){prop+=h;continue;}// Propuska: jen hodiny propusky, žádné jiné
+    if(t==='P'){prop+=h;if(!off){days++;if(night)nightH+=8;if(isWknd)weH+=12;}continue;}// Propuska: odprac. den + noční/víkend příplatky
     if(t==='ot'){// weekday OT 25%
       otW+=h;if(!off){days++;if(night)nightH+=8;}continue;}
     if(t==='otso'){// Saturday OT 25% → weH + otSo
