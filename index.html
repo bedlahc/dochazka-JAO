@@ -112,6 +112,20 @@ tr:hover td.cn,tr:hover td.cp{filter:none;background:var(--bg4)!important}
 .bcl{background:var(--bg3);border:1px solid var(--b2);color:var(--tx2);height:34px;border-radius:6px;padding:0 12px}
 .note{font-size:11px;color:var(--tx2);padding:6px 9px;background:var(--bg3);border-radius:5px;margin-top:5px;font-family:'DM Mono',monospace}
 ::-webkit-scrollbar{width:5px;height:5px}
+/* WEEKLY REPORT */
+.wr-wrap{background:var(--bg2);border:1px solid var(--b2);border-radius:10px;overflow:hidden}
+.wr-title{padding:10px 16px;background:var(--bg3);border-bottom:1px solid var(--b2);font-size:12px;font-weight:700;color:var(--tx2);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:flex;align-items:center;gap:8px}
+.wr-table{width:100%;border-collapse:collapse;font-size:12px;font-family:'DM Sans',sans-serif}
+.wr-table th{background:var(--bg3);color:var(--tx3);font-size:10px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.06em;padding:6px 14px;text-align:left;border-bottom:1px solid var(--b2);white-space:nowrap}
+.wr-table th.wh{text-align:center;min-width:80px}
+.wr-table td{padding:8px 14px;border-bottom:1px solid var(--b1);color:var(--tx)}
+.wr-table td.wv{text-align:center;font-family:'DM Mono',monospace;font-weight:600;font-size:13px}
+.wr-table td.wt{text-align:center;font-family:'DM Mono',monospace;font-weight:800;font-size:14px;background:var(--bg3);color:#1d4ed8;border-left:2px solid #93c5fd}
+.wr-table tr:last-child td{border-bottom:none}
+.wr-table tr:hover td{background:var(--bg3)}
+.wr-row-label{font-weight:600;color:var(--tx)}
+.wr-row-sub{font-size:10px;color:var(--tx3);margin-top:1px}
+.wr-section{margin-bottom:12px}
 ::-webkit-scrollbar-track{background:var(--bg3)}
 ::-webkit-scrollbar-thumb{background:#c8ccd8;border-radius:3px}
 /* PRINT MODAL */
@@ -224,6 +238,7 @@ tr:hover td.cn,tr:hover td.cp{filter:none;background:var(--bg4)!important}
     <button onclick="doExport()" style="color:var(--tx2)">↓ CSV</button>
     <button onclick="doExportExcel()" style="color:#166534;background:#dcfce7;border-color:#86efac;font-weight:600">↓ Excel</button>
     <button onclick="doPrint()" style="color:#1e40af;background:#dbeafe;border-color:#93c5fd;font-weight:600">🖨 Tisk</button>
+    <button onclick="showWeeklyReport()" style="color:#166534;background:#dcfce7;border-color:#86efac;font-weight:700">📊 Týdenní report</button>
     <button onclick="uploadToFirebase()" style="color:#fff;background:#f97316;border-color:#ea580c;font-weight:700">☁ Uložit do cloudu</button>
     <button onclick="doBackup()" style="color:#1e40af;background:#eff6ff;border-color:#93c5fd;font-weight:600">⬇ Záloha JSON</button>
     <button onclick="document.getElementById('restoreInput').click()" style="color:#5b21b6;background:#f5f3ff;border-color:#c4b5fd;font-weight:600">⬆ Obnovit zálohu</button>
@@ -682,6 +697,149 @@ function makeSubHeader(n,prov){
   row+=`</tr>`;
   return row;
 }
+
+// ── WEEKLY REPORT ──
+function getWeeksInMonth(y, m){
+  const dInM2=(m2,y2)=>m2===2&&y2%4===0?29:[0,31,28,31,30,31,30,31,31,30,31,30,31][m2];
+  const first=new Date(y,m-1,1);
+  const last=dInM2(m,y);
+  // Monday of week containing day 1
+  const firstDow=first.getDay()||7; // 1=Mon..7=Sun
+  const weekStartDay=2-firstDow; // could be negative (days from prev month)
+  const weeks=[];
+  let d=weekStartDay;
+  while(d<=last){
+    const wStart=Math.max(d,1);
+    const wEnd=Math.min(d+6,last);
+    const days=[];
+    for(let i=wStart;i<=wEnd;i++) days.push(i);
+    if(days.length>0) weeks.push({days, startDay:d, endDay:d+6});
+    d+=7;
+  }
+  return weeks;
+}
+
+function calcEmpHoursForDays(emp, days){
+  let h=0;
+  days.forEach(d=>{
+    const rec=emp.data[d], t=rec?.t||null;
+    // Brigada: raw hours
+    if(emp.prov==='brigada'){
+      const bv=typeof rec==='object'&&rec!==null?rec.h:(typeof rec==='number'?rec:0);
+      if(bv>0) h+=bv;
+      return;
+    }
+    if(t==='N') return; // sick
+    if(t==='D') return; // vacation
+    const we=isWE(ST.y,ST.m,d);
+    if(emp.prov==='2sm'){
+      // 2sm: 8h per non-weekend workday (no group-based schedule)
+      if(t==='ot'){h+=8+(rec.h||0);return;}
+      if(t==='otso'||t==='otne'){h+=rec.h||0;return;}
+      if(t==='otsv'){h+=rec.h||0;return;}
+      if(t==='neg'){h+=Math.max(0,8-(rec.h||0));return;}
+      if(t==='P'){h+=8;return;}
+      if(!we) h+=8; // normal workday
+      return;
+    }
+    // 4sm
+    const sh=getShift(emp,ST.m,d);
+    if(isOffT(sh)) return;
+    const shH=12;
+    if(t==='ot') h+=shH+(rec.h||0);
+    else if(t==='neg') h+=Math.max(0,shH-(rec.h||0));
+    else if(t==='P') h+=shH;
+    else if(t==='sv') h+=rec.h||11;
+    else if(t==='otsv'||t==='otso'||t==='otne') h+=rec.h||0;
+    else h+=shH;
+  });
+  return r2(h);
+}
+
+function renderWeeklyReport(){
+  const weeks=getWeeksInMonth(ST.y,ST.m);
+  const n=dInM(ST.m,ST.y);
+
+  // Format week label
+  const wLabel=(w,idx)=>{
+    const s=Math.max(w.days[0],1);
+    const e=Math.min(w.days[w.days.length-1],n);
+    const sPad=s+'.'+ST.m+'.';
+    const ePad=e+'.'+ST.m+'.';
+    return `T${idx+1}: ${sPad}–${ePad}`;
+  };
+
+  // Row 1: 4sm employees + ruční hodiny 4sm
+  const emps4sm=ST.emps.filter(e=>e.prov==='4sm');
+  // Row 2: 2sm employees + ruční hodiny 2sm + Vrána Pavel (id=31)
+  const emps2sm=ST.emps.filter(e=>e.prov==='2sm');
+  const vranaEmp=ST.emps.find(e=>e.id===31);
+  // Row 3: Randstad = pouze David Hetfleis (id=32)
+  const hetflEmp=ST.emps.find(e=>e.id===32);
+
+  // Weekly report counts ONLY manual rows (ruční hodiny)
+  const calcManH=(manKey,days)=>{
+    const mr=ST.manualRows[manKey]||{};
+    let total=0;
+    days.forEach(d=>{ if(typeof mr[d]==='number'&&mr[d]>0) total+=mr[d]; });
+    return r2(total);
+  };
+  const calcBrigadaH=(emp,days)=>{
+    if(!emp) return 0;
+    let total=0;
+    days.forEach(d=>{
+      const rec=emp.data[d];
+      const bv=typeof rec==='object'&&rec!==null?rec.h:(typeof rec==='number'?rec:0);
+      if(bv>0) total+=bv;
+    });
+    return r2(total);
+  };
+
+  let html=`<div class="wr-wrap">`;
+  html+=`<div class="wr-title">📊 Týdenní report — ${MCZ[ST.m]} ${ST.y}</div>`;
+  html+=`<table class="wr-table">`;
+  
+  // Header
+  html+=`<tr><th>Skupina</th>`;
+  weeks.forEach((w,i)=>{ html+=`<th class="wh">${wLabel(w,i)}</th>`; });
+  html+=`<th class="wh" style="color:#1d4ed8">Měsíc celkem</th></tr>`;
+
+  // Row 1: 4-směnný
+  const r1weeks=weeks.map(w=>calcManH('4sm',w.days));
+  const r1total=r2(r1weeks.reduce((a,v)=>a+v,0));
+  html+=`<tr>
+    <td><div class="wr-row-label">4-směnný provoz</div><div class="wr-row-sub">Ruční hodiny 4-směnný</div></td>`;
+  r1weeks.forEach(v=>{ html+=`<td class="wv">${v>0?v:'—'}</td>`; });
+  html+=`<td class="wt">${r1total>0?r1total:'—'}</td></tr>`;
+
+  // Row 2: 2-směnný + Vrána Pavel
+  const r2weeks=weeks.map(w=>r2(calcManH('2sm',w.days)+calcBrigadaH(vranaEmp,w.days)));
+  const r2total=r2(r2weeks.reduce((a,v)=>a+v,0));
+  html+=`<tr>
+    <td><div class="wr-row-label">2-směnný + Vrána Pavel</div><div class="wr-row-sub">Ruční hodiny 2-směnný + brigádník P. Vrána</div></td>`;
+  r2weeks.forEach(v=>{ html+=`<td class="wv">${v>0?v:'—'}</td>`; });
+  html+=`<td class="wt">${r2total>0?r2total:'—'}</td></tr>`;
+
+  // Row 3: Randstad = David Hetfleis
+  const r3weeks=weeks.map(w=>calcBrigadaH(hetflEmp,w.days));
+  const r3total=r2(r3weeks.reduce((a,v)=>a+v,0));
+  html+=`<tr>
+    <td><div class="wr-row-label">Randstad</div><div class="wr-row-sub">Hetfleis David</div></td>`;
+  r3weeks.forEach(v=>{ html+=`<td class="wv">${v>0?v:'—'}</td>`; });
+  html+=`<td class="wt">${r3total>0?r3total:'—'}</td></tr>`;
+
+  html+=`</table></div>`;
+  
+  const el=document.getElementById('wrContent');
+  if(el) el.innerHTML=html;
+}
+
+function showWeeklyReport(){
+  renderWeeklyReport();
+  document.getElementById('wrMod').style.display='flex';
+}
+
+
 
 function render(){
   const n=dInM(ST.m,ST.y);
@@ -1599,6 +1757,17 @@ function loadScript(src){
     <button class="bsv" onclick="executePrint()">🖨 Tisknout</button>
   </div>
 </div></div>
+
+<!-- WEEKLY REPORT MODAL -->
+<div id="wrMod" style="display:none" class="mbg" onclick="if(event.target===this)document.getElementById('wrMod').style.display='none'">
+<div class="md" style="width:700px;max-width:96vw;max-height:85vh;overflow-y:auto">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+    <h3 style="margin:0">📊 Týdenní report</h3>
+    <button class="bcl" onclick="document.getElementById('wrMod').style.display='none'" style="height:28px;padding:0 12px">✕ Zavřít</button>
+  </div>
+  <div id="wrContent"></div>
+</div>
+</div>
 
 <!-- LOGIN SCREEN -->
 <div id="loginScreen">
