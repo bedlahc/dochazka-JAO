@@ -52,7 +52,11 @@ select:hover,button:hover{border-color:var(--b3)}
 .ld{width:22px;height:12px;border-radius:2px;flex-shrink:0}
 .lsep{color:var(--tx3);margin:0 2px}
 /* TABLE */
-.tw{overflow:auto;flex:1;min-height:0;-webkit-overflow-scrolling:touch;scroll-behavior:smooth}
+.tw{overflow:auto;flex:1;min-height:0;-webkit-overflow-scrolling:touch}
+.tw::-webkit-scrollbar{width:12px;height:12px;display:block}
+.tw::-webkit-scrollbar-track{background:#e2e8f0}
+.tw::-webkit-scrollbar-thumb{background:#475569;border-radius:6px;border:2px solid #e2e8f0}
+.tw::-webkit-scrollbar-corner{background:#e2e8f0}
 table{border-collapse:collapse;font-size:11px;min-width:1200px}
 thead th{background:var(--bg2);color:var(--tx2);font-family:'DM Mono',monospace;font-size:9px;font-weight:500;text-transform:uppercase;letter-spacing:.05em;padding:6px 2px;text-align:center;border-bottom:2px solid var(--b2);white-space:nowrap;position:sticky;top:0;z-index:10}
 thead th.cn{text-align:left;padding-left:18px;min-width:138px;position:sticky;left:0;top:0;background:var(--bg2)!important;z-index:25;border-right:2px solid var(--b2);box-shadow:4px 0 8px -2px rgba(0,0,0,.2)}
@@ -72,6 +76,7 @@ tr:hover td.cn{filter:none;background:var(--bg4)!important;box-shadow:4px 0 8px 
 .cSV{background:#fed7aa!important;color:#7c2d12!important;border:1px solid #f97316!important;font-weight:700}
 .cN{background:var(--N-bg)!important;color:var(--N-tx)!important;border-color:#6a1515!important;font-weight:700}
 .cD{background:var(--D-bg)!important;color:var(--D-tx)!important;border-color:#1a5a30!important;font-weight:700}
+.cD2{background:#dcfce7!important;color:#166534!important;font-weight:600}
 .cP{background:var(--P-bg)!important;color:var(--P-tx)!important;border-color:#4a1a80!important;font-weight:700}
 .cWE{background:var(--WE-bg)!important;color:var(--WE-tx)!important;border-color:var(--wed-bd)!important;font-weight:700}
 .cOT{font-weight:700;color:var(--OT)!important}
@@ -156,6 +161,7 @@ tr:hover td.cn{filter:none;background:var(--bg4)!important;box-shadow:4px 0 8px 
   .sof-we{background:#86efac!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .cN{background:#fecaca!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .cD{background:#bbf7d0!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .cD2{background:#dcfce7!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .cP{background:#ddd6fe!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .cSV{background:#fdba74!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .gr td{background:#e2e8f0!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
@@ -264,7 +270,7 @@ tr:hover td.cn{filter:none;background:var(--bg4)!important;box-shadow:4px 0 8px 
   <span class="li"><span class="ld cSV"></span>Svátek</span>
   <span class="lsep">│</span>
   <span class="li"><span class="ld cN" style="width:14px;height:12px"></span>Nemoc</span>
-  <span class="li"><span class="ld cD" style="width:14px;height:12px"></span>Dovolená</span>
+  <span class="li"><span class="ld cD" style="width:14px;height:12px"></span>Dovolená</span><span class="li"><span class="ld cD2" style="width:14px;height:12px"></span>D/2</span>
   <span class="li"><span class="ld cP" style="width:14px;height:12px"></span>Propuska</span>
   <span class="lsep">│</span>
   <span class="li"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#3b82f6"></span>Modrá</span>
@@ -274,7 +280,6 @@ tr:hover td.cn{filter:none;background:var(--bg4)!important;box-shadow:4px 0 8px 
   <span style="color:var(--tx3);font-size:10px;margin-left:4px">│ zelená svislá čára = sobota</span>
 </div>
 <div class="tw" id="mainTw"><table><thead id="th"></thead><tbody id="tb"></tbody></table></div>
-<div class="fake-scroll-bar" id="fakeScroll"><div class="fake-scroll-inner" id="fakeScrollInner"></div></div>
 
 <!-- CELL MODAL -->
 <div id="cmMod" style="display:none" class="mbg" onclick="if(event.target===this)closeMod()">
@@ -313,7 +318,8 @@ tr:hover td.cn{filter:none;background:var(--bg4)!important;box-shadow:4px 0 8px 
       <select id="ct" onchange="ctChg()">
         <option value="">— odpracovaný den —</option>
         <option value="N">N – nemoc</option>
-        <option value="D">D – dovolená</option>
+        <option value="D">D – dovolená (celý den)</option>
+        <option value="D2">D/2 – dovolená (půl dne)</option>
         <option value="P">P – propuska / lékař</option>
         <option value="ot">Přesčas 25% – pracovní den</option>
         <option value="otso">Přesčas 25% – sobota</option>
@@ -534,7 +540,8 @@ function calcSums(emp){
     if(emp.prov==='2sm'){
       // 2sm: no auto-holiday hours, only manual overtime on holiday
       if(t==='N'){nem++;continue;}
-      if(t==='D'){dov++;continue;}// Dovolená: jen dov++
+      if(t==='D'){dov++;continue;}
+      if(t==='D2'){dov+=0.5;if(!we)days++;continue;}// D/2: půl den vol., 4h odprac.
       if(t==='P'){prop+=h;if(!we)days++;continue;}// Propuska: odprac. den + hodiny propusky
       if(t==='ot'){// weekday OT 25%
         otW+=h;if(!we)days++;continue;}
@@ -553,7 +560,8 @@ function calcSums(emp){
     const night=isNightT(sh),off=isOffT(sh);
     const isWknd=we; // Sat or Sun
     if(t==='N'){nem++;continue;}
-    if(t==='D'){dov++;continue;}// Dovolená: počítá se jen den D, žádné hodiny
+    if(t==='D'){dov++;continue;}
+    if(t==='D2'){dov+=0.5;if(!off){days++;if(night)nightH+=6;if(isWknd)weH+=6;}continue;}// D/2: 6h odprac., půl den vol.
     if(t==='P'){prop+=h;if(!off){days++;if(night)nightH+=8;if(isWknd)weH+=12;}continue;}// Propuska: odprac. den + noční/víkend příplatky
     if(t==='ot'){// weekday OT 25%
       otW+=h;if(!off){days++;if(night)nightH+=8;}continue;}
@@ -591,7 +599,7 @@ function cellCls(emp,d,rec){
     return'cbr';
   }
   const t=rec?.t||null;
-  if(t==='N') return'cN';if(t==='D') return'cD';if(t==='P') return'cP';if(t==='we') return'cWE';
+  if(t==='N') return'cN';if(t==='D') return'cD';if(t==='D2') return'cD2';if(t==='P') return'cP';if(t==='we') return'cWE';
   const sv=isSv(ST.m,d);
   if(emp.prov==='2sm'){
     const we=isWE(ST.y,ST.m,d);
@@ -627,7 +635,7 @@ function cellDisp(emp,d,rec){
     if(!isOffT(sh)) return 11;
   }
   if(!t) return null;
-  if(t==='N') return'N';if(t==='D') return'D';if(t==='P') return(h||'')+'/P';
+  if(t==='N') return'N';if(t==='D') return'D';if(t==='D2') return'D/2';if(t==='P') return(h||'')+'/P';
   if(t==='ot') return h||'';if(t==='neg') return'-'+(h||'');
   if(t==='otso') return h||'';if(t==='otne') return h||'';
   if(t==='otsv') return h||'';if(t==='sv') return h||11;
@@ -745,9 +753,11 @@ function calcEmpHoursForDays(emp, days){
     }
     if(t==='N') return; // sick
     if(t==='D') return; // vacation
+    // D2: partial day worked
     const we=isWE(ST.y,ST.m,d);
     if(emp.prov==='2sm'){
       // 2sm: 8h per non-weekend workday (no group-based schedule)
+      if(t==='D2'){if(!we)h+=4;return;}// D/2 = 4h
       if(t==='ot'){h+=8+(rec.h||0);return;}
       if(t==='otso'||t==='otne'){h+=rec.h||0;return;}
       if(t==='otsv'){h+=rec.h||0;return;}
@@ -760,6 +770,7 @@ function calcEmpHoursForDays(emp, days){
     const sh=getShift(emp,ST.m,d);
     if(isOffT(sh)) return;
     const shH=12;
+    if(t==='D2'){h+=6;return;}// D/2 = 6h
     if(t==='ot') h+=shH+(rec.h||0);
     else if(t==='neg') h+=Math.max(0,shH-(rec.h||0));
     else if(t==='P') h+=shH;
@@ -857,25 +868,8 @@ function showWeeklyReport(){
 
 function twScroll(px){
   var tw=document.getElementById('mainTw');
-  var fs=document.getElementById('fakeScroll');
   if(!tw) return;
   tw.scrollLeft += px;
-  if(fs) fs.scrollLeft = tw.scrollLeft;
-}
-
-function syncFakeScroll(){
-  var tw=document.getElementById('mainTw');
-  var fs=document.getElementById('fakeScroll');
-  var fi=document.getElementById('fakeScrollInner');
-  if(!tw||!fs) return;
-  if(fi) fi.style.width = tw.scrollWidth + 'px';
-  if(!fs._bound){
-    fs.addEventListener('scroll',function(){ tw.scrollLeft = fs.scrollLeft; });
-    tw.addEventListener('scroll',function(){ fs.scrollLeft = tw.scrollLeft; });
-    fs._bound = true;
-  }
-  tw.scrollLeft = 0;
-  if(fs) fs.scrollLeft = 0;
 }
 
 function render(){
@@ -1198,7 +1192,7 @@ function openCell(empId,day){
     const sel=document.getElementById('ct');
     ['hOT','hOTSO','hOTNE','hOTSV','hSV','hNEG','hP'].forEach(id=>document.getElementById(id).value='');
     if(!rec?.t)sel.value='';
-    else if(rec.t==='N')sel.value='N';else if(rec.t==='D')sel.value='D';
+    else if(rec.t==='N')sel.value='N';else if(rec.t==='D')sel.value='D';else if(rec.t==='D2')sel.value='D2';
     else if(rec.t==='P'){sel.value='P';document.getElementById('hP').value=rec.h||'';}
     else if(rec.t==='ot'){sel.value='ot';document.getElementById('hOT').value=rec.h||'';}
     else if(rec.t==='otso'){sel.value='otso';document.getElementById('hOTSO').value=rec.h||'';}
@@ -1279,7 +1273,7 @@ function saveCell(){
   else{
     const t=document.getElementById('ct').value;
     if(!t)delete emp.data[ET.day];
-    else if(t==='N')emp.data[ET.day]={t:'N'};else if(t==='D')emp.data[ET.day]={t:'D'};
+    else if(t==='N')emp.data[ET.day]={t:'N'};else if(t==='D')emp.data[ET.day]={t:'D'};else if(t==='D2')emp.data[ET.day]={t:'D2'};
     else if(t==='P')emp.data[ET.day]={t:'P',h:parseFloat(document.getElementById('hP').value)||0};
     else if(t==='ot')emp.data[ET.day]={t:'ot',h:parseFloat(document.getElementById('hOT').value)||0};
     else if(t==='otso')emp.data[ET.day]={t:'otso',h:parseFloat(document.getElementById('hOTSO').value)||0};
@@ -1791,7 +1785,6 @@ function loadScript(src){
       restoreState(data);
       render();
       updateNameDropdown();
-      var tw=document.getElementById('mainTw');if(tw)tw.scrollLeft=0;
       showSyncStatus('↺ Sync', '#2563eb');
     }
   });
