@@ -659,7 +659,7 @@ function renderManualRow(rowKey,label,sublabel,rowCls,n,autoData){
     }
   }
   // 8 summary cols (Dny, Noční h, Víkend h, Přesčas, Mínus, N, D, P h) — show dashes
-  for(let i=0;i<13;i++) html+=`<td class="ts" style="color:var(--tx3)">—</td>`;
+  for(let i=0;i<12;i++) html+=`<td class="ts" style="color:var(--tx3)">—</td>`;
   // CELKEM h column — show month total
   html+=`<td class="ts" style="font-size:12px;font-weight:700;color:#1d4ed8;background:#dbeafe!important;border-left:2px solid #93c5fd!important">${total>0?total:'—'}</td>`;
   html+=`</tr>`;
