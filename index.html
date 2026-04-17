@@ -53,17 +53,16 @@ select:hover,button:hover{border-color:var(--b3)}
 .lsep{color:var(--tx3);margin:0 2px}
 /* TABLE */
 .tw{overflow:auto;flex:1;min-height:0;-webkit-overflow-scrolling:touch}
-.tw table{width:auto !important}
 .tw::-webkit-scrollbar{width:12px;height:12px}
 .tw::-webkit-scrollbar-track{background:#cbd5e1}
 .tw::-webkit-scrollbar-thumb{background:#334155;border-radius:6px;border:2px solid #cbd5e1}
 .tw::-webkit-scrollbar-corner{background:#cbd5e1}
 table{border-collapse:collapse;font-size:11px;min-width:1200px}
 thead th{background:var(--bg2);color:var(--tx2);font-family:'DM Mono',monospace;font-size:9px;font-weight:500;text-transform:uppercase;letter-spacing:.05em;padding:6px 2px;text-align:center;border-bottom:2px solid var(--b2);white-space:nowrap;position:sticky;top:0;z-index:10}
-thead th.cn{text-align:left;padding-left:18px;min-width:138px;position:sticky;left:0;top:0;background:var(--bg2)!important;z-index:25;border-right:2px solid var(--b2);box-shadow:4px 0 8px -2px rgba(0,0,0,.2)}
-thead th.cp{text-align:left;padding-left:4px;min-width:90px;background:var(--bg2);border-right:2px solid var(--b2)}
+thead th.cn{text-align:left;padding-left:18px;min-width:138px;border-right:1px solid var(--b2)}
+thead th.cp{text-align:left;padding-left:4px;min-width:90px;border-right:2px solid var(--b2)}
 td{padding:3px 1px;text-align:center;border-bottom:1px solid var(--b1);font-family:'DM Mono',monospace;min-width:22px}
-td.cn{text-align:left;padding-left:18px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;color:var(--tx);position:sticky;left:0;background:var(--bg2)!important;z-index:15;white-space:nowrap;border-right:2px solid var(--b2);box-shadow:4px 0 8px -2px rgba(0,0,0,.2)}
+td.cn{text-align:left;padding-left:18px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;color:var(--tx);white-space:nowrap;border-right:1px solid var(--b2)}
 td.cp{text-align:left;padding-left:4px;background:var(--bg2);font-family:'DM Sans',sans-serif;border-right:2px solid var(--b2)}
 tr:hover td{filter:brightness(.95)}
 tr:hover td.cn{filter:none;background:var(--bg4)!important;box-shadow:4px 0 8px -2px rgba(0,0,0,.2)}
@@ -202,6 +201,9 @@ tr:hover td.cn{filter:none;background:var(--bg4)!important;box-shadow:4px 0 8px 
 .sh-btn.active.off{outline-color:#94a3b8}
 .sh-divider{font-size:10px;color:var(--tx3);margin:4px 0 8px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.06em}
 .mr-row td.cn{background:#fffbeb!important;box-shadow:4px 0 8px -2px rgba(0,0,0,.2);font-weight:600;font-size:11px;color:#92400e}
+.mr-row td.mr-cn2{background:#fffbeb!important;font-weight:600;font-size:11px;color:#92400e}
+.offwc-row td.mr-cn2{background:#eff6ff!important;font-weight:600;color:#1e40af}
+.offceln-row td.mr-cn2{background:#f0fdf4!important;font-weight:600;color:#14532d}
 .mr-row td.cp{background:#fffbeb;font-size:10px;color:#b45309}
 .mr-row td.mr-cell{cursor:pointer}
 .mr-row td.mr-cell:hover{background:#fef3c7}
@@ -672,6 +674,7 @@ function renderManualRow(rowKey,label,sublabel,rowCls,n,autoData){
     }
   }
   // 8 summary cols (Dny, Noční h, Víkend h, Přesčas, Mínus, N, D, P h) — show dashes
+  html+=`<td class="cn mr-cn2" style="border-left:3px solid var(--b2)">—</td>`;
   for(let i=0;i<12;i++) html+=`<td class="ts" style="color:var(--tx3)">—</td>`;
   // CELKEM h column — show month total
   html+=`<td class="ts" style="font-size:12px;font-weight:700;color:#1d4ed8;background:#dbeafe!important;border-left:2px solid #93c5fd!important">${total>0?total:'—'}</td>`;
@@ -717,6 +720,7 @@ function makeSubHeader(n,prov){
   }
   // summary col headers
   const sumCols=['Dny','Noční h','Víkend h','Př 25%','Př So','Př Ne','Př sv','Mínus','N','D','P h','Svátek','CELKEM'];
+  row+=`<td class="cn" style="border-left:3px solid var(--b2);font-size:9px;font-weight:700;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.06em">Jméno</td>`;
   sumCols.forEach((lbl,i)=>{
     const bg=i===12?'background:#dbeafe;color:#1d4ed8;':i===11?'background:#fff7ed;color:#7c2d12;':'background:var(--bg3);color:var(--tx3);';
     row+=`<td style="${bg};text-align:center;font-size:8px;font-weight:700;padding:3px 1px;font-family:'DM Mono',monospace;white-space:nowrap">${lbl}</td>`;
@@ -902,6 +906,7 @@ function render(){
     const todayCls=isToday?' class="today-col-hdr"':'';
     ths+=`<th${todayCls} style="${wbg}${wbl}font-weight:${isToday?'800':'600'}"${svTitle}><div style="font-size:11px;font-weight:${isToday?'800':'600'}">${d}${isToday?'◀':''}</div><div style="font-size:9px;opacity:.7">${DN[w]}</div></th>`;
   }
+  ths+=`<th class="cn" style="border-left:3px solid var(--b2)">Jméno</th>`;
   ths+=`<th style="color:var(--day-tx);min-width:32px">Dny</th>`;
   ths+=`<th style="color:var(--ngt-tx);min-width:36px">Noční h</th>`;
   ths+=`<th style="color:var(--wed-tx);min-width:36px">Víkend h</th>`;
@@ -946,6 +951,10 @@ function render(){
         const todayTint=isToday?'outline:2px solid #fbbf24;outline-offset:-2px;':'';
         html+=`<td class="${cls}" onclick="openCell(${emp.id},${d})" style="cursor:pointer;${wbl}${todayTint}">${disp||'<span style="color:#d1d5db">·</span>'}</td>`;
       }
+      // Second name column before summary
+      const grpColor2=gcol(emp.grp);
+      const grpBg2=emp.grp==='blue'?'rgba(59,130,246,.07)':emp.grp==='black'?'rgba(100,116,139,.07)':emp.grp==='green'?'rgba(34,197,94,.07)':emp.grp==='red'?'rgba(239,68,68,.07)':'';
+      html+=`<td class="cn" style="border-left:3px solid ${grpColor2};${grpBg2?'background:'+grpBg2:''}">${emp.name}</td>`;
       if(isBr){
         // brigada columns match header: Dny|Noční|Víkend|Př25%|PřSo|PřNe|PřSv|Mínus|N|D|Ph|Svátek|CELKEM
         // Dny | Noční | Víkend | Př25% | PřSo | PřNe | PřSv | Mínus | N | D | Ph | Svátek | CELKEM
@@ -1057,6 +1066,7 @@ function render(){
       html+=`<td class="ts" style="${wbl};font-size:10px;font-weight:600;color:${mv>0?'#1d4ed8':'var(--tx3)'}">${mv>0?mv+'h':''}</td>`;
     }
     // 8 summary cols
+    html+=`<td class="cn tr" style="border-left:3px solid var(--b2);font-size:9px;font-family:'DM Mono',monospace;letter-spacing:.07em;color:var(--tx3);text-transform:uppercase;background:var(--bg3)!important">CELKEM</td>`;
     html+=`<td class="ts" style="color:var(--day-tx)">${tD||''}</td>`;
     html+=`<td class="ts" style="color:var(--ngt-tx)">${tN>0?r2(tN):''}</td>`;
     html+=`<td class="ts" style="color:var(--wed-tx)">${tW>0?r2(tW):''}</td>`;
