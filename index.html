@@ -1063,6 +1063,7 @@ function render(){
     html+=`<td class="ts" style="color:var(--NEG)">${tM>0?'-'+r2(tM):''}</td>`;
     html+=`<td class="ts" style="color:var(--N-tx)">${tNem||''}</td>`;
     html+=`<td class="ts" style="color:var(--D-tx)">${tDov||''}</td>`;
+    html+=`<td class="ts" style="color:var(--P-tx)">${tPr>0?r2(tPr):''}</td>`;
     // CELKEM h: sum of all 5 manual rows as tooltip breakdown + grand total
     const breakdown=`4sm:${man4sm}h | 2sm:${man2sm}h | Brig:${manBrig}h | WC:${manWC}h | Celní:${manCeln}h`;
     let tSv=0;emps.forEach(e=>{const s=calcSums(e);tSv+=s.svatekH||0;});tSv=r2(tSv);
