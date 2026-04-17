@@ -117,7 +117,7 @@ tr:hover td.cn{filter:none;background:var(--bg4)!important;box-shadow:4px 0 8px 
 /* WEEKLY REPORT */
 .wr-wrap{background:var(--bg2);border:1px solid var(--b2);border-radius:10px;overflow:hidden}
 .wr-title{padding:10px 16px;background:var(--bg3);border-bottom:1px solid var(--b2);font-size:12px;font-weight:700;color:var(--tx2);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;display:flex;align-items:center;gap:8px}
-.wr-table{width:100%;border-collapse:collapse;font-size:12px;font-family:'DM Sans',sans-serif}
+.wr-table{width:max-content;min-width:100%;border-collapse:collapse;font-size:12px;font-family:'DM Sans',sans-serif}
 .wr-table th{background:var(--bg3);color:var(--tx3);font-size:10px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.06em;padding:6px 14px;text-align:left;border-bottom:1px solid var(--b2);white-space:nowrap}
 .wr-table th.wh{text-align:center;min-width:80px}
 .wr-table td{padding:8px 14px;border-bottom:1px solid var(--b1);color:var(--tx)}
@@ -1882,12 +1882,12 @@ function loadScript(src){
 
 <!-- WEEKLY REPORT MODAL -->
 <div id="wrMod" style="display:none" class="mbg" onclick="if(event.target===this)document.getElementById('wrMod').style.display='none'">
-<div class="md" style="width:700px;max-width:96vw;max-height:85vh;overflow-y:auto">
+<div class="md" style="width:90vw;max-width:1100px;max-height:85vh;overflow:auto">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
     <h3 style="margin:0">📊 Týdenní report</h3>
     <button class="bcl" onclick="document.getElementById('wrMod').style.display='none'" style="height:28px;padding:0 12px">✕ Zavřít</button>
   </div>
-  <div id="wrContent"></div>
+  <div id="wrContent" style="overflow-x:auto"></div>
 </div>
 </div>
 
