@@ -867,12 +867,15 @@ function syncFakeScroll(){
   var tw=document.getElementById('mainTw');
   var fs=document.getElementById('fakeScroll');
   var fi=document.getElementById('fakeScrollInner');
-  if(!tw||!fs||!fi) return;
-  fi.style.width = tw.scrollWidth + 'px';
-  fs.onscroll = function(){ tw.scrollLeft = fs.scrollLeft; };
-  tw.onscroll = function(){ fs.scrollLeft = tw.scrollLeft; };
+  if(!tw||!fs) return;
+  if(fi) fi.style.width = tw.scrollWidth + 'px';
+  if(!fs._bound){
+    fs.addEventListener('scroll',function(){ tw.scrollLeft = fs.scrollLeft; });
+    tw.addEventListener('scroll',function(){ fs.scrollLeft = tw.scrollLeft; });
+    fs._bound = true;
+  }
   tw.scrollLeft = 0;
-  fs.scrollLeft = 0;
+  if(fs) fs.scrollLeft = 0;
 }
 
 function render(){
@@ -1788,6 +1791,7 @@ function loadScript(src){
       restoreState(data);
       render();
       updateNameDropdown();
+      var tw=document.getElementById('mainTw');if(tw)tw.scrollLeft=0;
       showSyncStatus('↺ Sync', '#2563eb');
     }
   });
