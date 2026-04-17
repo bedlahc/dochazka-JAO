@@ -855,6 +855,26 @@ function showWeeklyReport(){
 
 
 
+function twScroll(px){
+  var tw=document.getElementById('mainTw');
+  var fs=document.getElementById('fakeScroll');
+  if(!tw) return;
+  tw.scrollLeft += px;
+  if(fs) fs.scrollLeft = tw.scrollLeft;
+}
+
+function syncFakeScroll(){
+  var tw=document.getElementById('mainTw');
+  var fs=document.getElementById('fakeScroll');
+  var fi=document.getElementById('fakeScrollInner');
+  if(!tw||!fs||!fi) return;
+  fi.style.width = tw.scrollWidth + 'px';
+  fs.onscroll = function(){ tw.scrollLeft = fs.scrollLeft; };
+  tw.onscroll = function(){ fs.scrollLeft = tw.scrollLeft; };
+  tw.scrollLeft = 0;
+  fs.scrollLeft = 0;
+}
+
 function render(){
   const n=dInM(ST.m,ST.y);
   document.getElementById('ptitle').textContent=`Docházka — ${MCZ[ST.m]} ${ST.y}`;
