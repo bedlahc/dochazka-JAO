@@ -1575,7 +1575,27 @@ function doRestore(event){
         alert('Neplatný zálohovací soubor.'); return;
       }
       // Restore data
-      if(backup.monthData)  ST.monthData  = backup.monthData;
+      // Fix array keys → object keys (Firebase stores arrays differently)
+      if(backup.monthData){
+        Object.keys(backup.monthData).forEach(m=>{
+          const md = backup.monthData[m];
+          if(Array.isArray(md)){
+            const fixed={};
+            md.forEach((v,i)=>{if(v!==null&&v!==undefined&&Object.keys(v||{}).length>0)fixed[String(i)]=v;});
+            backup.monthData[m]=fixed;
+          } else {
+            // Fix any nested arrays (emp data stored as array)
+            Object.keys(md||{}).forEach(eid=>{
+              if(Array.isArray(md[eid])){
+                const fixedEmp={};
+                md[eid].forEach((v,i)=>{if(v!==null&&v!==undefined)fixedEmp[String(i)]=v;});
+                md[eid]=fixedEmp;
+              }
+            });
+          }
+        });
+        ST.monthData = backup.monthData;
+      }
       if(backup.monthManualRows) ST.monthManualRows = backup.monthManualRows;
       else if(backup.manualRows) ST.monthManualRows[ST.m] = backup.manualRows;
       // Restore current month into emps
