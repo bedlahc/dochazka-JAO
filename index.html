@@ -234,6 +234,10 @@ tr:hover td.cn{filter:none;background:var(--bg4)!important;box-shadow:4px 0 8px 
 <body>
 <div class="topbar">
   <div class="logo">DAMCO <b>JAROMĚŘ</b></div>
+  <div style="display:flex;align-items:center;gap:6px;margin-left:4px">
+    <span id="userEmail" style="font-size:11px;color:var(--tx3);font-family:'DM Mono',monospace"></span>
+    <button onclick="if(window._fbAuth)window._fbAuth.signOut()" style="height:24px;padding:0 8px;font-size:11px;background:var(--bg3);border:1px solid var(--b2);border-radius:4px;color:var(--tx2);cursor:pointer;font-family:'DM Sans',sans-serif">Odhlásit</button>
+  </div>
   <div id="syncStatus" style="font-size:11px;font-family:'DM Mono',monospace;color:#94a3b8;transition:opacity .5s;margin-left:4px">● Připojování...</div>
   <div class="ptitle" id="ptitle">Docházka — Duben 2026</div>
   <div style="display:flex;gap:3px;margin-left:4px">
@@ -1742,6 +1746,20 @@ function loadScript(src){
   };
   if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
+  const auth = firebase.auth();
+  window._fbAuth = auth;
+
+  // Auth state listener - show/hide app
+  auth.onAuthStateChanged(user=>{
+    if(user){
+      document.getElementById('loginScreen').style.display='none';
+      // Show user email in topbar
+      const el=document.getElementById('userEmail');
+      if(el) el.textContent=user.email.split('@')[0];
+    } else {
+      document.getElementById('loginScreen').style.display='flex';
+    }
+  });
 
   function showSyncStatus(msg, color){
     const el = document.getElementById('syncStatus');
@@ -1908,7 +1926,7 @@ function loadScript(src){
 </div>
 </div>
 
-<!-- LOGIN SCREEN -->
+<!-- FIREBASE AUTH LOGIN SCREEN -->
 <div id="loginScreen">
   <div class="login-box">
     <div class="login-logo">
@@ -1920,37 +1938,50 @@ function loadScript(src){
       <div class="login-dot active"></div>
     </div>
     <div class="login-title">Docházkový systém</div>
-    <div class="login-sub">Přihlaste se pro přístup k docházce</div>
+    <div class="login-sub">Přihlaste se svým firemním emailem</div>
+    <div style="margin-bottom:12px">
+      <label class="login-label">Email</label>
+      <input class="login-input" type="email" id="loginEmail" placeholder="vas@email.com" onkeydown="if(event.key==='Enter')document.getElementById('loginPwd').focus()">
+    </div>
     <div>
       <label class="login-label">Heslo</label>
-      <input class="login-input" type="password" id="loginPwd" placeholder="Zadejte heslo..." onkeydown="if(event.key==='Enter')doLogin()">
+      <input class="login-input" type="password" id="loginPwd" placeholder="Zadejte heslo..." onkeydown="if(event.key==='Enter')doFirebaseLogin()">
     </div>
-    <button class="login-btn" onclick="doLogin()">Přihlásit se</button>
+    <button class="login-btn" id="loginBtn" onclick="doFirebaseLogin()">Přihlásit se</button>
     <div class="login-error" id="loginErr"></div>
     <div class="login-footer">Damco Jaroměř &nbsp;·&nbsp; 2026</div>
   </div>
 </div>
 
 <script>
-// ── LOGIN ──
-const APP_PWD = 'Damco2026';
-function doLogin(){
-  const val=document.getElementById('loginPwd').value;
-  if(val===APP_PWD){
-    document.getElementById('loginScreen').style.display='none';
-    sessionStorage.setItem('dochazka_auth','1');
-  } else {
-    const err=document.getElementById('loginErr');
-    err.textContent='Nesprávné heslo. Zkuste znovu.';
-    document.getElementById('loginPwd').value='';
-    document.getElementById('loginPwd').focus();
-    setTimeout(()=>err.textContent='',3000);
-  }
+function doFirebaseLogin(){
+  const email=document.getElementById('loginEmail').value.trim();
+  const pwd=document.getElementById('loginPwd').value;
+  const err=document.getElementById('loginErr');
+  const btn=document.getElementById('loginBtn');
+  if(!email||!pwd){err.textContent='Zadejte email a heslo.';return;}
+  btn.textContent='Přihlašuji...';btn.disabled=true;
+  err.textContent='';
+  // Wait for Firebase auth to be ready
+  const tryLogin=()=>{
+    if(!window._fbAuth){setTimeout(tryLogin,200);return;}
+    window._fbAuth.signInWithEmailAndPassword(email,pwd)
+      .then(()=>{
+        document.getElementById('loginScreen').style.display='none';
+      })
+      .catch(e=>{
+        let msg='Nesprávný email nebo heslo.';
+        if(e.code==='auth/user-not-found') msg='Uživatel nenalezen.';
+        if(e.code==='auth/wrong-password') msg='Nesprávné heslo.';
+        if(e.code==='auth/invalid-email') msg='Neplatný email.';
+        if(e.code==='auth/too-many-requests') msg='Příliš mnoho pokusů. Zkuste později.';
+        err.textContent=msg;
+        btn.textContent='Přihlásit se';btn.disabled=false;
+      });
+  };
+  tryLogin();
 }
-if(sessionStorage.getItem('dochazka_auth')==='1'){
-  document.getElementById('loginScreen').style.display='none';
-}
-document.getElementById('loginPwd').focus();
+document.getElementById('loginEmail').focus();
 </script>
 </body>
 </html>
