@@ -1734,6 +1734,7 @@ function loadScript(src){
 (function initFirebase(){
   loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js')
   .then(()=>loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js'))
+  .then(()=>loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js'))
   .then(()=>{
   const firebaseConfig = {
     apiKey: "AIzaSyADtN_1sfMlmpY6nelwIF4PYTHO_Ssi7Ag",
