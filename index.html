@@ -1393,7 +1393,16 @@ function doExportXLS(){
   // XML Spreadsheet format - supports full formatting AND explicit text type
   const esc=(s)=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
-  // Cell with explicit String type - never interpreted as date
+  // Smart cell - numbers as Number type, text as String type
+  const cell=(v,style)=>{
+    if(v===''||v===null||v===undefined) return `<Cell ss:StyleID="${style||'s1'}"/>`;
+    const s=String(v);
+    const num=parseFloat(s.replace(',','.'));
+    if(!isNaN(num)&&s.trim()!==''&&!/[^0-9.\-]/.test(s.trim())){
+      return `<Cell ss:StyleID="${style||'s1'}"><Data ss:Type="Number">${num}</Data></Cell>`;
+    }
+    return `<Cell ss:StyleID="${style||'s1'}"><Data ss:Type="String">${esc(s)}</Data></Cell>`;
+  };
   const strCell=(v,style)=>`<Cell ss:StyleID="${style||'s1'}"><Data ss:Type="String">${esc(v)}</Data></Cell>`;
   const numCell=(v,style)=>`<Cell ss:StyleID="${style||'s1'}"><Data ss:Type="Number">${v}</Data></Cell>`;
   const emptyCell=(style)=>`<Cell ss:StyleID="${style||'s1'}"/>`;
@@ -1408,26 +1417,26 @@ function doExportXLS(){
   <Style ss:ID="s1"><Alignment ss:Horizontal="Center"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/></Borders><Font ss:Size="9"/></Style>
   <Style ss:ID="hdr"><Alignment ss:Horizontal="Center"/><Font ss:Bold="1" ss:Color="#FFFFFF" ss:Size="9"/><Interior ss:Color="#1E3A5F" ss:Pattern="Solid"/></Style>
   <Style ss:ID="hdrL"><Alignment ss:Horizontal="Left"/><Font ss:Bold="1" ss:Color="#FFFFFF" ss:Size="9"/><Interior ss:Color="#1E3A5F" ss:Pattern="Solid"/></Style>
-  <Style ss:ID="sd"><Alignment ss:Horizontal="Center"/><Interior ss:Color="#93C5FD" ss:Pattern="Solid"/><Font ss:Size="9"/></Style>
-  <Style ss:ID="sn"><Alignment ss:Horizontal="Center"/><Interior ss:Color="#94A3B8" ss:Pattern="Solid"/><Font ss:Size="9"/></Style>
-  <Style ss:ID="swe"><Alignment ss:Horizontal="Center"/><Interior ss:Color="#86EFAC" ss:Pattern="Solid"/><Font ss:Size="9"/></Style>
-  <Style ss:ID="cN"><Alignment ss:Horizontal="Center"/><Interior ss:Color="#FECACA" ss:Pattern="Solid"/><Font ss:Bold="1" ss:Size="9"/></Style>
-  <Style ss:ID="cD"><Alignment ss:Horizontal="Center"/><Interior ss:Color="#BBF7D0" ss:Pattern="Solid"/><Font ss:Bold="1" ss:Size="9"/></Style>
-  <Style ss:ID="cD2"><Alignment ss:Horizontal="Center"/><Interior ss:Color="#DCF2E7" ss:Pattern="Solid"/><Font ss:Bold="1" ss:Size="9"/></Style>
-  <Style ss:ID="cP"><Alignment ss:Horizontal="Center"/><Interior ss:Color="#DDD6FE" ss:Pattern="Solid"/><Font ss:Bold="1" ss:Size="9"/></Style>
-  <Style ss:ID="cSV"><Alignment ss:Horizontal="Center"/><Interior ss:Color="#FED7AA" ss:Pattern="Solid"/><Font ss:Bold="1" ss:Size="9"/></Style>
-  <Style ss:ID="ot"><Alignment ss:Horizontal="Center"/><Interior ss:Color="#EDE9FE" ss:Pattern="Solid"/><Font ss:Bold="1" ss:Size="9"/></Style>
-  <Style ss:ID="neg"><Alignment ss:Horizontal="Center"/><Font ss:Bold="1" ss:Color="#DC2626" ss:Size="9"/></Style>
-  <Style ss:ID="sv"><Alignment ss:Horizontal="Center"/><Interior ss:Color="#FFF7ED" ss:Pattern="Solid"/><Font ss:Size="9"/></Style>
-  <Style ss:ID="celkem"><Alignment ss:Horizontal="Center"/><Interior ss:Color="#DBEAFE" ss:Pattern="Solid"/><Font ss:Bold="1" ss:Color="#1D4ED8" ss:Size="9"/></Style>
-  <Style ss:ID="mr"><Alignment ss:Horizontal="Center"/><Interior ss:Color="#FEF9C3" ss:Pattern="Solid"/><Font ss:Bold="1" ss:Size="9"/></Style>
-  <Style ss:ID="mrL"><Alignment ss:Horizontal="Left"/><Interior ss:Color="#FEF9C3" ss:Pattern="Solid"/><Font ss:Bold="1" ss:Size="9"/></Style>
+  <Style ss:ID="sd"><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/></Borders><Alignment ss:Horizontal="Center"/><Interior ss:Color="#93C5FD" ss:Pattern="Solid"/><Font ss:Size="9"/></Style>
+  <Style ss:ID="sn"><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/></Borders><Alignment ss:Horizontal="Center"/><Interior ss:Color="#94A3B8" ss:Pattern="Solid"/><Font ss:Size="9"/></Style>
+  <Style ss:ID="swe"><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/></Borders><Alignment ss:Horizontal="Center"/><Interior ss:Color="#86EFAC" ss:Pattern="Solid"/><Font ss:Size="9"/></Style>
+  <Style ss:ID="cN"><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/></Borders><Alignment ss:Horizontal="Center"/><Interior ss:Color="#FECACA" ss:Pattern="Solid"/><Font ss:Bold="1" ss:Size="9"/></Style>
+  <Style ss:ID="cD"><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/></Borders><Alignment ss:Horizontal="Center"/><Interior ss:Color="#BBF7D0" ss:Pattern="Solid"/><Font ss:Bold="1" ss:Size="9"/></Style>
+  <Style ss:ID="cD2"><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/></Borders><Alignment ss:Horizontal="Center"/><Interior ss:Color="#DCF2E7" ss:Pattern="Solid"/><Font ss:Bold="1" ss:Size="9"/></Style>
+  <Style ss:ID="cP"><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/></Borders><Alignment ss:Horizontal="Center"/><Interior ss:Color="#DDD6FE" ss:Pattern="Solid"/><Font ss:Bold="1" ss:Size="9"/></Style>
+  <Style ss:ID="cSV"><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/></Borders><Alignment ss:Horizontal="Center"/><Interior ss:Color="#FED7AA" ss:Pattern="Solid"/><Font ss:Bold="1" ss:Size="9"/></Style>
+  <Style ss:ID="ot"><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/></Borders><Alignment ss:Horizontal="Center"/><Interior ss:Color="#EDE9FE" ss:Pattern="Solid"/><Font ss:Bold="1" ss:Size="9"/></Style>
+  <Style ss:ID="neg"><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/></Borders><Alignment ss:Horizontal="Center"/><Font ss:Bold="1" ss:Color="#DC2626" ss:Size="9"/></Style>
+  <Style ss:ID="sv"><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/></Borders><Alignment ss:Horizontal="Center"/><Interior ss:Color="#FFF7ED" ss:Pattern="Solid"/><Font ss:Size="9"/></Style>
+  <Style ss:ID="celkem"><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/></Borders><Alignment ss:Horizontal="Center"/><Interior ss:Color="#DBEAFE" ss:Pattern="Solid"/><Font ss:Bold="1" ss:Color="#1D4ED8" ss:Size="9"/></Style>
+  <Style ss:ID="mr"><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/></Borders><Alignment ss:Horizontal="Center"/><Interior ss:Color="#FEF9C3" ss:Pattern="Solid"/><Font ss:Bold="1" ss:Size="9"/></Style>
+  <Style ss:ID="mrL"><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/></Borders><Alignment ss:Horizontal="Left"/><Interior ss:Color="#FEF9C3" ss:Pattern="Solid"/><Font ss:Bold="1" ss:Size="9"/></Style>
   <Style ss:ID="grp"><Alignment ss:Horizontal="Left"/><Font ss:Bold="1" ss:Size="10"/></Style>
-  <Style ss:ID="nm"><Alignment ss:Horizontal="Left"/><Font ss:Bold="1" ss:Size="9"/></Style>
-  <Style ss:ID="pos"><Alignment ss:Horizontal="Left"/><Font ss:Size="8" ss:Color="#64748B"/></Style>
-  <Style ss:ID="wknd"><Alignment ss:Horizontal="Center"/><Interior ss:Color="#86EFAC" ss:Pattern="Solid"/><Font ss:Size="9"/></Style>
-  <Style ss:ID="hdrWknd"><Alignment ss:Horizontal="Center"/><Interior ss:Color="#86EFAC" ss:Pattern="Solid"/><Font ss:Bold="1" ss:Size="9" ss:Color="#14532D"/></Style>
-  <Style ss:ID="hdrSv"><Alignment ss:Horizontal="Center"/><Interior ss:Color="#FED7AA" ss:Pattern="Solid"/><Font ss:Bold="1" ss:Size="9" ss:Color="#7C2D12"/></Style>
+  <Style ss:ID="nm"><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/></Borders><Alignment ss:Horizontal="Left"/><Font ss:Bold="1" ss:Size="9"/></Style>
+  <Style ss:ID="pos"><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/></Borders><Alignment ss:Horizontal="Left"/><Font ss:Size="8" ss:Color="#64748B"/></Style>
+  <Style ss:ID="wknd"><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/></Borders><Alignment ss:Horizontal="Center"/><Interior ss:Color="#86EFAC" ss:Pattern="Solid"/><Font ss:Size="9"/></Style>
+  <Style ss:ID="hdrWknd"><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/></Borders><Alignment ss:Horizontal="Center"/><Interior ss:Color="#86EFAC" ss:Pattern="Solid"/><Font ss:Bold="1" ss:Size="9" ss:Color="#14532D"/></Style>
+  <Style ss:ID="hdrSv"><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/></Borders><Alignment ss:Horizontal="Center"/><Interior ss:Color="#FED7AA" ss:Pattern="Solid"/><Font ss:Bold="1" ss:Size="9" ss:Color="#7C2D12"/></Style>
 </Styles>
 <Worksheet ss:Name="${MCZ[ST.m]} ${ST.y}">
 <Table>
@@ -1475,25 +1484,25 @@ function doExportXLS(){
       const disp=cellDisp(emp,d,rec);
       const cls=cellCls(emp,d,rec);
       const st=getCellStyle(cls);
-      xml+=strCell(disp!==null?disp:'',st);
+      xml+=cell(disp!==null?disp:'',st);
     }
     if(isBr){
       for(let i=0;i<12;i++) xml+=emptyCell('s1');
-      xml+=strCell(r2(s.brig-s.negH)||'','celkem');
+      xml+=cell(r2(s.brig-s.negH)||'','celkem');
     } else {
-      xml+=strCell(s.days||'','s1');
-      xml+=strCell(s.nightH>0?s.nightH:'','sn');
-      xml+=strCell(s.weH>0?s.weH:'','swe');
-      xml+=strCell(s.otW>0?s.otW:'','ot');
-      xml+=strCell(s.otSo>0?s.otSo:'','ot');
-      xml+=strCell(s.otNe>0?s.otNe:'','ot');
-      xml+=strCell(s.otSv>0?s.otSv:'','ot');
-      xml+=strCell(s.negH>0?'-'+s.negH:'','neg');
-      xml+=strCell(s.nem||'','cN');
-      xml+=strCell(s.dov||'','cD');
-      xml+=strCell(s.prop||'','cP');
-      xml+=strCell(s.svatekH>0?s.svatekH:'','sv');
-      xml+=strCell(r2((s.otW||0)+(s.otSo||0)+(s.otNe||0)+(s.otSv||0))||'','celkem');
+      xml+=cell(s.days||'','s1');
+      xml+=cell(s.nightH>0?s.nightH:'','sn');
+      xml+=cell(s.weH>0?s.weH:'','swe');
+      xml+=cell(s.otW>0?s.otW:'','ot');
+      xml+=cell(s.otSo>0?s.otSo:'','ot');
+      xml+=cell(s.otNe>0?s.otNe:'','ot');
+      xml+=cell(s.otSv>0?s.otSv:'','ot');
+      xml+=cell(s.negH>0?'-'+s.negH:'','neg');
+      xml+=cell(s.nem||'','cN');
+      xml+=cell(s.dov||'','cD');
+      xml+=cell(s.prop||'','cP');
+      xml+=cell(s.svatekH>0?s.svatekH:'','sv');
+      xml+=cell(r2((s.otW||0)+(s.otSo||0)+(s.otNe||0)+(s.otSv||0))||'','celkem');
     }
     xml+=`</Row>
 `;
@@ -1508,7 +1517,7 @@ function doExportXLS(){
     const mr=ST.manualRows[key]||{};
     xml+=`<Row ss:Height="16">`;
     xml+=strCell(label,'mrL')+strCell('','mr');
-    for(let d=1;d<=n;d++) xml+=strCell(mr[d]||'','mr');
+    for(let d=1;d<=n;d++) xml+=cell(mr[d]||'','mr');
     for(let i=0;i<13;i++) xml+=emptyCell('mr');
     xml+=`</Row>
 `;
