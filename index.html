@@ -230,6 +230,7 @@ tr:hover td.cn{filter:none;background:var(--bg4)!important;box-shadow:4px 0 8px 
 /* Force scrollbar visible on all platforms */
 .tw{scrollbar-width:thick !important;scrollbar-color:#334155 #cbd5e1 !important}
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
 <div class="topbar">
@@ -262,7 +263,7 @@ tr:hover td.cn{filter:none;background:var(--bg4)!important;box-shadow:4px 0 8px 
     </select>
     <button class="badd" onclick="openAddEmp()">+ Zaměstnanec</button>
     <button onclick="doExport()" style="color:var(--tx2)">↓ CSV</button>
-    <button onclick="doExportExcel()" style="color:#166534;background:#dcfce7;border-color:#86efac;font-weight:600">↓ Excel</button>
+    <button onclick="doExportXLSX()" style="color:#166534;background:#dcfce7;border-color:#86efac;font-weight:600">↓ Excel</button>
     <button onclick="doPrint()" style="color:#1e40af;background:#dbeafe;border-color:#93c5fd;font-weight:600">🖨 Tisk</button>
     <button onclick="showWeeklyReport()" style="color:#166534;background:#dcfce7;border-color:#86efac;font-weight:700">📊 Týdenní report</button>
     <button onclick="uploadToFirebase()" style="color:#fff;background:#f97316;border-color:#ea580c;font-weight:700">☁ Uložit do cloudu</button>
@@ -1383,6 +1384,73 @@ function executePrint(){
       document.querySelectorAll('tr[data-prov]').forEach(tr=>tr.style.display='');
     },500);
   },100);
+}
+
+function doExportXLSX(){
+  const n=dInM(ST.m,ST.y);
+  const DN2=['Ne','Po','Út','St','Čt','Pá','So'];
+  const wb=XLSX.utils.book_new();
+  const wsData=[];
+
+  // Header row
+  const hdr=['Jméno','Pozice'];
+  for(let d=1;d<=n;d++) hdr.push(d+'.'+DN2[dow(ST.y,ST.m,d)]);
+  hdr.push('Dny','Noční h','Víkend h','Př 25%','Př So','Př Ne','Př sv','Mínus','N','D','P h','Svátek h','CELKEM h');
+  wsData.push(hdr);
+
+  const addRow=(emp)=>{
+    const s=calcSums(emp);
+    const isBr=emp.prov==='brigada';
+    const row=[emp.name, emp.pos||''];
+    for(let d=1;d<=n;d++){
+      const disp=cellDisp(emp,d,emp.data[d]);
+      // Force string type to prevent date interpretation
+      row.push(disp!==null ? {v:String(disp),t:'s'} : '');
+    }
+    if(isBr){
+      const brigCelk=r2(s.brig-s.negH);
+      for(let i=0;i<12;i++) row.push('—');
+      row.push(brigCelk>0?brigCelk:'');
+    } else {
+      row.push(s.days||'',s.nightH>0?s.nightH:'',s.weH>0?s.weH:'',
+        s.otW>0?s.otW:'',s.otSo>0?s.otSo:'',s.otNe>0?s.otNe:'',s.otSv>0?s.otSv:'',
+        s.negH>0?'-'+s.negH:'',s.nem||'',s.dov||'',s.prop||'',
+        s.svatekH>0?s.svatekH:'','');
+    }
+    wsData.push(row);
+  };
+
+  // Group rows
+  const G4=['blue','black','green','red'];
+  const GL={blue:'MODRÁ',black:'ČERNÁ',green:'ZELENÁ',red:'ČERVENÁ'};
+  G4.forEach(g=>{
+    const list=ST.emps.filter(e=>e.prov==='4sm'&&e.grp===g);
+    if(!list.length)return;
+    wsData.push([`4-SMĚNNÝ — ${GL[g]}`]);
+    list.forEach(addRow);
+  });
+  const f2=ST.emps.filter(e=>e.prov==='2sm');
+  if(f2.length){wsData.push(['2-SMĚNNÝ PROVOZ']);f2.forEach(addRow);}
+  const fB=ST.emps.filter(e=>e.prov==='brigada');
+  if(fB.length){wsData.push(['BRIGÁDNÍCI']);fB.forEach(addRow);}
+
+  // Convert to worksheet
+  const ws=XLSX.utils.aoa_to_sheet(wsData);
+
+  // Set all day columns to text format (columns C onwards)
+  const range=XLSX.utils.decode_range(ws['!ref']);
+  for(let R=1;R<=range.e.r;R++){
+    for(let C=2;C<=n+1;C++){
+      const addr=XLSX.utils.encode_cell({r:R,c:C});
+      if(ws[addr] && ws[addr].v!==undefined && ws[addr].v!==''){
+        ws[addr].t='s'; // force string type
+        ws[addr].z='@'; // text format
+      }
+    }
+  }
+
+  XLSX.utils.book_append_sheet(wb, ws, `${MCZ[ST.m]} ${ST.y}`);
+  XLSX.writeFile(wb, `dochazka_${ST.y}_${ST.m}.xlsx`);
 }
 
 function doExportExcel(){
