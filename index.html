@@ -1946,8 +1946,9 @@ function doExport(){
 
 
 // ── IMPORT: KVĚTEN AŽ ŘÍJEN 2026 ──
+window._localImport = window._localImport || {};
+if(!ST.monthData) ST.monthData={};
 (function importAllMonths(){
-  if(!ST.monthData) ST.monthData={};
   const se=(id,m,day,rec)=>{
     const e=ST.emps.find(x=>x.id===id);if(!e)return;
     if(!ST.monthData[m])ST.monthData[m]={};
