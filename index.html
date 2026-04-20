@@ -1502,7 +1502,10 @@ function doExportXLS(){
       xml+=cell(s.dov||'','cD');
       xml+=cell(s.prop||'','cP');
       xml+=cell(s.svatekH>0?s.svatekH:'','sv');
-      xml+=cell(r2((s.otW||0)+(s.otSo||0)+(s.otNe||0)+(s.otSv||0))||'','celkem');
+      // CELKEM = odpracované dny * 12h (4sm) or 8h (2sm) + OT - neg + svátek
+      const shiftH=emp.prov==='2sm'?8:12;
+      const celkemH=r2((s.days*shiftH)+(s.nightH||0)+(s.otW||0)+(s.otSo||0)+(s.otNe||0)+(s.otSv||0)-(s.negH||0)+(s.svatekH||0));
+      xml+=cell(celkemH||'','celkem');
     }
     xml+=`</Row>
 `;
@@ -1530,8 +1533,9 @@ function doExportXLS(){
     if(!list.length)return;
     grpRow(`4-SMĚNNÝ — ${GL[g]}`);
     list.forEach(empRow);
-    mrRow('4sm','Ruční hodiny');
   });
+  // Ruční hodiny jen pod poslední (červenou) skupinou
+  mrRow('4sm','Ruční hodiny 4-směnný');
 
   const f2=ST.emps.filter(e=>e.prov==='2sm');
   if(f2.length){grpRow('2-SMĚNNÝ PROVOZ');f2.forEach(empRow);mrRow('2sm','Ruční hodiny');}
