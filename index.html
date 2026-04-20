@@ -263,7 +263,7 @@ tr:hover td.cn{filter:none;background:var(--bg4)!important;box-shadow:4px 0 8px 
     </select>
     <button class="badd" onclick="openAddEmp()">+ Zaměstnanec</button>
     <button onclick="doExport()" style="color:var(--tx2)">↓ CSV</button>
-    <button onclick="doExportXLSX()" style="color:#166534;background:#dcfce7;border-color:#86efac;font-weight:600">↓ Excel</button>
+    <button onclick="doExportXLS()" style="color:#166534;background:#dcfce7;border-color:#86efac;font-weight:600">↓ Excel</button>
     <button onclick="doPrint()" style="color:#1e40af;background:#dbeafe;border-color:#93c5fd;font-weight:600">🖨 Tisk</button>
     <button onclick="showWeeklyReport()" style="color:#166534;background:#dcfce7;border-color:#86efac;font-weight:700">📊 Týdenní report</button>
     <button onclick="uploadToFirebase()" style="color:#fff;background:#f97316;border-color:#ea580c;font-weight:700">☁ Uložit do cloudu</button>
@@ -1386,179 +1386,157 @@ function executePrint(){
   },100);
 }
 
-function doExportXLSX(){
+function doExportXLS(){
   const n=dInM(ST.m,ST.y);
   const DN2=['Ne','Po','Út','St','Čt','Pá','So'];
-  const wb=XLSX.utils.book_new();
 
-  // Color map for cell types
-  const bgColors={
-    sd:'93C5FD', sn:'94A3B8', swd:'93C5FD', swn:'94A3B8',
-    'sof-we':'86EFAC', cN:'FECACA', cD:'BBF7D0', cD2:'DCF2E7',
-    cP:'DDD6FE', cSV:'FED7AA', cbh:'EDE9FE', cbr:'F5F3FF'
-  };
-  const grpColors={blue:'DBEAFE',black:'E2E8F0',green:'DCFCE7',red:'FEE2E2'};
+  // XML Spreadsheet format - supports full formatting AND explicit text type
+  const esc=(s)=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
-  function makeCellStyle(fgColor, bold, align){
-    const s={};
-    if(fgColor) s.fill={patternType:'solid',fgColor:{rgb:fgColor}};
-    s.font={bold:!!bold,sz:9};
-    s.alignment={horizontal:align||'center',vertical:'center',wrapText:false};
-    s.border={
-      top:{style:'thin',color:{rgb:'CBD5E1'}},
-      bottom:{style:'thin',color:{rgb:'CBD5E1'}},
-      left:{style:'thin',color:{rgb:'CBD5E1'}},
-      right:{style:'thin',color:{rgb:'CBD5E1'}}
-    };
-    return s;
-  }
+  // Cell with explicit String type - never interpreted as date
+  const strCell=(v,style)=>`<Cell ss:StyleID="${style||'s1'}"><Data ss:Type="String">${esc(v)}</Data></Cell>`;
+  const numCell=(v,style)=>`<Cell ss:StyleID="${style||'s1'}"><Data ss:Type="Number">${v}</Data></Cell>`;
+  const emptyCell=(style)=>`<Cell ss:StyleID="${style||'s1'}"/>`;
 
-  // Track cell styles separately
-  const cellStyles={};
-  const wsData=[];
-  let rowIdx=0;
+  // Build XML
+  let xml=`<?xml version="1.0"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:x="urn:schemas-microsoft-com:office:excel">
+<Styles>
+  <Style ss:ID="s1"><Alignment ss:Horizontal="Center"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/></Borders><Font ss:Size="9"/></Style>
+  <Style ss:ID="hdr"><Alignment ss:Horizontal="Center"/><Font ss:Bold="1" ss:Color="#FFFFFF" ss:Size="9"/><Interior ss:Color="#1E3A5F" ss:Pattern="Solid"/></Style>
+  <Style ss:ID="hdrL"><Alignment ss:Horizontal="Left"/><Font ss:Bold="1" ss:Color="#FFFFFF" ss:Size="9"/><Interior ss:Color="#1E3A5F" ss:Pattern="Solid"/></Style>
+  <Style ss:ID="sd"><Alignment ss:Horizontal="Center"/><Interior ss:Color="#93C5FD" ss:Pattern="Solid"/><Font ss:Size="9"/></Style>
+  <Style ss:ID="sn"><Alignment ss:Horizontal="Center"/><Interior ss:Color="#94A3B8" ss:Pattern="Solid"/><Font ss:Size="9"/></Style>
+  <Style ss:ID="swe"><Alignment ss:Horizontal="Center"/><Interior ss:Color="#86EFAC" ss:Pattern="Solid"/><Font ss:Size="9"/></Style>
+  <Style ss:ID="cN"><Alignment ss:Horizontal="Center"/><Interior ss:Color="#FECACA" ss:Pattern="Solid"/><Font ss:Bold="1" ss:Size="9"/></Style>
+  <Style ss:ID="cD"><Alignment ss:Horizontal="Center"/><Interior ss:Color="#BBF7D0" ss:Pattern="Solid"/><Font ss:Bold="1" ss:Size="9"/></Style>
+  <Style ss:ID="cD2"><Alignment ss:Horizontal="Center"/><Interior ss:Color="#DCF2E7" ss:Pattern="Solid"/><Font ss:Bold="1" ss:Size="9"/></Style>
+  <Style ss:ID="cP"><Alignment ss:Horizontal="Center"/><Interior ss:Color="#DDD6FE" ss:Pattern="Solid"/><Font ss:Bold="1" ss:Size="9"/></Style>
+  <Style ss:ID="cSV"><Alignment ss:Horizontal="Center"/><Interior ss:Color="#FED7AA" ss:Pattern="Solid"/><Font ss:Bold="1" ss:Size="9"/></Style>
+  <Style ss:ID="ot"><Alignment ss:Horizontal="Center"/><Interior ss:Color="#EDE9FE" ss:Pattern="Solid"/><Font ss:Bold="1" ss:Size="9"/></Style>
+  <Style ss:ID="neg"><Alignment ss:Horizontal="Center"/><Font ss:Bold="1" ss:Color="#DC2626" ss:Size="9"/></Style>
+  <Style ss:ID="sv"><Alignment ss:Horizontal="Center"/><Interior ss:Color="#FFF7ED" ss:Pattern="Solid"/><Font ss:Size="9"/></Style>
+  <Style ss:ID="celkem"><Alignment ss:Horizontal="Center"/><Interior ss:Color="#DBEAFE" ss:Pattern="Solid"/><Font ss:Bold="1" ss:Color="#1D4ED8" ss:Size="9"/></Style>
+  <Style ss:ID="mr"><Alignment ss:Horizontal="Center"/><Interior ss:Color="#FEF9C3" ss:Pattern="Solid"/><Font ss:Bold="1" ss:Size="9"/></Style>
+  <Style ss:ID="mrL"><Alignment ss:Horizontal="Left"/><Interior ss:Color="#FEF9C3" ss:Pattern="Solid"/><Font ss:Bold="1" ss:Size="9"/></Style>
+  <Style ss:ID="grp"><Alignment ss:Horizontal="Left"/><Font ss:Bold="1" ss:Size="10"/></Style>
+  <Style ss:ID="nm"><Alignment ss:Horizontal="Left"/><Font ss:Bold="1" ss:Size="9"/></Style>
+  <Style ss:ID="pos"><Alignment ss:Horizontal="Left"/><Font ss:Size="8" ss:Color="#64748B"/></Style>
+  <Style ss:ID="wknd"><Alignment ss:Horizontal="Center"/><Interior ss:Color="#86EFAC" ss:Pattern="Solid"/><Font ss:Size="9"/></Style>
+  <Style ss:ID="hdrWknd"><Alignment ss:Horizontal="Center"/><Interior ss:Color="#86EFAC" ss:Pattern="Solid"/><Font ss:Bold="1" ss:Size="9" ss:Color="#14532D"/></Style>
+  <Style ss:ID="hdrSv"><Alignment ss:Horizontal="Center"/><Interior ss:Color="#FED7AA" ss:Pattern="Solid"/><Font ss:Bold="1" ss:Size="9" ss:Color="#7C2D12"/></Style>
+</Styles>
+<Worksheet ss:Name="${MCZ[ST.m]} ${ST.y}">
+<Table>
+`;
 
-  function pushRow(arr, styles){
-    wsData.push(arr);
-    if(styles) cellStyles[rowIdx]=styles;
-    rowIdx++;
-  }
+  // Col widths
+  xml+=`<Column ss:Width="140"/><Column ss:Width="80"/>`;
+  for(let d=0;d<n;d++) xml+=`<Column ss:Width="28"/>`;
+  for(let i=0;i<13;i++) xml+=`<Column ss:Width="55"/>`;
 
-  // Title row
-  pushRow([`Docházka — ${MCZ[ST.m]} ${ST.y} — Damco Jaroměř`]);
-
-  // Header row
-  const hdr=['Jméno','Pozice'];
-  const hdrStyles={0:{fill:{patternType:'solid',fgColor:{rgb:'1E3A5F'}},font:{bold:true,color:{rgb:'FFFFFF'},sz:9},alignment:{horizontal:'left'}},
-    1:{fill:{patternType:'solid',fgColor:{rgb:'1E3A5F'}},font:{bold:true,color:{rgb:'FFFFFF'},sz:9}}};
+  // Header
+  xml+=`<Row ss:Height="28">`;
+  xml+=strCell('Jméno','hdrL')+strCell('Pozice','hdr');
   for(let d=1;d<=n;d++){
     const w=dow(ST.y,ST.m,d);
     const sv=isSv(ST.m,d);
-    const isWknd=w===6||w===0;
-    hdr.push(d+'');
-    const col=d+1;
-    hdrStyles[col]={
-      fill:{patternType:'solid',fgColor:{rgb:sv?'FED7AA':isWknd?'86EFAC':'E2E8F0'}},
-      font:{bold:true,sz:9,color:{rgb:sv?'7C2D12':isWknd?'14532D':'334155'}},
-      alignment:{horizontal:'center'}
-    };
+    const wknd=w===6||w===0;
+    const st=sv?'hdrSv':wknd?'hdrWknd':'hdr';
+    xml+=strCell(d,'hdr');
   }
-  const sumHdrs=['Dny','Noční h','Víkend h','Př 25%','Př So','Př Ne','Př sv','Mínus','N','D','P h','Svátek h','CELKEM h'];
-  const sumColors=['60A5FA','94A3B8','4ADE80','FCD34D','FCD34D','FCD34D','FB923C','FC8181','','','A78BFA','FB923C','93C5FD'];
-  sumHdrs.forEach((lbl,i)=>{
-    hdr.push(lbl);
-    const col=n+2+i;
-    hdrStyles[col]={fill:{patternType:'solid',fgColor:{rgb:sumColors[i]||'E2E8F0'}},font:{bold:true,sz:9},alignment:{horizontal:'center'}};
-  });
-  pushRow(hdr, hdrStyles);
+  ['Dny','Noční h','Víkend h','Př 25%','Př So','Př Ne','Př sv','Mínus','N','D','P h','Svátek h','CELKEM h'].forEach(h=>xml+=strCell(h,'hdr'));
+  xml+=`</Row>
+`;
 
-  const addEmpRow=(emp)=>{
+  function getCellStyle(cls){
+    if(cls.includes('cN')) return 'cN';
+    if(cls.includes('cD2')) return 'cD2';
+    if(cls.includes('cD')) return 'cD';
+    if(cls.includes('cP')) return 'cP';
+    if(cls.includes('cSV')) return 'cSV';
+    if(cls.includes('cbh')) return 'ot';
+    if(cls.includes('sn')||cls.includes('swn')) return 'sn';
+    if(cls.includes('sd')||cls.includes('swd')) return 'sd';
+    if(cls.includes('sof-we')||cls.includes('swd')||cls.includes('woff')) return 'swe';
+    return 's1';
+  }
+
+  function empRow(emp){
     const s=calcSums(emp);
     const isBr=emp.prov==='brigada';
-    const row=[emp.name, emp.pos||''];
-    const styles={
-      0:{font:{bold:true,sz:9},fill:{patternType:'solid',fgColor:{rgb:grpColors[emp.grp]||'F8FAFC'}},alignment:{horizontal:'left'}},
-      1:{font:{sz:8,color:{rgb:'64748B'}},alignment:{horizontal:'left'}}
-    };
+    xml+=`<Row ss:Height="16">`;
+    xml+=strCell(emp.name,'nm')+strCell(emp.pos||'','pos');
     for(let d=1;d<=n;d++){
       const rec=emp.data[d];
       const disp=cellDisp(emp,d,rec);
       const cls=cellCls(emp,d,rec);
-      const col=d+1;
-      row.push(disp!==null?{v:String(disp),t:'s'}:{v:'',t:'s'});
-      // Find matching color
-      let bg=null;
-      for(const[k,v] of Object.entries(bgColors)){if(cls.includes(k)){bg=v;break;}}
-      const w=dow(ST.y,ST.m,d);
-      if(!bg&&(w===6||w===0)) bg='F0FDF4';
-      if(!bg&&isSv(ST.m,d)) bg='FED7AA';
-      styles[col]={fill:{patternType:'solid',fgColor:{rgb:bg||'FFFFFF'}},font:{sz:9},alignment:{horizontal:'center'},border:{top:{style:'thin',color:{rgb:'CBD5E1'}},bottom:{style:'thin',color:{rgb:'CBD5E1'}},left:{style:'thin',color:{rgb:'CBD5E1'}},right:{style:'thin',color:{rgb:'CBD5E1'}}}};
+      const st=getCellStyle(cls);
+      xml+=strCell(disp!==null?disp:'',st);
     }
     if(isBr){
-      for(let i=0;i<12;i++) row.push('');
-      row.push(r2(s.brig-s.negH)||'');
+      for(let i=0;i<12;i++) xml+=emptyCell('s1');
+      xml+=strCell(r2(s.brig-s.negH)||'','celkem');
     } else {
-      const sums=[s.days||'',s.nightH>0?s.nightH:'',s.weH>0?s.weH:'',
-        s.otW>0?s.otW:'',s.otSo>0?s.otSo:'',s.otNe>0?s.otNe:'',s.otSv>0?s.otSv:'',
-        s.negH>0?'-'+s.negH:'',s.nem||'',s.dov||'',s.prop||'',
-        s.svatekH>0?s.svatekH:'',r2((s.otW||0)+(s.otSo||0)+(s.otNe||0)+(s.otSv||0))||''];
-      sums.forEach((v,i)=>{
-        row.push(v);
-        styles[n+2+i]={font:{sz:9,bold:i===12},fill:{patternType:'solid',fgColor:{rgb:i===12?'DBEAFE':i===11?'FFF7ED':'F8FAFC'}},alignment:{horizontal:'center'}};
-      });
+      xml+=strCell(s.days||'','s1');
+      xml+=strCell(s.nightH>0?s.nightH:'','sn');
+      xml+=strCell(s.weH>0?s.weH:'','swe');
+      xml+=strCell(s.otW>0?s.otW:'','ot');
+      xml+=strCell(s.otSo>0?s.otSo:'','ot');
+      xml+=strCell(s.otNe>0?s.otNe:'','ot');
+      xml+=strCell(s.otSv>0?s.otSv:'','ot');
+      xml+=strCell(s.negH>0?'-'+s.negH:'','neg');
+      xml+=strCell(s.nem||'','cN');
+      xml+=strCell(s.dov||'','cD');
+      xml+=strCell(s.prop||'','cP');
+      xml+=strCell(s.svatekH>0?s.svatekH:'','sv');
+      xml+=strCell(r2((s.otW||0)+(s.otSo||0)+(s.otNe||0)+(s.otSv||0))||'','celkem');
     }
-    pushRow(row, styles);
-  };
+    xml+=`</Row>
+`;
+  }
 
-  const addGrpRow=(label,color)=>{
-    const row=[label];
-    const st={0:{fill:{patternType:'solid',fgColor:{rgb:color}},font:{bold:true,sz:10},alignment:{horizontal:'left'}}};
-    pushRow(row,st);
-  };
+  function grpRow(label,color){
+    xml+=`<Row ss:Height="18"><Cell ss:MergeAcross="${n+14}" ss:StyleID="grp"><Data ss:Type="String">${esc(label)}</Data></Cell></Row>
+`;
+  }
+
+  function mrRow(key,label){
+    const mr=ST.manualRows[key]||{};
+    xml+=`<Row ss:Height="16">`;
+    xml+=strCell(label,'mrL')+strCell('','mr');
+    for(let d=1;d<=n;d++) xml+=strCell(mr[d]||'','mr');
+    for(let i=0;i<13;i++) xml+=emptyCell('mr');
+    xml+=`</Row>
+`;
+  }
 
   const G4=['blue','black','green','red'];
   const GL={blue:'MODRÁ',black:'ČERNÁ',green:'ZELENÁ',red:'ČERVENÁ'};
-  const gc={blue:'BFDBFE',black:'CBD5E1',green:'BBF7D0',red:'FECACA'};
   G4.forEach(g=>{
     const list=ST.emps.filter(e=>e.prov==='4sm'&&e.grp===g);
     if(!list.length)return;
-    addGrpRow(`4-SMĚNNÝ — ${GL[g]}`,gc[g]);
-    list.forEach(addEmpRow);
-    // Manual row
-    const mr=ST.manualRows['4sm']||{};
-    const mrRow=['Ruční hodiny','4-směnný'];
-    for(let d=1;d<=n;d++) mrRow.push(mr[d]||'');
-    for(let i=0;i<13;i++) mrRow.push('');
-    pushRow(mrRow,{0:{fill:{patternType:'solid',fgColor:{rgb:'FEF9C3'}},font:{bold:true,sz:9}},1:{fill:{patternType:'solid',fgColor:{rgb:'FEF9C3'}},font:{sz:8}}});
+    grpRow(`4-SMĚNNÝ — ${GL[g]}`);
+    list.forEach(empRow);
+    mrRow('4sm','Ruční hodiny');
   });
 
   const f2=ST.emps.filter(e=>e.prov==='2sm');
-  if(f2.length){
-    addGrpRow('2-SMĚNNÝ PROVOZ','FED7AA');
-    f2.forEach(addEmpRow);
-    const mr2=ST.manualRows['2sm']||{};
-    const mrRow2=['Ruční hodiny','2-směnný'];
-    for(let d=1;d<=n;d++) mrRow2.push(mr2[d]||'');
-    for(let i=0;i<13;i++) mrRow2.push('');
-    pushRow(mrRow2,{0:{fill:{patternType:'solid',fgColor:{rgb:'FEF9C3'}},font:{bold:true,sz:9}},1:{fill:{patternType:'solid',fgColor:{rgb:'FEF9C3'}},font:{sz:8}}});
-  }
+  if(f2.length){grpRow('2-SMĚNNÝ PROVOZ');f2.forEach(empRow);mrRow('2sm','Ruční hodiny');}
 
   const fB=ST.emps.filter(e=>e.prov==='brigada');
-  if(fB.length){
-    addGrpRow('BRIGÁDNÍCI','EDE9FE');
-    fB.forEach(addEmpRow);
-  }
+  if(fB.length){grpRow('BRIGÁDNÍCI');fB.forEach(empRow);}
 
-  // Build worksheet
-  const ws=XLSX.utils.aoa_to_sheet(wsData.map(row=>row.map(cell=>
-    typeof cell==='object'&&cell!==null&&cell.v!==undefined?cell.v:cell
-  )));
+  xml+=`</Table></Worksheet></Workbook>`;
 
-  // Apply styles
-  const range=XLSX.utils.decode_range(ws['!ref']);
-  for(const[rStr,styles] of Object.entries(cellStyles)){
-    const R=parseInt(rStr);
-    for(const[cStr,style] of Object.entries(styles)){
-      const C=parseInt(cStr);
-      const addr=XLSX.utils.encode_cell({r:R,c:C});
-      if(!ws[addr]) ws[addr]={v:'',t:'s'};
-      ws[addr].s=style;
-    }
-  }
-
-  // Force text type for day columns to prevent date interpretation
-  for(let R=2;R<=range.e.r;R++){
-    for(let C=2;C<=n+1;C++){
-      const addr=XLSX.utils.encode_cell({r:R,c:C});
-      if(ws[addr]){ws[addr].t='s';ws[addr].z='@';}
-    }
-  }
-
-  // Column widths
-  ws['!cols']=[{wch:20},{wch:12},...Array(n).fill({wch:4}),...Array(13).fill({wch:8})];
-
-  XLSX.utils.book_append_sheet(wb,ws,`${MCZ[ST.m]} ${ST.y}`);
-  XLSX.writeFile(wb,`dochazka_${ST.y}_${ST.m}.xlsx`);
+  const blob=new Blob([xml],{type:'application/vnd.ms-excel;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=`dochazka_${ST.y}_${ST.m}.xls`;a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 
 function doExportExcel(){
