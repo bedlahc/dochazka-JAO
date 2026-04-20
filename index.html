@@ -1390,67 +1390,175 @@ function doExportXLSX(){
   const n=dInM(ST.m,ST.y);
   const DN2=['Ne','Po','Út','St','Čt','Pá','So'];
   const wb=XLSX.utils.book_new();
+
+  // Color map for cell types
+  const bgColors={
+    sd:'93C5FD', sn:'94A3B8', swd:'93C5FD', swn:'94A3B8',
+    'sof-we':'86EFAC', cN:'FECACA', cD:'BBF7D0', cD2:'DCF2E7',
+    cP:'DDD6FE', cSV:'FED7AA', cbh:'EDE9FE', cbr:'F5F3FF'
+  };
+  const grpColors={blue:'DBEAFE',black:'E2E8F0',green:'DCFCE7',red:'FEE2E2'};
+
+  function makeCellStyle(fgColor, bold, align){
+    const s={};
+    if(fgColor) s.fill={patternType:'solid',fgColor:{rgb:fgColor}};
+    s.font={bold:!!bold,sz:9};
+    s.alignment={horizontal:align||'center',vertical:'center',wrapText:false};
+    s.border={
+      top:{style:'thin',color:{rgb:'CBD5E1'}},
+      bottom:{style:'thin',color:{rgb:'CBD5E1'}},
+      left:{style:'thin',color:{rgb:'CBD5E1'}},
+      right:{style:'thin',color:{rgb:'CBD5E1'}}
+    };
+    return s;
+  }
+
+  // Track cell styles separately
+  const cellStyles={};
   const wsData=[];
+  let rowIdx=0;
+
+  function pushRow(arr, styles){
+    wsData.push(arr);
+    if(styles) cellStyles[rowIdx]=styles;
+    rowIdx++;
+  }
+
+  // Title row
+  pushRow([`Docházka — ${MCZ[ST.m]} ${ST.y} — Damco Jaroměř`]);
 
   // Header row
   const hdr=['Jméno','Pozice'];
-  for(let d=1;d<=n;d++) hdr.push(d+'.'+DN2[dow(ST.y,ST.m,d)]);
-  hdr.push('Dny','Noční h','Víkend h','Př 25%','Př So','Př Ne','Př sv','Mínus','N','D','P h','Svátek h','CELKEM h');
-  wsData.push(hdr);
+  const hdrStyles={0:{fill:{patternType:'solid',fgColor:{rgb:'1E3A5F'}},font:{bold:true,color:{rgb:'FFFFFF'},sz:9},alignment:{horizontal:'left'}},
+    1:{fill:{patternType:'solid',fgColor:{rgb:'1E3A5F'}},font:{bold:true,color:{rgb:'FFFFFF'},sz:9}}};
+  for(let d=1;d<=n;d++){
+    const w=dow(ST.y,ST.m,d);
+    const sv=isSv(ST.m,d);
+    const isWknd=w===6||w===0;
+    hdr.push(d+'');
+    const col=d+1;
+    hdrStyles[col]={
+      fill:{patternType:'solid',fgColor:{rgb:sv?'FED7AA':isWknd?'86EFAC':'E2E8F0'}},
+      font:{bold:true,sz:9,color:{rgb:sv?'7C2D12':isWknd?'14532D':'334155'}},
+      alignment:{horizontal:'center'}
+    };
+  }
+  const sumHdrs=['Dny','Noční h','Víkend h','Př 25%','Př So','Př Ne','Př sv','Mínus','N','D','P h','Svátek h','CELKEM h'];
+  const sumColors=['60A5FA','94A3B8','4ADE80','FCD34D','FCD34D','FCD34D','FB923C','FC8181','','','A78BFA','FB923C','93C5FD'];
+  sumHdrs.forEach((lbl,i)=>{
+    hdr.push(lbl);
+    const col=n+2+i;
+    hdrStyles[col]={fill:{patternType:'solid',fgColor:{rgb:sumColors[i]||'E2E8F0'}},font:{bold:true,sz:9},alignment:{horizontal:'center'}};
+  });
+  pushRow(hdr, hdrStyles);
 
-  const addRow=(emp)=>{
+  const addEmpRow=(emp)=>{
     const s=calcSums(emp);
     const isBr=emp.prov==='brigada';
     const row=[emp.name, emp.pos||''];
+    const styles={
+      0:{font:{bold:true,sz:9},fill:{patternType:'solid',fgColor:{rgb:grpColors[emp.grp]||'F8FAFC'}},alignment:{horizontal:'left'}},
+      1:{font:{sz:8,color:{rgb:'64748B'}},alignment:{horizontal:'left'}}
+    };
     for(let d=1;d<=n;d++){
-      const disp=cellDisp(emp,d,emp.data[d]);
-      // Force string type to prevent date interpretation
-      row.push(disp!==null ? {v:String(disp),t:'s'} : '');
+      const rec=emp.data[d];
+      const disp=cellDisp(emp,d,rec);
+      const cls=cellCls(emp,d,rec);
+      const col=d+1;
+      row.push(disp!==null?{v:String(disp),t:'s'}:{v:'',t:'s'});
+      // Find matching color
+      let bg=null;
+      for(const[k,v] of Object.entries(bgColors)){if(cls.includes(k)){bg=v;break;}}
+      const w=dow(ST.y,ST.m,d);
+      if(!bg&&(w===6||w===0)) bg='F0FDF4';
+      if(!bg&&isSv(ST.m,d)) bg='FED7AA';
+      styles[col]={fill:{patternType:'solid',fgColor:{rgb:bg||'FFFFFF'}},font:{sz:9},alignment:{horizontal:'center'},border:{top:{style:'thin',color:{rgb:'CBD5E1'}},bottom:{style:'thin',color:{rgb:'CBD5E1'}},left:{style:'thin',color:{rgb:'CBD5E1'}},right:{style:'thin',color:{rgb:'CBD5E1'}}}};
     }
     if(isBr){
-      const brigCelk=r2(s.brig-s.negH);
-      for(let i=0;i<12;i++) row.push('—');
-      row.push(brigCelk>0?brigCelk:'');
+      for(let i=0;i<12;i++) row.push('');
+      row.push(r2(s.brig-s.negH)||'');
     } else {
-      row.push(s.days||'',s.nightH>0?s.nightH:'',s.weH>0?s.weH:'',
+      const sums=[s.days||'',s.nightH>0?s.nightH:'',s.weH>0?s.weH:'',
         s.otW>0?s.otW:'',s.otSo>0?s.otSo:'',s.otNe>0?s.otNe:'',s.otSv>0?s.otSv:'',
         s.negH>0?'-'+s.negH:'',s.nem||'',s.dov||'',s.prop||'',
-        s.svatekH>0?s.svatekH:'','');
+        s.svatekH>0?s.svatekH:'',r2((s.otW||0)+(s.otSo||0)+(s.otNe||0)+(s.otSv||0))||''];
+      sums.forEach((v,i)=>{
+        row.push(v);
+        styles[n+2+i]={font:{sz:9,bold:i===12},fill:{patternType:'solid',fgColor:{rgb:i===12?'DBEAFE':i===11?'FFF7ED':'F8FAFC'}},alignment:{horizontal:'center'}};
+      });
     }
-    wsData.push(row);
+    pushRow(row, styles);
   };
 
-  // Group rows
+  const addGrpRow=(label,color)=>{
+    const row=[label];
+    const st={0:{fill:{patternType:'solid',fgColor:{rgb:color}},font:{bold:true,sz:10},alignment:{horizontal:'left'}}};
+    pushRow(row,st);
+  };
+
   const G4=['blue','black','green','red'];
   const GL={blue:'MODRÁ',black:'ČERNÁ',green:'ZELENÁ',red:'ČERVENÁ'};
+  const gc={blue:'BFDBFE',black:'CBD5E1',green:'BBF7D0',red:'FECACA'};
   G4.forEach(g=>{
     const list=ST.emps.filter(e=>e.prov==='4sm'&&e.grp===g);
     if(!list.length)return;
-    wsData.push([`4-SMĚNNÝ — ${GL[g]}`]);
-    list.forEach(addRow);
+    addGrpRow(`4-SMĚNNÝ — ${GL[g]}`,gc[g]);
+    list.forEach(addEmpRow);
+    // Manual row
+    const mr=ST.manualRows['4sm']||{};
+    const mrRow=['Ruční hodiny','4-směnný'];
+    for(let d=1;d<=n;d++) mrRow.push(mr[d]||'');
+    for(let i=0;i<13;i++) mrRow.push('');
+    pushRow(mrRow,{0:{fill:{patternType:'solid',fgColor:{rgb:'FEF9C3'}},font:{bold:true,sz:9}},1:{fill:{patternType:'solid',fgColor:{rgb:'FEF9C3'}},font:{sz:8}}});
   });
+
   const f2=ST.emps.filter(e=>e.prov==='2sm');
-  if(f2.length){wsData.push(['2-SMĚNNÝ PROVOZ']);f2.forEach(addRow);}
+  if(f2.length){
+    addGrpRow('2-SMĚNNÝ PROVOZ','FED7AA');
+    f2.forEach(addEmpRow);
+    const mr2=ST.manualRows['2sm']||{};
+    const mrRow2=['Ruční hodiny','2-směnný'];
+    for(let d=1;d<=n;d++) mrRow2.push(mr2[d]||'');
+    for(let i=0;i<13;i++) mrRow2.push('');
+    pushRow(mrRow2,{0:{fill:{patternType:'solid',fgColor:{rgb:'FEF9C3'}},font:{bold:true,sz:9}},1:{fill:{patternType:'solid',fgColor:{rgb:'FEF9C3'}},font:{sz:8}}});
+  }
+
   const fB=ST.emps.filter(e=>e.prov==='brigada');
-  if(fB.length){wsData.push(['BRIGÁDNÍCI']);fB.forEach(addRow);}
+  if(fB.length){
+    addGrpRow('BRIGÁDNÍCI','EDE9FE');
+    fB.forEach(addEmpRow);
+  }
 
-  // Convert to worksheet
-  const ws=XLSX.utils.aoa_to_sheet(wsData);
+  // Build worksheet
+  const ws=XLSX.utils.aoa_to_sheet(wsData.map(row=>row.map(cell=>
+    typeof cell==='object'&&cell!==null&&cell.v!==undefined?cell.v:cell
+  )));
 
-  // Set all day columns to text format (columns C onwards)
+  // Apply styles
   const range=XLSX.utils.decode_range(ws['!ref']);
-  for(let R=1;R<=range.e.r;R++){
-    for(let C=2;C<=n+1;C++){
+  for(const[rStr,styles] of Object.entries(cellStyles)){
+    const R=parseInt(rStr);
+    for(const[cStr,style] of Object.entries(styles)){
+      const C=parseInt(cStr);
       const addr=XLSX.utils.encode_cell({r:R,c:C});
-      if(ws[addr] && ws[addr].v!==undefined && ws[addr].v!==''){
-        ws[addr].t='s'; // force string type
-        ws[addr].z='@'; // text format
-      }
+      if(!ws[addr]) ws[addr]={v:'',t:'s'};
+      ws[addr].s=style;
     }
   }
 
-  XLSX.utils.book_append_sheet(wb, ws, `${MCZ[ST.m]} ${ST.y}`);
-  XLSX.writeFile(wb, `dochazka_${ST.y}_${ST.m}.xlsx`);
+  // Force text type for day columns to prevent date interpretation
+  for(let R=2;R<=range.e.r;R++){
+    for(let C=2;C<=n+1;C++){
+      const addr=XLSX.utils.encode_cell({r:R,c:C});
+      if(ws[addr]){ws[addr].t='s';ws[addr].z='@';}
+    }
+  }
+
+  // Column widths
+  ws['!cols']=[{wch:20},{wch:12},...Array(n).fill({wch:4}),...Array(13).fill({wch:8})];
+
+  XLSX.utils.book_append_sheet(wb,ws,`${MCZ[ST.m]} ${ST.y}`);
+  XLSX.writeFile(wb,`dochazka_${ST.y}_${ST.m}.xlsx`);
 }
 
 function doExportExcel(){
