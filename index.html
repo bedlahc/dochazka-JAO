@@ -1429,9 +1429,9 @@ function doExportExcel(){
       const w=dow(ST.y,ST.m,d);
       if(!bg&&(w===6||w===0)) bg='background:#f0fdf4';
       const dispVal = disp!==null ? String(disp) : '';
-      // Prefix numbers with space to prevent Excel date interpretation
-      const xlVal = dispVal && /^\d/.test(dispVal) ? ' '+dispVal : dispVal;
-      row+=`<td style="text-align:center;${bg}">${xlVal}</td>`;
+      // Force text format in Excel to prevent date interpretation
+      const xlStyle = bg ? `text-align:center;${bg};mso-number-format:'@'` : `text-align:center;mso-number-format:'@'`;
+      row+=`<td style="${xlStyle}" x:str="${dispVal}">${dispVal}</td>`;
     }
     if(isBr){
       row+=`<td style="text-align:center">—</td>`;// Dny
