@@ -147,6 +147,7 @@ tr:hover td.cn{filter:none;background:var(--bg4)!important;box-shadow:4px 0 8px 
 .print-grp{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
 .print-grp-btn{padding:5px 12px;border-radius:5px;border:1px solid var(--b2);font-size:12px;font-weight:500;cursor:pointer;background:var(--bg3);color:var(--tx2);transition:all .15s}
 .print-grp-btn.sel{border-color:var(--acc);background:#dbeafe;color:#1d4ed8;font-weight:700}
+.print-nodays .day-col{ display:none !important; }
 @media print{
   body{height:auto;overflow:visible;font-size:9px}
   .topbar,.sbar,.leg-bar,#loginScreen,.badd,button{display:none!important}
@@ -673,9 +674,9 @@ function renderManualRow(rowKey,label,sublabel,rowCls,n,autoData){
     const _nt=new Date();const _isT=ST.y===_nt.getFullYear()&&ST.m===(_nt.getMonth()+1)&&d===_nt.getDate();
     const _tt=_isT?'outline:2px solid #fbbf24;outline-offset:-2px;':'';
     if(isAuto){
-      html+=`<td class="mr-cell ${hasCls}" style="${wbl}${_tt};cursor:default">${disp||'<span style="color:#d1d5db">·</span>'}</td>`;
+      html+=`<td class="mr-cell ${hasCls} day-col" style="${wbl}${_tt};cursor:default">${disp||'<span style="color:#d1d5db">·</span>'}</td>`;
     } else {
-      html+=`<td class="mr-cell ${hasCls}" onclick="openManualCell('${rowKey}',${d})" style="cursor:pointer;${wbl}${_tt}">${disp||'<span style="color:#d1d5db">·</span>'}</td>`;
+      html+=`<td class="mr-cell ${hasCls} day-col" onclick="openManualCell('${rowKey}',${d})" style="cursor:pointer;${wbl}${_tt}">${disp||'<span style="color:#d1d5db">·</span>'}</td>`;
     }
   }
   // 8 summary cols (Dny, Noční h, Víkend h, Přesčas, Mínus, N, D, P h) — show dashes
@@ -722,7 +723,7 @@ function makeSubHeader(n,prov){
     const sv=isSv(ST.m,d);
     const wbl=isSat?'border-left:3px solid #16a34a;':'';
     const wbg=sv?'background:#fed7aa;color:#7c2d12;':isSat?'background:#86efac;color:#14532d;':isSun?'background:#bbf7d0;color:#166534;':'background:var(--bg3);color:var(--tx3);';
-    row+=`<td style="${wbg}${wbl};text-align:center;font-size:9px;font-weight:700;padding:4px 1px;font-family:'DM Mono',monospace"><div>${d}</div><div style="opacity:.7">${DN2[w]}</div></td>`;
+    row+=`<td class="day-col" style="${wbg}${wbl};text-align:center;font-size:9px;font-weight:700;padding:4px 1px;font-family:'DM Mono',monospace"><div>${d}</div><div style="opacity:.7">${DN2[w]}</div></td>`;
   }
   // summary col headers
   const sumCols=['Dny','Noční h','Víkend h','Př 25%','Př So','Př Ne','Př sv','Mínus','N','D','P h','Svátek','CELKEM'];
@@ -910,7 +911,7 @@ function render(){
     const wbg=isToday?'background:#fbbf24;color:#78350f;':sv?'background:#fed7aa;color:#7c2d12;':isSat?'background:#86efac;color:#14532d;':isSun?'background:#bbf7d0;color:#166534;':'';
     const svTitle=sv?` title="${svName(ST.m,d)}"` :'';
     const todayCls=isToday?' class="today-col-hdr"':'';
-    ths+=`<th${todayCls} style="${wbg}${wbl}font-weight:${isToday?'800':'600'}"${svTitle}><div style="font-size:11px;font-weight:${isToday?'800':'600'}">${d}${isToday?'◀':''}</div><div style="font-size:9px;opacity:.7">${DN[w]}</div></th>`;
+    ths+=`<th${todayCls} class="day-col" style="${wbg}${wbl}font-weight:${isToday?'800':'600'}"${svTitle}><div style="font-size:11px;font-weight:${isToday?'800':'600'}">${d}${isToday?'◀':''}</div><div style="font-size:9px;opacity:.7">${DN[w]}</div></th>`;
   }
   ths+=`<th class="cn" style="border-left:3px solid var(--b2)">Jméno</th>`;
   ths+=`<th style="color:var(--day-tx);min-width:32px">Dny</th>`;
@@ -955,7 +956,7 @@ function render(){
         const wbl=w===6?'border-left:3px solid #16a34a;':'';
         const isToday=d===_todayD;
         const todayTint=isToday?'outline:2px solid #fbbf24;outline-offset:-2px;':'';
-        html+=`<td class="${cls}" onclick="openCell(${emp.id},${d})" style="cursor:pointer;${wbl}${todayTint}">${disp||'<span style="color:#d1d5db">·</span>'}</td>`;
+        html+=`<td class="${cls} day-col" onclick="openCell(${emp.id},${d})" style="cursor:pointer;${wbl}${todayTint}">${disp||'<span style="color:#d1d5db">·</span>'}</td>`;
       }
       // Second name column before summary
       const grpColor2=gcol(emp.grp);
@@ -1069,7 +1070,7 @@ function render(){
       const w=dow(ST.y,ST.m,d);
       const wbl=w===6?'border-left:3px solid #16a34a;':'';
       const mv=manDayTotals[d];
-      html+=`<td class="ts" style="${wbl};font-size:10px;font-weight:600;color:${mv>0?'#1d4ed8':'var(--tx3)'}">${mv>0?mv+'h':''}</td>`;
+      html+=`<td class="ts day-col" style="${wbl};font-size:10px;font-weight:600;color:${mv>0?'#1d4ed8':'var(--tx3)'}">${mv>0?mv+'h':''}</td>`;
     }
     // 8 summary cols
     html+=`<td class="cn tr" style="border-left:3px solid var(--b2);font-size:9px;font-family:'DM Mono',monospace;letter-spacing:.07em;color:var(--tx3);text-transform:uppercase;background:var(--bg3)!important">CELKEM</td>`;
@@ -1349,6 +1350,7 @@ function executePrint(){
   const show2sm=document.getElementById('po2sm').checked;
   const showBrig=document.getElementById('pobrig').checked;
   const showSum=document.getElementById('posum').checked;
+  const nodays=document.getElementById('ponodays').checked;
   const fmt=document.getElementById('printFormat').value;
   const grps={
     blue:document.getElementById('pgBlue').classList.contains('sel'),
@@ -1361,7 +1363,8 @@ function executePrint(){
   let existStyle=document.getElementById('printPageStyle');
   if(!existStyle){existStyle=document.createElement('style');existStyle.id='printPageStyle';document.head.appendChild(existStyle);}
   const sizes={A3L:'A3 landscape',A4L:'A4 landscape',A4P:'A4 portrait'};
-  existStyle.textContent=`@media print{@page{size:${sizes[fmt]};margin:6mm}}`;
+  existStyle.textContent=`.print-nodays .day-col{ display:none !important; }
+@media print{@page{size:${sizes[fmt]};margin:6mm}}`;
 
   // Mark rows to hide/show using print-hide class
   document.querySelectorAll('tr[data-prov]').forEach(tr=>{
@@ -1376,12 +1379,17 @@ function executePrint(){
     tr.style.display=hide?'none':'';
   });
 
+  // Apply nodays mode
+  const tableEl = document.querySelector('.tw table');
+  if(nodays) tableEl && tableEl.classList.add('print-nodays');
+  
   closePrintMod();
   setTimeout(()=>{
     window.print();
-    // Restore all rows after print
+    // Restore all rows and remove nodays class after print
     setTimeout(()=>{
       document.querySelectorAll('tr[data-prov]').forEach(tr=>tr.style.display='');
+      tableEl && tableEl.classList.remove('print-nodays');
     },500);
   },100);
 }
@@ -1502,10 +1510,7 @@ function doExportXLS(){
       xml+=cell(s.dov||'','cD');
       xml+=cell(s.prop||'','cP');
       xml+=cell(s.svatekH>0?s.svatekH:'','sv');
-      // CELKEM = odpracované dny * 12h (4sm) or 8h (2sm) + OT - neg + svátek
-      const shiftH=emp.prov==='2sm'?8:12;
-      const celkemH=r2((s.days*shiftH)+(s.nightH||0)+(s.otW||0)+(s.otSo||0)+(s.otNe||0)+(s.otSv||0)-(s.negH||0)+(s.svatekH||0));
-      xml+=cell(celkemH||'','celkem');
+      xml+=emptyCell('celkem');// CELKEM per employee empty - shown in summary row
     }
     xml+=`</Row>
 `;
@@ -1542,6 +1547,83 @@ function doExportXLS(){
 
   const fB=ST.emps.filter(e=>e.prov==='brigada');
   if(fB.length){grpRow('BRIGÁDNÍCI');fB.forEach(empRow);}
+
+  // ── SUMMARY ROWS ──
+  // Brigádníci součet
+  const brigSum=[];let brigTotal=0;
+  for(let d=1;d<=n;d++){
+    let s=0;
+    ST.emps.filter(e=>e.prov==='brigada').forEach(e=>{
+      const v=e.data[d];
+      const bv=typeof v==='object'&&v!==null?v.h:(typeof v==='number'?v:0);
+      if(bv>0)s+=bv;
+    });
+    brigSum.push(s||'');
+    brigTotal+=s;
+  }
+  // Office WC
+  const mrWC=ST.manualRows['offwc']||{};
+  let wcTotal=0;
+  // Office Celní
+  const mrCeln=ST.manualRows['offceln']||{};
+  let celnTotal=0;
+
+  function sumRow(label,mr,color){
+    let total=0;
+    xml+=`<Row ss:Height="16">`;
+    xml+=strCell(label,color+'L');
+    xml+=emptyCell(color);
+    for(let d=1;d<=n;d++){
+      const v=typeof mr==='object'&&!Array.isArray(mr)?mr[d]:mr[d-1];
+      const num=typeof v==='number'?v:(parseFloat(v)||0);
+      if(num>0)total+=num;
+      xml+=cell(num||'',color);
+    }
+    for(let i=0;i<12;i++) xml+=emptyCell(color);
+    xml+=cell(total||'','celkem');
+    xml+=`</Row>
+`;
+    return total;
+  }
+
+  // Brigádníci row
+  xml+=`<Row ss:Height="16">`;
+  xml+=strCell('Brigádníci součet','mrL')+emptyCell('mr');
+  for(let d=0;d<n;d++) xml+=cell(brigSum[d]||'','mr');
+  for(let i=0;i<12;i++) xml+=emptyCell('mr');
+  xml+=cell(brigTotal||'','celkem');
+  xml+=`</Row>
+`;
+
+  // Office WC
+  wcTotal=sumRow('Office WC',mrWC,'offwc');
+  // Office Celní
+  celnTotal=sumRow('Office Celní',mrCeln,'offceln');
+
+  // 4sm manual row total
+  const mr4=ST.manualRows['4sm']||{};
+  let total4=0;Object.values(mr4).forEach(v=>{if(v>0)total4+=v;});
+  // 2sm manual row total
+  const mr2=ST.manualRows['2sm']||{};
+  let total2=0;Object.values(mr2).forEach(v=>{if(v>0)total2+=v;});
+
+  // Grand total row
+  const grandTotal=r2(total4+total2+brigTotal+wcTotal+celnTotal);
+  xml+=`<Row ss:Height="20">`;
+  xml+=strCell('CELKEM','hdrL')+emptyCell('hdr');
+  for(let d=1;d<=n;d++){
+    const mr4v=mr4[d]||0;
+    const mr2v=mr2[d]||0;
+    const brigv=typeof brigSum[d-1]==='number'?brigSum[d-1]:0;
+    const wcv=mrWC[d]||0;
+    const celnv=mrCeln[d]||0;
+    const tot=r2(mr4v+mr2v+brigv+wcv+celnv);
+    xml+=cell(tot||'','hdr');
+  }
+  for(let i=0;i<12;i++) xml+=emptyCell('hdr');
+  xml+=cell(grandTotal||'','celkem');
+  xml+=`</Row>
+`;
 
   xml+=`</Table></Worksheet></Workbook>`;
 
@@ -2101,6 +2183,10 @@ function loadScript(src){
     <div class="print-opt" onclick="togglePO('posum')">
       <input type="checkbox" id="posum" checked>
       <label for="posum">Řádek CELKEM</label>
+    </div>
+    <div class="print-opt" onclick="togglePO('ponodays')">
+      <input type="checkbox" id="ponodays">
+      <label for="ponodays">Jen souhrn (bez sloupců dnů)</label>
     </div>
   </div>
   <div class="print-section-head">Skupiny (4-směnný)</div>
