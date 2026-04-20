@@ -231,7 +231,6 @@ tr:hover td.cn{filter:none;background:var(--bg4)!important;box-shadow:4px 0 8px 
 /* Force scrollbar visible on all platforms */
 .tw{scrollbar-width:thick !important;scrollbar-color:#334155 #cbd5e1 !important}
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
 <div class="topbar">
@@ -500,6 +499,7 @@ let ST={m:4,y:2026,fp:'all',fg:'all',fn:'',emps:[
   {id:31,name:'Vrána Pavel',pos:'Brigádník',prov:'brigada',grp:'brigada',data:{}},
   {id:32,name:'Hetfleis David',pos:'Brigádník',prov:'brigada',grp:'brigada',data:{}},
 ]};
+ST.monthData = {};
 
 // Manual hour rows (keyed by row ID, value = {day: hours})
 if(!ST.monthManualRows) ST.monthManualRows={};
