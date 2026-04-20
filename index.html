@@ -706,6 +706,7 @@ function saveManualCell(){
   if(!ST.manualRows[manualEditTarget.rowKey]) ST.manualRows[manualEditTarget.rowKey]={};
   if(!h||h<=0) delete ST.manualRows[manualEditTarget.rowKey][manualEditTarget.day];
   else ST.manualRows[manualEditTarget.rowKey][manualEditTarget.day]=h;
+  getManualRows(ST.m);// ensure current month is initialized
   if(window.fbSave) fbSave();
   closeManualMod();render();
 }
@@ -1400,7 +1401,7 @@ function doExportExcel(){
     const bg=sv?'background:#fed7aa':isWknd?'background:#86efac':'';
     hdr+=`<td style="text-align:center;${bg}">${d}<br>${DN2[w]}</td>`;
   }
-  hdr+=`<td>Dny</td><td>Noční h</td><td>Víkend h</td><td>Př 25%</td><td>Př So</td><td>Př Ne</td><td>Př sv</td><td>Mínus</td><td>N</td><td>D</td><td>P h</td><td>Svátek h</td></tr>`;
+  hdr+=`<td>Dny</td><td>Noční h</td><td>Víkend h</td><td>Př 25%</td><td>Př So</td><td>Př Ne</td><td>Př sv</td><td>Mínus</td><td>N</td><td>D</td><td>P h</td><td>Svátek h</td><td style="background:#dbeafe;color:#1d4ed8;font-weight:700">CELKEM h</td></tr>`;
   rows.push(hdr);
 
   // Group labels + employee rows
@@ -1427,10 +1428,19 @@ function doExportExcel(){
       for(const[k,v] of Object.entries(bgMap)){if(cls.includes(k)){bg=`background:${v}`;break;}}
       const w=dow(ST.y,ST.m,d);
       if(!bg&&(w===6||w===0)) bg='background:#f0fdf4';
-      row+=`<td style="text-align:center;${bg}">${disp!==null?disp:''}</td>`;
+      const dispVal = disp!==null ? String(disp) : '';
+      // Prefix numbers with space to prevent Excel date interpretation
+      const xlVal = dispVal && /^\d/.test(dispVal) ? ' '+dispVal : dispVal;
+      row+=`<td style="text-align:center;${bg}">${xlVal}</td>`;
     }
     if(isBr){
-      row+=`<td colspan="11" style="text-align:center;color:#6d28d9">${s.brig>0?s.brig:''}</td><td></td>`;
+      row+=`<td style="text-align:center">—</td>`;// Dny
+      for(let i=0;i<6;i++) row+=`<td>—</td>`;// Noc-PrSv
+      row+=`<td style="text-align:center;color:#dc2626">${s.negH>0?'-'+s.negH:''}</td>`;// Minus
+      row+=`<td>—</td><td>—</td><td>—</td>`;// N,D,P
+      row+=`<td style="background:#fff7ed">${s.svatekH>0?s.svatekH:''}</td>`;// Svatek
+      const brigCelk=r2(s.brig-s.negH);
+      row+=`<td style="text-align:center;font-weight:700;color:#6d28d9;background:#ede9fe">${brigCelk>0?brigCelk:''}</td>`;// CELKEM
     } else {
       row+=`<td style="text-align:center">${s.days||''}</td>`;
       row+=`<td style="text-align:center">${s.nightH>0?s.nightH:''}</td>`;
@@ -1444,6 +1454,9 @@ function doExportExcel(){
       row+=`<td style="text-align:center">${s.dov||''}</td>`;
       row+=`<td style="text-align:center">${s.prop||''}</td>`;
       row+=`<td style="text-align:center;background:#fff7ed">${s.svatekH>0?s.svatekH:''}</td>`;
+      // CELKEM h
+      const empTotal=r2((s.otW||0)+(s.otSo||0)+(s.otNe||0)+(s.otSv||0));
+      row+=`<td style="text-align:center;font-weight:700;color:#1d4ed8;background:#dbeafe">${empTotal>0?empTotal:''}</td>`;
     }
     row+='</tr>';
     rows.push(row);
@@ -1793,11 +1806,19 @@ function loadScript(src){
   }
 
   function serializeState(){
-    const data = { monthData:{}, monthManualRows: ST.monthManualRows||{}, emps_shiftOv:{} };
+    // Ensure current month manualRows are saved to store first
+    getManualRows(ST.m);
+    const data = { monthData:{}, monthManualRows:{}, emps_shiftOv:{} };
+    // Save all monthData
     Object.keys(ST.monthData||{}).forEach(m=>{ data.monthData[m] = ST.monthData[m]; });
     const cm = String(ST.m);
     if(!data.monthData[cm]) data.monthData[cm] = {};
     ST.emps.forEach(e=>{ data.monthData[cm][String(e.id)] = e.data||{}; });
+    // Save ALL monthManualRows (not just current month)
+    Object.keys(ST.monthManualRows||{}).forEach(m=>{
+      data.monthManualRows[m] = ST.monthManualRows[m];
+    });
+    // shiftOv
     ST.emps.forEach(e=>{
       if(e.shiftOv && Object.keys(e.shiftOv).length>0)
         data.emps_shiftOv[String(e.id)] = e.shiftOv;
