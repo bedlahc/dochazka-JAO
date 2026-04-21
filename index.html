@@ -2443,17 +2443,21 @@ function loadScript(src){
       // Merge local import data for months not yet in Firebase
       let needsSave = false;
       [1,2,3,5,6,7,8,9,10].forEach(m=>{
-        if(!ST.monthData[m] || Object.keys(ST.monthData[m]).length===0){
-          // Month missing in Firebase — copy from local import
-          const localMonth = data.monthData?.[m];
-          if(!localMonth){
-            // Check if we have local import data for this month
-            const importData = window._localImport?.[m];
-            if(importData && Object.keys(importData).length>0){
-              ST.monthData[m] = importData;
-              needsSave = true;
+        const importData = window._localImport?.[m];
+        if(!importData || Object.keys(importData).length===0) return;
+        const firebaseMonth = data.monthData?.[m];
+        const fbCount = firebaseMonth ? Object.keys(firebaseMonth).length : 0;
+        const localCount = Object.keys(importData).length;
+        // Merge if Firebase has fewer employees for this month than local import
+        if(fbCount < localCount){
+          // Deep merge: for each employee, merge days
+          if(!ST.monthData[m]) ST.monthData[m] = {};
+          Object.keys(importData).forEach(eid=>{
+            if(!ST.monthData[m][eid] || Object.keys(ST.monthData[m][eid]).length === 0){
+              ST.monthData[m][eid] = importData[eid];
             }
-          }
+          });
+          needsSave = true;
         }
       });
       if(needsSave){
