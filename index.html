@@ -684,6 +684,11 @@ function renderManualRow(rowKey,label,sublabel,rowCls,n,autoData){
   for(let i=0;i<12;i++) html+=`<td class="ts" style="color:var(--tx3)">—</td>`;
   // CELKEM h column — show month total
   html+=`<td class="ts" style="font-size:12px;font-weight:700;color:#1d4ed8;background:#dbeafe!important;border-left:2px solid #93c5fd!important">${total>0?total:'—'}</td>`;
+  // Kumulativní mínus (jen 4sm)
+  if(emp.prov==='4sm'){
+    const cumNeg=calcCumMinus(emp);
+    html+=`<td class="ts cum-neg" title="Kumulativní mínus za M1–M${ST.m}">${cumNeg>0?'-'+cumNeg:''}</td>`;
+  }
   html+=`</tr>`;
   return html;
 }
@@ -882,6 +887,20 @@ function showWeeklyReport(){
 
 
 
+function calcCumMinus(emp){
+  // Sum negH for all months from 1 to current month (inclusive)
+  let total = 0;
+  for(let m = 1; m <= ST.m; m++){
+    const monthData = m === ST.m ? emp.data : (ST.monthData[m]?.[emp.id] || ST.monthData[m]?.[String(emp.id)] || {});
+    const n = [0,31,28,31,30,31,30,31,31,30,31,30,31][m];
+    for(let d = 1; d <= n; d++){
+      const rec = monthData[d] || monthData[String(d)];
+      if(rec?.t === 'neg') total += rec.h || 0;
+    }
+  }
+  return r2(total);
+}
+
 function twScroll(px){
   var tw=document.getElementById('mainTw');
   if(!tw){tw=document.querySelector('.tw');};
@@ -927,6 +946,7 @@ function render(){
   ths+=`<th style="color:var(--P-tx);min-width:28px">P h</th>`;
   ths+=`<th style="color:#7c2d12;background:#fed7aa;min-width:38px;font-size:9px">Svátek h</th>`;
   ths+=`<th style="color:#1d4ed8;background:#dbeafe;min-width:44px;font-size:10px">CELKEM h</th>`;
+  if(emps.some(e=>e.prov==='4sm')) ths+=`<th class="cum-neg-hdr" style="min-width:52px;font-size:9px" title="Kumulativní součet mínusů od začátku roku">Kum. mínus</th>`;
   ths+=`</tr>`;
   document.getElementById('th').innerHTML=ths;
 
@@ -1090,6 +1110,7 @@ function render(){
     let tSv=0;emps.forEach(e=>{const s=calcSums(e);tSv+=s.svatekH||0;});tSv=r2(tSv);
     html+=`<td class="ts" style="color:#7c2d12;background:#fff7ed!important">${tSv>0?tSv+'h':''}</td>`;
     html+=`<td class="ts" style="font-size:12px;font-weight:700;color:#1d4ed8;background:#dbeafe!important;border-left:2px solid #93c5fd!important;cursor:help" title="${breakdown}">${manGrand>0?manGrand:'—'}</td>`;
+    html+=`<td class="ts"></td>`;// spacer for Kum. mínus column
     html+=`</tr>`;
   }
   document.getElementById('tb').innerHTML=html;
@@ -2139,6 +2160,268 @@ if(!ST.monthData) ST.monthData={};
   window._localImport[10] = ST.monthData[10] ? Object.assign({}, ST.monthData[10]) : {};
 })();
 
+
+// ── IMPORT: LEDEN AŽ BŘEZEN 2026 ──
+(function importQ1(){
+  if(!ST.monthData) ST.monthData={};
+  const se=(id,m,day,rec)=>{
+    const e=ST.emps.find(x=>x.id===id);if(!e)return;
+    if(!ST.monthData[m])ST.monthData[m]={};
+    if(!ST.monthData[m][id])ST.monthData[m][id]={};
+    ST.monthData[m][id][day]=rec;
+  };
+  // Měsíc 1
+  se(2,1,16,{t:'D'});
+  se(2,1,17,{t:'D'});
+  se(2,1,18,{t:'D'});
+  se(3,1,30,{t:'D'});
+  se(3,1,31,{t:'D'});
+  se(4,1,3,{t:'D'});
+  se(4,1,4,{t:'D'});
+  se(4,1,7,{t:'D'});
+  se(4,1,8,{t:'D'});
+  se(7,1,7,{t:'ot',h:8});
+  se(8,1,16,{t:'ot',h:9});
+  se(8,1,19,{t:'D'});
+  se(8,1,20,{t:'D'});
+  se(10,1,8,{t:'ot',h:6});
+  se(11,1,3,{t:'N'});
+  se(11,1,4,{t:'N'});
+  se(11,1,7,{t:'N'});
+  se(11,1,8,{t:'N'});
+  se(11,1,12,{t:'N'});
+  se(11,1,13,{t:'N'});
+  se(11,1,16,{t:'N'});
+  se(11,1,17,{t:'N'});
+  se(11,1,18,{t:'N'});
+  se(11,1,21,{t:'N'});
+  se(11,1,22,{t:'N'});
+  se(11,1,26,{t:'N'});
+  se(11,1,27,{t:'N'});
+  se(11,1,30,{t:'N'});
+  se(13,1,2,{t:'D'});
+  se(15,1,10,{t:'ot',h:8});
+  se(15,1,11,{t:'ot',h:8});
+  se(15,1,24,{t:'ot',h:8});
+  se(15,1,25,{t:'ot',h:8});
+  se(16,1,30,{t:'ot',h:9});
+  se(17,1,23,{t:'D'});
+  se(17,1,24,{t:'D'});
+  se(18,1,14,{t:'D'});
+  se(18,1,15,{t:'D'});
+  se(18,1,18,{t:'ot',h:8});
+  se(18,1,31,{t:'ot',h:5.5});
+  se(19,1,11,{t:'D'});
+  se(21,1,2,{t:'N'});
+  se(22,1,2,{t:'D'});
+  se(22,1,6,{t:'ot',h:5});
+  se(22,1,14,{t:'P',h:0});
+  se(22,1,26,{t:'P',h:0});
+  se(23,1,4,{t:'ot',h:8});
+  se(23,1,11,{t:'ot',h:8});
+  se(23,1,17,{t:'ot',h:8});
+  se(23,1,18,{t:'ot',h:8});
+  se(23,1,26,{t:'D'});
+  se(23,1,27,{t:'D'});
+  se(23,1,28,{t:'D'});
+  se(23,1,29,{t:'D'});
+  se(23,1,30,{t:'D'});
+  se(24,1,14,{t:'N'});
+  se(24,1,15,{t:'N'});
+  se(24,1,16,{t:'N'});
+  se(24,1,19,{t:'N'});
+  se(24,1,20,{t:'N'});
+  se(24,1,21,{t:'N'});
+  se(24,1,22,{t:'N'});
+  se(24,1,23,{t:'N'});
+  se(24,1,26,{t:'N'});
+  se(24,1,27,{t:'N'});
+  se(24,1,28,{t:'N'});
+  se(24,1,29,{t:'D'});
+  se(24,1,30,{t:'D'});
+  se(25,1,6,{t:'P',h:0});
+  se(25,1,14,{t:'ot',h:4});
+  se(25,1,15,{t:'ot',h:2});
+  se(25,1,19,{t:'ot',h:2});
+  se(25,1,26,{t:'ot',h:3});
+  se(26,1,2,{t:'D'});
+  se(26,1,12,{t:'D'});
+  se(26,1,27,{t:'ot',h:1});
+  se(27,1,16,{t:'D'});
+  se(28,1,20,{t:'ot',h:2});
+  se(28,1,21,{t:'ot',h:1});
+  se(28,1,23,{t:'ot',h:1});
+  se(28,1,26,{t:'ot',h:3});
+  se(28,1,27,{t:'ot',h:2});
+  se(28,1,30,{t:'ot',h:2});
+  se(30,1,2,{t:'D'});
+  se(30,1,15,{t:'D'});
+  se(30,1,17,{t:'ot',h:8});
+  se(30,1,24,{t:'ot',h:8});
+  se(30,1,25,{t:'ot',h:8});
+  se(30,1,30,{t:'D'});
+  // Měsíc 2
+  se(2,2,18,{t:'D'});
+  se(2,2,19,{t:'D'});
+  se(2,2,27,{t:'D'});
+  se(2,2,28,{t:'D'});
+  se(3,2,1,{t:'D'});
+  se(3,2,21,{t:'ot',h:8});
+  se(7,2,8,{t:'D'});
+  se(8,2,22,{t:'D'});
+  se(12,2,14,{t:'D'});
+  se(15,2,7,{t:'ot',h:6});
+  se(15,2,8,{t:'ot',h:8});
+  se(15,2,21,{t:'ot',h:8});
+  se(15,2,22,{t:'ot',h:8});
+  se(16,2,1,{t:'ot',h:4.5});
+  se(16,2,18,{t:'ot',h:10});
+  se(18,2,15,{t:'ot',h:8});
+  se(18,2,19,{t:'ot',h:8});
+  se(19,2,11,{t:'D'});
+  se(19,2,12,{t:'D'});
+  se(22,2,6,{t:'P',h:0});
+  se(22,2,9,{t:'P',h:0});
+  se(22,2,16,{t:'P',h:0});
+  se(22,2,17,{t:'ot',h:5});
+  se(23,2,2,{t:'D'});
+  se(23,2,3,{t:'D'});
+  se(23,2,4,{t:'D'});
+  se(23,2,5,{t:'D'});
+  se(23,2,6,{t:'D'});
+  se(23,2,7,{t:'ot',h:8});
+  se(23,2,8,{t:'ot',h:8});
+  se(23,2,10,{t:'ot',h:2});
+  se(23,2,14,{t:'ot',h:8});
+  se(23,2,15,{t:'ot',h:8});
+  se(23,2,18,{t:'ot',h:0.5});
+  se(23,2,22,{t:'ot',h:8});
+  se(25,2,5,{t:'ot',h:2});
+  se(25,2,6,{t:'ot',h:2});
+  se(25,2,9,{t:'ot',h:4});
+  se(25,2,17,{t:'P',h:0});
+  se(25,2,23,{t:'ot',h:2});
+  se(25,2,25,{t:'D'});
+  se(26,2,17,{t:'ot',h:1});
+  se(26,2,18,{t:'ot',h:1});
+  se(28,2,9,{t:'N'});
+  se(28,2,10,{t:'N'});
+  se(28,2,11,{t:'N'});
+  se(28,2,12,{t:'N'});
+  se(28,2,13,{t:'N'});
+  se(28,2,16,{t:'ot',h:1});
+  se(28,2,19,{t:'ot',h:1});
+  se(28,2,26,{t:'D'});
+  se(28,2,27,{t:'D'});
+  // Měsíc 3
+  se(1,3,4,{t:'D'});
+  se(1,3,5,{t:'D'});
+  se(2,3,1,{t:'D'});
+  se(2,3,27,{t:'D'});
+  se(2,3,28,{t:'D'});
+  se(2,3,29,{t:'D'});
+  se(3,3,11,{t:'ot',h:8});
+  se(3,3,19,{t:'D'});
+  se(3,3,23,{t:'D'});
+  se(3,3,24,{t:'D'});
+  se(6,3,6,{t:'D'});
+  se(7,3,6,{t:'D'});
+  se(7,3,13,{t:'ot',h:7});
+  se(8,3,6,{t:'D'});
+  se(8,3,19,{t:'ot',h:9});
+  se(9,3,6,{t:'D'});
+  se(9,3,30,{t:'D'});
+  se(9,3,31,{t:'D'});
+  se(10,3,6,{t:'D'});
+  se(10,3,11,{t:'D'});
+  se(10,3,12,{t:'D'});
+  se(10,3,23,{t:'ot',h:10});
+  se(13,3,9,{t:'N'});
+  se(13,3,10,{t:'N'});
+  se(13,3,13,{t:'N'});
+  se(13,3,14,{t:'N'});
+  se(13,3,15,{t:'N'});
+  se(13,3,18,{t:'N'});
+  se(13,3,19,{t:'N'});
+  se(13,3,23,{t:'N'});
+  se(13,3,24,{t:'N'});
+  se(13,3,27,{t:'N'});
+  se(13,3,28,{t:'N'});
+  se(13,3,29,{t:'N'});
+  se(15,3,8,{t:'ot',h:8});
+  se(16,3,6,{t:'D'});
+  se(16,3,7,{t:'D'});
+  se(16,3,27,{t:'ot',h:11});
+  se(17,3,6,{t:'D'});
+  se(17,3,7,{t:'D'});
+  se(18,3,6,{t:'D'});
+  se(18,3,7,{t:'D'});
+  se(18,3,8,{t:'D'});
+  se(18,3,15,{t:'ot',h:7});
+  se(18,3,28,{t:'ot',h:7});
+  se(19,3,6,{t:'D'});
+  se(19,3,7,{t:'D'});
+  se(20,3,2,{t:'D'});
+  se(20,3,3,{t:'D'});
+  se(20,3,6,{t:'D'});
+  se(20,3,7,{t:'D'});
+  se(20,3,24,{t:'ot',h:8});
+  se(21,3,6,{t:'D'});
+  se(21,3,12,{t:'D'});
+  se(21,3,13,{t:'D'});
+  se(21,3,16,{t:'D'});
+  se(21,3,17,{t:'D'});
+  se(21,3,18,{t:'D'});
+  se(21,3,19,{t:'D'});
+  se(21,3,20,{t:'D'});
+  se(21,3,23,{t:'D'});
+  se(21,3,24,{t:'D'});
+  se(21,3,25,{t:'D'});
+  se(21,3,26,{t:'D'});
+  se(21,3,27,{t:'D'});
+  se(22,3,6,{t:'D'});
+  se(22,3,11,{t:'P',h:0});
+  se(22,3,18,{t:'ot',h:0.5});
+  se(22,3,20,{t:'D'});
+  se(22,3,30,{t:'D'});
+  se(23,3,1,{t:'ot',h:8});
+  se(23,3,6,{t:'D'});
+  se(23,3,8,{t:'ot',h:8});
+  se(23,3,9,{t:'ot',h:2});
+  se(23,3,14,{t:'ot',h:8});
+  se(23,3,15,{t:'ot',h:8});
+  se(23,3,16,{t:'ot',h:1.5});
+  se(23,3,17,{t:'ot',h:0.5});
+  se(23,3,20,{t:'ot',h:2});
+  se(23,3,21,{t:'ot',h:8});
+  se(23,3,22,{t:'ot',h:8});
+  se(23,3,23,{t:'ot',h:2});
+  se(23,3,29,{t:'ot',h:8});
+  se(24,3,2,{t:'D'});
+  se(24,3,3,{t:'D'});
+  se(24,3,4,{t:'D'});
+  se(24,3,5,{t:'D'});
+  se(24,3,6,{t:'D'});
+  se(25,3,6,{t:'D'});
+  se(25,3,11,{t:'ot',h:4});
+  se(25,3,23,{t:'ot',h:3});
+  se(26,3,6,{t:'D'});
+  se(27,3,6,{t:'D'});
+  se(27,3,9,{t:'D'});
+  se(27,3,10,{t:'D'});
+  se(27,3,11,{t:'D'});
+  se(27,3,13,{t:'D'});
+  se(28,3,6,{t:'D'});
+  se(28,3,23,{t:'D'});
+  se(30,3,6,{t:'D'});
+  se(30,3,14,{t:'ot',h:8});
+  se(30,3,28,{t:'ot',h:7});
+  // Save to _localImport
+  if(window._localImport) window._localImport[1] = ST.monthData[1] ? Object.assign({},ST.monthData[1]) : {};
+  if(window._localImport) window._localImport[2] = ST.monthData[2] ? Object.assign({},ST.monthData[2]) : {};
+  if(window._localImport) window._localImport[3] = ST.monthData[3] ? Object.assign({},ST.monthData[3]) : {};
+})();
+
 render();
 updateNameDropdown();
 
@@ -2262,7 +2545,7 @@ function loadScript(src){
       restoreState(data);
       // Merge local import data for months not yet in Firebase
       let needsSave = false;
-      [5,6,7,8,9,10].forEach(m=>{
+      [1,2,3,5,6,7,8,9,10].forEach(m=>{
         if(!ST.monthData[m] || Object.keys(ST.monthData[m]).length===0){
           // Month missing in Firebase — copy from local import
           const localMonth = data.monthData?.[m];
