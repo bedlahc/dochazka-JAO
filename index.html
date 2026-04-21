@@ -684,11 +684,6 @@ function renderManualRow(rowKey,label,sublabel,rowCls,n,autoData){
   for(let i=0;i<12;i++) html+=`<td class="ts" style="color:var(--tx3)">—</td>`;
   // CELKEM h column — show month total
   html+=`<td class="ts" style="font-size:12px;font-weight:700;color:#1d4ed8;background:#dbeafe!important;border-left:2px solid #93c5fd!important">${total>0?total:'—'}</td>`;
-  // Kumulativní mínus (jen 4sm)
-  if(emp.prov==='4sm'){
-    const cumNeg=calcCumMinus(emp);
-    html+=`<td class="ts cum-neg" title="Kumulativní mínus za M1–M${ST.m}">${cumNeg>0?'-'+cumNeg:''}</td>`;
-  }
   html+=`</tr>`;
   return html;
 }
@@ -1011,6 +1006,11 @@ function render(){
         html+=`<td class="ts" style="color:var(--D-tx)">${s.dov||''}</td>`;
         html+=`<td class="ts" style="color:var(--P-tx)">${s.prop||''}</td>`;
         html+=`<td class="ts" style="color:#7c2d12;background:#fff7ed!important">${s.svatekH>0?s.svatekH:''}</td>`;
+      }
+      // Kumulativní mínus (jen 4sm)
+      if(emp.prov==='4sm'){
+        const cumNeg=calcCumMinus(emp);
+        html+=`<td class="ts cum-neg" title="Kumulativní mínus M1–M${ST.m}">${cumNeg>0?'-'+cumNeg:''}</td>`;
       }
       html+=`</tr>`;
     });
