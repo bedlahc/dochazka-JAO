@@ -673,10 +673,12 @@ function renderManualRow(rowKey,label,sublabel,rowCls,n,autoData){
     const w=dow(ST.y,ST.m,d);const wbl=w===6?'border-left:3px solid #16a34a;':'';
     const _nt=new Date();const _isT=ST.y===_nt.getFullYear()&&ST.m===(_nt.getMonth()+1)&&d===_nt.getDate();
     const _tt=_isT?'outline:2px solid #fbbf24;outline-offset:-2px;':'';
+    const isSatMr=w===6,isSunMr=w===0;
+    const weBg=(!hasCls&&(isSatMr||isSunMr))?'background:#86efac;color:#14532d;':'';
     if(isAuto){
-      html+=`<td class="mr-cell ${hasCls} day-col" style="${wbl}${_tt};cursor:default">${disp||'<span style="color:#d1d5db">·</span>'}</td>`;
+      html+=`<td class="mr-cell ${hasCls} day-col" style="${wbl}${_tt}${weBg};cursor:default">${disp||'<span style="color:#d1d5db">·</span>'}</td>`;
     } else {
-      html+=`<td class="mr-cell ${hasCls} day-col" onclick="openManualCell('${rowKey}',${d})" style="cursor:pointer;${wbl}${_tt}">${disp||'<span style="color:#d1d5db">·</span>'}</td>`;
+      html+=`<td class="mr-cell ${hasCls} day-col" onclick="openManualCell('${rowKey}',${d})" style="cursor:pointer;${wbl}${_tt}${weBg}">${disp||'<span style="color:#d1d5db">·</span>'}</td>`;
     }
   }
   // 8 summary cols (Dny, Noční h, Víkend h, Přesčas, Mínus, N, D, P h) — show dashes
