@@ -2319,6 +2319,29 @@ if(!ST.monthData) ST.monthData={};
   if(window._localImport) window._localImport[3] = ST.monthData[3] ? Object.assign({},ST.monthData[3]) : {};
 })();
 
+// ── IMPORT: LISTOPAD + PROSINEC 2026 ──
+window._localImport = window._localImport || {};
+if(!ST.monthData) ST.monthData={};
+(function importNovDec(){
+  if(!ST.monthData) ST.monthData={};
+  const se=(id,m,day,rec)=>{
+    const e=ST.emps.find(x=>x.id===id);if(!e)return;
+    if(!ST.monthData[m])ST.monthData[m]={};
+    if(!ST.monthData[m][id])ST.monthData[m][id]={};
+    ST.monthData[m][id][day]=rec;
+  };
+  // Měsíc 11 - Listopad
+  se(26,11,17,{t:'D'});
+  // Měsíc 12 - Prosinec
+  se(17,12,22,{t:'D'});se(17,12,23,{t:'D'});se(17,12,28,{t:'D'});se(17,12,31,{t:'D'});
+  se(26,12,29,{t:'D'});se(26,12,30,{t:'D'});se(26,12,31,{t:'D'});
+  se(29,12,29,{t:'D'});se(29,12,30,{t:'D'});se(29,12,31,{t:'D'});
+  if(window._localImport){
+    window._localImport[11]=ST.monthData[11]?Object.assign({},ST.monthData[11]):{};
+    window._localImport[12]=ST.monthData[12]?Object.assign({},ST.monthData[12]):{};
+  }
+})();
+
 render();
 updateNameDropdown();
 
@@ -2442,7 +2465,7 @@ function loadScript(src){
       restoreState(data);
       // Merge local import data for months not yet in Firebase
       let needsSave = false;
-      [1,2,3,5,6,7,8,9,10].forEach(m=>{
+      [1,2,3,5,6,7,8,9,10,11,12].forEach(m=>{
         const importData = window._localImport?.[m];
         if(!importData || Object.keys(importData).length===0) return;
         const firebaseMonth = data.monthData?.[m];
