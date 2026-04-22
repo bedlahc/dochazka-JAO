@@ -937,18 +937,24 @@ const BONUS_BASE = {
   30:{kpi:684,psk:684,bozp:684,osob:1368,dist:0},
 };
 
-function plannedDays(y,m,prov){
+function plannedDays(y,m,prov,grp){
   const n=dInM(m,y);
-  if(prov==='4sm'){
-    // 4sm: 12h shifts, half of all calendar days (incl. holidays, excl. weekends)
+  if(prov==='4sm'&&grp&&SS[String(m)]){
+    // Use actual schedule from SS - count days where this group works
+    const grpKey=grp==='black'?'dark':grp;
     let cnt=0;
     for(let d=1;d<=n;d++){
-      const w=dow(y,m,d);
-      if(w!==0&&w!==6) cnt++;// count Mon-Fri including holidays
+      const s=SS[String(m)][String(d)];
+      if(s&&(s.den===grpKey||s.noc===grpKey)) cnt++;
     }
+    return cnt;
+  } else if(prov==='4sm'){
+    // fallback: half of Mon-Fri days
+    let cnt=0;
+    for(let d=1;d<=n;d++){const w=dow(y,m,d);if(w!==0&&w!==6)cnt++;}
     return Math.round(cnt/2);
   } else {
-    // 2sm: Mon-Fri working days
+    // 2sm: Mon-Fri working days excl. holidays
     let cnt=0;
     for(let d=1;d<=n;d++){const w=dow(y,m,d);if(w!==0&&w!==6&&!isSv(m,d))cnt++;}
     return cnt;
@@ -1249,7 +1255,7 @@ function doPrintBonus(){
 
   const m=ST.m,y=ST.y;
   const bdata=getBonusData(m);
-  const planned=plannedDays(y,m);
+  // planned calculated per employee
 
   let html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
     <title>Bonusy — ${MCZ[m]} ${y}</title>
