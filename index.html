@@ -1296,7 +1296,7 @@ table{border-collapse:collapse}td,th{font-family:Calibri;font-size:9pt;border:0.
     <th class="hdr">Pošk. základ</th><th class="hdr">Pošk. %</th><th class="hdr">Pošk. výp.</th>
     <th class="hdr">BOZP základ</th><th class="hdr">BOZP %</th><th class="hdr">BOZP výp.</th>
     <th class="hdr">OSOB základ</th><th class="hdr">OSOB %</th><th class="hdr">OSOB výp.</th>
-    <th class="hdr">Plán dní</th><th class="hdr">% docházky</th>
+    <th class="hdr">Plán</th><th class="hdr">Cíl</th><th class="hdr">% docházky</th>
     <th class="hdr">Předpoklad</th><th class="hdr">Zaplatit dle doch.</th>
     <th class="hdr">Bonus</th><th class="hdr">Zaplatit</th>
     <th class="hdr">Extra bonus</th><th class="hdr">Celkem zaplatit</th>
@@ -1334,13 +1334,38 @@ table{border-collapse:collapse}td,th{font-family:Calibri;font-size:9pt;border:0.
         <td class="num">${base.psk}</td><td class="num">${pskPct}</td><td class="num">${pskV}</td>
         <td class="num">${base.bozp}</td><td class="num">${bozpPct}</td><td class="num">${bozpV}</td>
         <td class="num">${base.osob}</td><td class="num">${osobPct}</td><td class="num">${osobV}</td>
-        <td class="num">${planned}</td><td class="num">${Math.round(dochPct*100)}%</td>
+        <td class="num">${planned}</td><td class="num" style="font-weight:bold">${actual}</td><td class="num">${Math.round(dochPct*100)}%</td>
         <td class="pred">${pred}</td><td class="zdoch">${zaplatDoch}</td>
         <td class="num">${bonus||''}</td><td class="zap">${zaplatit}</td>
         <td class="num">${extra||''}</td><td class="celkem">${celkem}</td>
         <td class="dop">${doprava||''}</td>
       </tr>`;
     });
+  });
+
+  // Office section
+  const bdata2=getBonusData(m);
+  const planned2sm=plannedDays(y,m,'2sm',null);
+  html+=`<tr><td colspan="24" class="grp" style="background:#F0F9FF">OFFICE</td></tr>`;
+  [{id:'tomas',name:'Tomas Bedlek',pos:'Manager',pred:8600,dist:10},
+   {id:'renata',name:'Renata Hornychova',pos:'Client Coordinator',pred:0,dist:10}].forEach(off=>{
+    const bd2=bdata2['off_'+off.id]||{};
+    const actualDays=bd2.actualDays||0;
+    const dochPct2=planned2sm>0?Math.min(1,actualDays/planned2sm):0;
+    const zaplatDoch2=off.pred>0?Math.round(off.pred*dochPct2):0;
+    const bonus2=bd2.bonus||0,extra2=bd2.extraBonus||0;
+    const zaplatit2=zaplatDoch2+bonus2,celkem2=zaplatit2+extra2;
+    const doprava2=Math.round(1000*dochPct2);
+    html+=`<tr>
+      <td class="nm">${off.name}</td><td class="pos">${off.pos}</td>
+      <td colspan="12" style="text-align:center;color:#94A3B8">—</td>
+      <td class="num">${planned2sm}</td><td class="num" style="font-weight:bold">${actualDays}</td>
+      <td class="num">${Math.round(dochPct2*100)}%</td>
+      <td class="pred">${off.pred||'—'}</td><td class="zdoch">${zaplatDoch2||'—'}</td>
+      <td class="num">${bonus2||''}</td><td class="zap">${zaplatit2||'—'}</td>
+      <td class="num">${extra2||''}</td><td class="celkem">${celkem2||'—'}</td>
+      <td class="dop">${doprava2||''}</td>
+    </tr>`;
   });
 
   html+=`</table></body></html>`;
