@@ -1525,6 +1525,8 @@ function render(){
   }
   ths+=`<th class="cn" style="border-left:3px solid var(--b2)">Jméno</th>`;
   ths+=`<th style="color:var(--day-tx);min-width:32px">Dny</th>`;
+  ths+=`<th style="color:var(--N-tx);min-width:22px">N</th>`;
+  ths+=`<th style="color:var(--D-tx);min-width:22px">D</th>`;
   ths+=`<th style="color:var(--ngt-tx);min-width:36px">Noční h</th>`;
   ths+=`<th style="color:var(--wed-tx);min-width:36px">Víkend h</th>`;
   ths+=`<th style="color:#d97706;min-width:36px;font-size:9px">Přesčas 25%</th>`;
@@ -1532,8 +1534,6 @@ function render(){
   ths+=`<th style="color:#92400e;background:#fde68a;min-width:36px;font-size:9px">Přesčas Ne 50%</th>`;
   ths+=`<th style="color:#7c2d12;background:#fed7aa;min-width:36px;font-size:9px">Přesčas sv</th>`;
   ths+=`<th style="color:var(--NEG);min-width:30px">Mínus</th>`;
-  ths+=`<th style="color:var(--N-tx);min-width:22px">N</th>`;
-  ths+=`<th style="color:var(--D-tx);min-width:22px">D</th>`;
   ths+=`<th style="color:var(--P-tx);min-width:28px">P h</th>`;
   ths+=`<th style="color:#7c2d12;background:#fed7aa;min-width:38px;font-size:9px">Svátek h</th>`;
   if(emps.some(e=>e.prov==='4sm')) ths+=`<th class="cum-neg-hdr" style="min-width:52px;font-size:9px" title="Kumulativní součet mínusů od začátku roku">Kum. mínus</th>`;
@@ -1584,13 +1584,17 @@ function render(){
         html+=`<td class="ts">—</td>`;
         html+=`<td class="ts">—</td>`;
         html+=`<td class="ts">—</td>`;
+        html+=`<td class="ts">—</td>`;// N
+        html+=`<td class="ts">—</td>`;// D
         html+=`<td class="ts" style="color:var(--NEG);font-weight:700">${s.negH>0?'-'+s.negH:''}</td>`;
-        html+=`<td class="ts">—</td><td class="ts">—</td><td class="ts">—</td>`;
+        html+=`<td class="ts">—</td>`;// P h
         html+=`<td class="ts" style="color:#7c2d12;background:#fff7ed!important;font-weight:700">${s.svatekH>0?s.svatekH:''}</td>`;
         const brigCelkem=r2(s.brig-s.negH);
         html+=`<td class="ts" style="font-size:12px;font-weight:700;color:#6d28d9;background:#ede9fe!important;border-left:2px solid #c4b5fd!important">${brigCelkem>0?brigCelkem:''}</td>`;
       } else {
         html+=`<td class="ts" style="color:var(--day-tx)">${s.days||''}</td>`;
+        html+=`<td class="ts" style="color:var(--N-tx)">${s.nem||''}</td>`;
+        html+=`<td class="ts" style="color:var(--D-tx)">${s.dov||''}</td>`;
         html+=`<td class="ts" style="color:var(--ngt-tx)">${!is2&&s.nightH>0?s.nightH:is2?'':''}</td>`;
         html+=`<td class="ts" style="color:var(--wed-tx)">${s.weH>0?s.weH:''}</td>`;
         html+=`<td class="ts" style="color:#d97706">${s.otW>0?s.otW:''}</td>`;
@@ -1598,8 +1602,6 @@ function render(){
         html+=`<td class="ts" style="color:#92400e;background:#fef08a!important">${s.otNe>0?s.otNe:''}</td>`;
         html+=`<td class="ts" style="color:#7c2d12;background:#ffedd5!important">${s.otSv>0?s.otSv:''}</td>`;
         html+=`<td class="ts" style="color:var(--NEG)">${s.negH>0?'-'+s.negH:''}</td>`;
-        html+=`<td class="ts" style="color:var(--N-tx)">${s.nem||''}</td>`;
-        html+=`<td class="ts" style="color:var(--D-tx)">${s.dov||''}</td>`;
         html+=`<td class="ts" style="color:var(--P-tx)">${s.prop||''}</td>`;
         html+=`<td class="ts" style="color:#7c2d12;background:#fff7ed!important">${s.svatekH>0?s.svatekH:''}</td>`;
       }
