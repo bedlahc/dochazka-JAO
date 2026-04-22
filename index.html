@@ -1004,7 +1004,7 @@ function renderBonusTable(){
       const bd=bdata[emp.id]||{};
       const s=calcSums(emp);
       const actual=s.days+(s.dov||0);
-      const planned=plannedDays(y,m,emp.prov);
+      const planned=plannedDays(y,m,emp.prov,emp.grp);
       const dochPct=planned>0?Math.min(1,actual/planned):1;
       const kpiPct=bd.kpiPct!==undefined?bd.kpiPct:1;
       const pskPct=bd.pskPct!==undefined?bd.pskPct:1;
@@ -1057,7 +1057,7 @@ function updateBonus(){
     bdata[emp.id]={kpiPct,pskPct,bozpPct,osobPct,bonus,extraBonus:extra};
 
     const s=calcSums(emp);
-    const planned=plannedDays(ST.y,m,emp.prov);
+    const planned=plannedDays(ST.y,m,emp.prov,emp.grp);
     const dochPct=planned>0?Math.min(1,(s.days+(s.dov||0))/planned):1;
 
     const kpiV=Math.round(base.kpi*kpiPct);
@@ -1198,7 +1198,7 @@ table{border-collapse:collapse}td,th{font-family:Calibri;font-size:9pt;border:0.
       const bd=bdata[emp.id]||{};
       const s=calcSums(emp);
       const actual=s.days+(s.dov||0);
-      const planned=plannedDays(y,m,emp.prov);
+      const planned=plannedDays(y,m,emp.prov,emp.grp);
       const dochPct=planned>0?Math.min(1,actual/planned):1;
       const kpiPct=bd.kpiPct!==undefined?bd.kpiPct:1;
       const pskPct=bd.pskPct!==undefined?bd.pskPct:1;
@@ -1307,7 +1307,7 @@ function doPrintBonus(){
       const bd=bdata[emp.id]||{};
       const s=calcSums(emp);
       const actual=s.days+(s.dov||0);
-      const planned=plannedDays(y,m,emp.prov);
+      const planned=plannedDays(y,m,emp.prov,emp.grp);
       const dochPct=planned>0?Math.min(1,actual/planned):1;
       const kpiPct=bd.kpiPct!==undefined?bd.kpiPct:1;
       const pskPct=bd.pskPct!==undefined?bd.pskPct:1;
