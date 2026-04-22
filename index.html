@@ -937,10 +937,22 @@ const BONUS_BASE = {
   30:{kpi:684,psk:684,bozp:684,osob:1368,dist:0},
 };
 
-function plannedDays(y,m){
-  const n=dInM(m,y);let cnt=0;
-  for(let d=1;d<=n;d++){const w=dow(y,m,d);if(w!==0&&w!==6&&!isSv(m,d))cnt++;}
-  return cnt;
+function plannedDays(y,m,prov){
+  const n=dInM(m,y);
+  if(prov==='4sm'){
+    // 4sm: 12h shifts, half of all calendar days (incl. holidays, excl. weekends)
+    let cnt=0;
+    for(let d=1;d<=n;d++){
+      const w=dow(y,m,d);
+      if(w!==0&&w!==6) cnt++;// count Mon-Fri including holidays
+    }
+    return Math.round(cnt/2);
+  } else {
+    // 2sm: Mon-Fri working days
+    let cnt=0;
+    for(let d=1;d<=n;d++){const w=dow(y,m,d);if(w!==0&&w!==6&&!isSv(m,d))cnt++;}
+    return cnt;
+  }
 }
 function getBonusData(m){
   if(!ST.bonusData)ST.bonusData={};
@@ -959,7 +971,6 @@ function closeBonusPage(){
 function renderBonusTable(){
   const m=ST.m,y=ST.y;
   const bdata=getBonusData(m);
-  const planned=plannedDays(y,m);
   const th=(t,bg,fg,cs)=>`<th colspan="${cs||1}" style="background:${bg||'#1E3A5F'};color:${fg||'#fff'};padding:5px 7px;border:1px solid #CBD5E1;font-size:10px;text-align:center;white-space:nowrap">${t}</th>`;
   let html=`<thead><tr>
     ${th('Jméno','#1E3A5F','#fff')}${th('Pozice','#1E3A5F','#fff')}
@@ -993,6 +1004,7 @@ function renderBonusTable(){
       const bd=bdata[emp.id]||{};
       const s=calcSums(emp);
       const actual=s.days+(s.dov||0);
+      const planned=plannedDays(y,m,emp.prov);
       const dochPct=planned>0?Math.min(1,actual/planned):1;
       const kpiPct=bd.kpiPct!==undefined?bd.kpiPct:1;
       const pskPct=bd.pskPct!==undefined?bd.pskPct:1;
@@ -1035,7 +1047,7 @@ function renderBonusTable(){
   document.getElementById('bonusTable').innerHTML=html;
 }
 function updateBonus(){
-  const m=ST.m,bdata=getBonusData(m),planned=plannedDays(ST.y,m);
+  const m=ST.m,bdata=getBonusData(m);
   ST.emps.filter(e=>e.prov==='4sm'||e.prov==='2sm').forEach(emp=>{
     const base=BONUS_BASE[emp.id];if(!base)return;
     const id=`b_${emp.id}_`;
@@ -1045,6 +1057,7 @@ function updateBonus(){
     bdata[emp.id]={kpiPct,pskPct,bozpPct,osobPct,bonus,extraBonus:extra};
 
     const s=calcSums(emp);
+    const planned=plannedDays(ST.y,m,emp.prov);
     const dochPct=planned>0?Math.min(1,(s.days+(s.dov||0))/planned):1;
 
     const kpiV=Math.round(base.kpi*kpiPct);
@@ -1143,7 +1156,7 @@ function saveBonusData(){
 function exportBonusExcel(){
   const m=ST.m,y=ST.y;
   const bdata=getBonusData(m);
-  const planned=plannedDays(y,m);
+  // planned calculated per employee below
   const e2=(s)=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
   let html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">
@@ -1185,6 +1198,7 @@ table{border-collapse:collapse}td,th{font-family:Calibri;font-size:9pt;border:0.
       const bd=bdata[emp.id]||{};
       const s=calcSums(emp);
       const actual=s.days+(s.dov||0);
+      const planned=plannedDays(y,m,emp.prov);
       const dochPct=planned>0?Math.min(1,actual/planned):1;
       const kpiPct=bd.kpiPct!==undefined?bd.kpiPct:1;
       const pskPct=bd.pskPct!==undefined?bd.pskPct:1;
@@ -1293,6 +1307,7 @@ function doPrintBonus(){
       const bd=bdata[emp.id]||{};
       const s=calcSums(emp);
       const actual=s.days+(s.dov||0);
+      const planned=plannedDays(y,m,emp.prov);
       const dochPct=planned>0?Math.min(1,actual/planned):1;
       const kpiPct=bd.kpiPct!==undefined?bd.kpiPct:1;
       const pskPct=bd.pskPct!==undefined?bd.pskPct:1;
