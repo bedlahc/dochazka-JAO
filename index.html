@@ -1108,18 +1108,28 @@ function saveBonusData(){
   const payload={};
   Object.keys(ST.bonusData).forEach(mk=>{
     const md=ST.bonusData[mk];
-    if(md&&typeof md==='object') payload[mk]=md;
+    if(!md||typeof md!=='object') return;
+    // Convert array to object if needed
+    if(Array.isArray(md)){
+      const obj={};
+      md.forEach((v,i)=>{if(v!==null&&v!==undefined)obj[String(i)]=v;});
+      payload[mk]=obj;
+    } else {
+      payload[mk]=md;
+    }
   });
   console.log('Saving bonus payload:', JSON.stringify(payload).slice(0,200));
+  const syncEl=document.getElementById('syncStatus');
+  const setStat=(msg,col)=>{if(syncEl){syncEl.textContent=msg;syncEl.style.color=col;syncEl.style.opacity='1';}};
   window._fbDB.ref('bonus2026').set(payload)
     .then(()=>{
-      showSyncStatus('💰 Bonusy uloženy','#D97706');
-      alert('Bonusy uloženy!');
+      setStat('💰 Bonusy uloženy','#D97706');
+      setTimeout(()=>setStat('● Online','#16a34a'),3000);
     })
     .catch((err)=>{
       console.error('Bonus save error:', err);
-      showSyncStatus('✗ Chyba','#DC2626');
-      alert('Chyba uložení: '+err.message);
+      setStat('✗ Chyba uložení bonusů','#DC2626');
+      alert('Chyba: '+err.message);
     });
 }
 function exportBonusExcel(){
