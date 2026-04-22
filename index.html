@@ -2352,8 +2352,17 @@ function loadScript(src){
       // Show user email in topbar
       const el=document.getElementById('userEmail');
       if(el) el.textContent=user.email.split('@')[0];
+      // Show bonus button only for Tomas
+      window._isTomas = user.email === 'tomas.bedlek@lns.maersk.com';
+      const bonusBtn=document.getElementById('bonusTabBtn');
+      if(bonusBtn) bonusBtn.style.display=window._isTomas?'inline-flex':'none';
+      // Load bonus data
+      setTimeout(loadBonusData, 1000);
     } else {
       document.getElementById('loginScreen').style.display='flex';
+      const bonusBtn=document.getElementById('bonusTabBtn');
+      if(bonusBtn) bonusBtn.style.display='none';
+      window._isTomas=false;
     }
   });
 
