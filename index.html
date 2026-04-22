@@ -2038,101 +2038,142 @@ function executePrint(){
 function doExportXLS(){
   const n=dInM(ST.m,ST.y);
   const DN2=['Ne','Po','Út','St','Čt','Pá','So'];
-  const e=(s)=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const esc=(s)=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
-  const bgMap={sd:'#93C5FD',sn:'#94A3B8',swd:'#93C5FD',swn:'#94A3B8','sof-we':'#86EFAC',
-    cN:'#FECACA',cD:'#BBF7D0',cD2:'#DCF2E7',cP:'#DDD6FE',cSV:'#FED7AA',cbh:'#EDE9FE'};
+  // XML Spreadsheet format - full color support
+  const B=(color)=>`<Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/></Borders>`;
+  const F=(color,bold)=>`<Font ss:Size="9" ${bold?'ss:Bold="1"':''} ${color?`ss:Color="#${color}"`:''}/>`;
+  const I=(color)=>color?`<Interior ss:Color="#${color}" ss:Pattern="Solid"/>`:'';
+  const A=(h,v)=>`<Alignment ss:Horizontal="${h||'Center'}" ss:Vertical="Center"/>`;
 
-  // Build complete HTML document for Excel
-  let html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-<head><meta charset="UTF-8">
-<!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>
-<x:Name>${MCZ[ST.m]} ${ST.y}</x:Name>
-<x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions>
-</x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->
-<style>
-table{border-collapse:collapse}
-td,th{font-family:Calibri,Arial;font-size:9pt;border:0.5pt solid #CBD5E1;white-space:nowrap;padding:2px 6px}
-.hdr{background:#1E3A5F;color:#FFFFFF;font-weight:bold;text-align:center}
-.nm{font-weight:bold;text-align:left;background:#F8FAFC}
-.pos{color:#64748B;text-align:left}
-.grp{font-weight:bold;font-size:10pt;text-align:left}
-.sd{background:#93C5FD}.sn{background:#94A3B8}.swe{background:#86EFAC}
-.cN{background:#FECACA;font-weight:bold}.cD{background:#BBF7D0;font-weight:bold}
-.cD2{background:#DCF2E7;font-weight:bold}.cP{background:#DDD6FE;font-weight:bold}
-.cSV{background:#FED7AA;font-weight:bold}.ot{background:#EDE9FE;font-weight:bold}
-.neg{color:#DC2626;font-weight:bold}.sv{background:#FFF7ED}
-.celkem{background:#DBEAFE;color:#1D4ED8;font-weight:bold;text-align:right}
-.mr{background:#FEF9C3;font-weight:bold}.wc{background:#DBEAFE}.ce{background:#DCFCE7}
-.num{text-align:right}.txt{text-align:center}
-</style></head><body><table>`;
+  let styles=`<Styles>
+  <Style ss:ID="s0">${A('Center')}${B()}${F('000000',false)}</Style>
+  <Style ss:ID="hdr">${A('Center')}${B()}${F('FFFFFF',true)}${I('1E3A5F')}</Style>
+  <Style ss:ID="hdrL">${A('Left')}${B()}${F('FFFFFF',true)}${I('1E3A5F')}</Style>
+  <Style ss:ID="hdrWknd">${A('Center')}${B()}${F('14532D',true)}${I('86EFAC')}</Style>
+  <Style ss:ID="hdrSv">${A('Center')}${B()}${F('7C2D12',true)}${I('FED7AA')}</Style>
+  <Style ss:ID="nm">${A('Left')}${B()}${F('000000',true)}</Style>
+  <Style ss:ID="pos">${A('Left')}${B()}${F('64748B',false)}</Style>
+  <Style ss:ID="sd">${A('Center')}${B()}${F('1E3A5F',false)}${I('93C5FD')}</Style>
+  <Style ss:ID="sn">${A('Center')}${B()}${F('1E293B',false)}${I('94A3B8')}</Style>
+  <Style ss:ID="swe">${A('Center')}${B()}${F('14532D',false)}${I('86EFAC')}</Style>
+  <Style ss:ID="cN">${A('Center')}${B()}${F('7F1D1D',true)}${I('FECACA')}</Style>
+  <Style ss:ID="cD">${A('Center')}${B()}${F('14532D',true)}${I('BBF7D0')}</Style>
+  <Style ss:ID="cD2">${A('Center')}${B()}${F('14532D',true)}${I('DCF2E7')}</Style>
+  <Style ss:ID="cP">${A('Center')}${B()}${F('4C1D95',true)}${I('DDD6FE')}</Style>
+  <Style ss:ID="cSV">${A('Center')}${B()}${F('7C2D12',true)}${I('FED7AA')}</Style>
+  <Style ss:ID="ot">${A('Center')}${B()}${F('4C1D95',true)}${I('EDE9FE')}</Style>
+  <Style ss:ID="neg">${A('Center')}${B()}${F('DC2626',true)}</Style>
+  <Style ss:ID="sv">${A('Center')}${B()}${F('7C2D12',false)}${I('FFF7ED')}</Style>
+  <Style ss:ID="celkem">${A('Center')}${B()}${F('1D4ED8',true)}${I('DBEAFE')}</Style>
+  <Style ss:ID="mr">${A('Center')}${B()}${F('78350F',true)}${I('FEF9C3')}</Style>
+  <Style ss:ID="mrL">${A('Left')}${B()}${F('78350F',true)}${I('FEF9C3')}</Style>
+  <Style ss:ID="grp">${A('Left')}${B()}${F('000000',true)}</Style>
+  <Style ss:ID="wc">${A('Center')}${B()}${F('1E40AF',false)}${I('DBEAFE')}</Style>
+  <Style ss:ID="wcL">${A('Left')}${B()}${F('1E40AF',true)}${I('DBEAFE')}</Style>
+  <Style ss:ID="ce">${A('Center')}${B()}${F('14532D',false)}${I('DCFCE7')}</Style>
+  <Style ss:ID="ceL">${A('Left')}${B()}${F('14532D',true)}${I('DCFCE7')}</Style>
+  <Style ss:ID="empB">${A('Left')}${B()}${F('000000',true)}${I('DBEAFE')}</Style>
+  <Style ss:ID="empBk">${A('Left')}${B()}${F('000000',true)}${I('E2E8F0')}</Style>
+  <Style ss:ID="empG">${A('Left')}${B()}${F('000000',true)}${I('DCFCE7')}</Style>
+  <Style ss:ID="empR">${A('Left')}${B()}${F('000000',true)}${I('FEE2E2')}</Style>
+  <Style ss:ID="emp2">${A('Left')}${B()}${F('000000',true)}${I('FFFBEB')}</Style>
+  <Style ss:ID="cumNeg">${A('Center')}${B()}${F('BE123C',true)}${I('FFE4E6')}</Style>
+  </Styles>`;
 
-  // Helper functions
-  const tc=(v,cls)=>`<td class="txt ${cls||''}" x:str="${e(v===null||v===undefined?'':v)}">${e(v===null||v===undefined?'':v)}</td>`;
-  const nc=(v,cls)=>`<td class="num ${cls||''}">${v===null||v===undefined||v===''?'':v}</td>`;
-  const ec=(cls)=>`<td class="${cls||''}"></td>`;
+  const empStyles={blue:'empB',black:'empBk',green:'empG',red:'empR'};
+  const bgMap={sd:'sd',sn:'sn',swd:'sd',swn:'sn','sof-we':'swe',cN:'cN',cD:'cD',cD2:'cD2',cP:'cP',cSV:'cSV',cbh:'ot'};
+
+  function tc(v,style){
+    const s=String(v===null||v===undefined?'':v);
+    if(s==='') return `<Cell ss:StyleID="${style||'s0'}"/>`;
+    return `<Cell ss:StyleID="${style||'s0'}"><Data ss:Type="String">${esc(s)}</Data></Cell>`;
+  }
+  function nc(v,style){
+    if(v===''||v===null||v===undefined) return `<Cell ss:StyleID="${style||'s0'}"/>`;
+    const num=typeof v==='number'?v:parseFloat(v);
+    if(!isNaN(num)) return `<Cell ss:StyleID="${style||'s0'}"><Data ss:Type="Number">${num}</Data></Cell>`;
+    return `<Cell ss:StyleID="${style||'s0'}"><Data ss:Type="String">${esc(String(v))}</Data></Cell>`;
+  }
+  function ec(style){return `<Cell ss:StyleID="${style||'s0'}"/>`;}
+
+  let xml=`<?xml version="1.0"?><?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+${styles}
+<Worksheet ss:Name="${MCZ[ST.m]} ${ST.y}">
+<Table>
+<Column ss:Width="140"/><Column ss:Width="90"/>`;
+  for(let d=0;d<n;d++) xml+=`<Column ss:Width="26"/>`;
+  xml+=`<Column ss:Width="140"/>`;// second name
+  ['Dny','D','N','Noční h','Víkend h','Př 25%','Př So','Př Ne','Př sv','Mínus','P h','Svátek h','Kum.mínus','CELKEM h'].forEach(()=>xml+=`<Column ss:Width="52"/>`);
 
   // Header row
-  html+=`<tr>`;
-  html+=`<th class="hdr nm">Jméno</th><th class="hdr pos">Pozice</th>`;
+  xml+=`<Row ss:Height="22">`;
+  xml+=tc('Jméno','hdrL')+tc('Pozice','hdr');
   for(let d=1;d<=n;d++){
     const w=dow(ST.y,ST.m,d);const sv=isSv(ST.m,d);const wk=w===6||w===0;
-    const bg=sv?'background:#FED7AA;color:#7C2D12':wk?'background:#86EFAC;color:#14532D':'';
-    html+=`<th class="hdr" style="${bg}" x:str="${d}">${d}</th>`;
+    const st=sv?'hdrSv':wk?'hdrWknd':'hdr';
+    xml+=tc(String(d),st);
   }
-  html+=`<th class="hdr nm">Jméno</th>`;
-  ['Dny','Noční h','Víkend h','Př 25%','Př So','Př Ne','Př sv','Mínus','N','D','P h','Svátek h','CELKEM h'].forEach(h=>html+=`<th class="hdr">${h}</th>`);
-  html+=`</tr>`;
+  xml+=tc('Jméno','hdrL');
+  ['Dny','D','N','Noční h','Víkend h','Př 25%','Př So','Př Ne','Př sv','Mínus','P h','Svátek h','Kum.mínus','CELKEM h'].forEach(h=>xml+=tc(h,'hdr'));
+  xml+=`</Row>\n`;
 
   function empRow(emp){
     const s=calcSums(emp);const isBr=emp.prov==='brigada';
-    const gbg={blue:'#DBEAFE',black:'#F1F5F9',green:'#DCFCE7',red:'#FEE2E2'}[emp.grp]||'';
-    html+=`<tr>`;
-    html+=`<td class="nm" style="background:${gbg}">${e(emp.name)}</td>`;
-    html+=`<td class="pos">${e(emp.pos||'')}</td>`;
+    const nmSt=isBr?'emp2':(empStyles[emp.grp]||'nm');
+    xml+=`<Row ss:Height="15">`;
+    xml+=tc(emp.name,nmSt)+tc(emp.pos||'','pos');
     for(let d=1;d<=n;d++){
       const rec=emp.data[d];const disp=cellDisp(emp,d,rec);const cls2=cellCls(emp,d,rec);
-      let cls='';for(const[k,v] of Object.entries(bgMap)){if(cls2.includes(k)){cls=k.replace('-','_');break;}}
-      const w=dow(ST.y,ST.m,d);if(!cls&&(w===6||w===0))cls='swe';
-      html+=tc(disp!==null?disp:'',cls);
+      let st='s0';
+      for(const[k,v] of Object.entries(bgMap)){if(cls2.includes(k)){st=v;break;}}
+      const w=dow(ST.y,ST.m,d);if(st==='s0'&&(w===6||w===0)) st='swe';
+      xml+=tc(disp!==null?String(disp):'',st);
     }
-    html+=`<td class="nm" style="background:${gbg}">${e(emp.name)}</td>`;
+    xml+=tc(emp.name,nmSt);
     if(isBr){
-      for(let i=0;i<12;i++)html+=ec();
-      html+=nc(r2(s.brig-s.negH)||'','celkem');
+      for(let i=0;i<13;i++) xml+=ec('s0');
+      xml+=nc(r2(s.brig-s.negH)||'','celkem');
     } else {
-      html+=nc(s.days||'');
-      html+=nc(s.nightH>0?s.nightH:'','sn');
-      html+=nc(s.weH>0?s.weH:'','swe');
-      html+=nc(s.otW>0?s.otW:'','ot');
-      html+=nc(s.otSo>0?s.otSo:'','ot');
-      html+=nc(s.otNe>0?s.otNe:'','ot');
-      html+=nc(s.otSv>0?s.otSv:'','ot');
-      html+=nc(s.negH>0?'-'+s.negH:'','neg');
-      html+=nc(s.nem||'','cN');
-      html+=nc(s.dov||'','cD');
-      html+=nc(s.prop||'','cP');
-      html+=nc(s.svatekH>0?s.svatekH:'','sv');
-      html+=nc(r2((s.otW||0)+(s.otSo||0)+(s.otNe||0)+(s.otSv||0))||'','celkem');
+      xml+=nc(s.days||'','s0');
+      xml+=nc(s.dov||'','cD');
+      xml+=nc(s.nem||'','cN');
+      xml+=nc(s.nightH>0?s.nightH:'','sn');
+      xml+=nc(s.weH>0?s.weH:'','swe');
+      xml+=nc(s.otW>0?s.otW:'','ot');
+      xml+=nc(s.otSo>0?s.otSo:'','ot');
+      xml+=nc(s.otNe>0?s.otNe:'','ot');
+      xml+=nc(s.otSv>0?s.otSv:'','ot');
+      xml+=nc(s.negH>0?-s.negH:'','neg');
+      xml+=nc(s.prop||'','cP');
+      xml+=nc(s.svatekH>0?s.svatekH:'','sv');
+      if(emp.prov==='4sm'){const cn=calcCumMinus(emp);xml+=nc(cn>0?-cn:'','cumNeg');}
+      else xml+=ec('s0');
+      xml+=ec('celkem');
     }
-    html+=`</tr>`;
+    xml+=`</Row>\n`;
   }
 
-  function grpRow(label,bg){
-    html+=`<tr><td colspan="${n+16}" class="grp" style="background:${bg};border:0.5pt solid #CBD5E1">${e(label)}</td></tr>`;
+  function grpRow(label,color){
+    const colSpan=n+16;
+    xml+=`<Row ss:Height="18"><Cell ss:MergeAcross="${colSpan}" ss:StyleID="grp" style="background:#${color}"><Data ss:Type="String">${esc(label)}</Data></Cell></Row>\n`;
   }
 
   function mrRow(key,label,cls){
     const mr=ST.manualRows[key]||{};let tot=0;
-    html+=`<tr><td class="${cls}" style="text-align:left">${e(label)}</td><td class="${cls}"></td>`;
-    for(let d=1;d<=n;d++){const v=mr[d];if(v>0)tot+=v;html+=nc(v>0?v:'',cls);}
-    html+=ec(cls)+ec(cls);for(let i=0;i<12;i++)html+=ec(cls);
-    html+=nc(tot||'','celkem');html+=`</tr>`;
+    xml+=`<Row ss:Height="15">`;
+    xml+=tc(label,cls+'L')+ec(cls);
+    for(let d=1;d<=n;d++){const v=mr[d];if(v>0)tot+=v;xml+=nc(v>0?v:'',cls);}
+    xml+=ec(cls);// second name spacer
+    for(let i=0;i<13;i++) xml+=ec(cls);
+    xml+=nc(tot||'','celkem');
+    xml+=`</Row>\n`;
   }
 
   const G4=['blue','black','green','red'];
   const GL={blue:'MODRÁ',black:'ČERNÁ',green:'ZELENÁ',red:'ČERVENÁ'};
-  const gc={blue:'#BFDBFE',black:'#CBD5E1',green:'#BBF7D0',red:'#FECACA'};
+  const gc={blue:'BFDBFE',black:'CBD5E1',green:'BBF7D0',red:'FECACA'};
   G4.forEach(g=>{
     const list=ST.emps.filter(e=>e.prov==='4sm'&&e.grp===g);
     if(!list.length)return;
@@ -2142,28 +2183,30 @@ td,th{font-family:Calibri,Arial;font-size:9pt;border:0.5pt solid #CBD5E1;white-s
   mrRow('4sm','Ruční hodiny 4-směnný','mr');
 
   const f2=ST.emps.filter(e=>e.prov==='2sm');
-  if(f2.length){grpRow('2-SMĚNNÝ PROVOZ','#FED7AA');f2.forEach(empRow);}
+  if(f2.length){grpRow('2-SMĚNNÝ PROVOZ','FED7AA');f2.forEach(empRow);}
   mrRow('2sm','Ruční hodiny 2-směnný','mr');
 
   const fB=ST.emps.filter(e=>e.prov==='brigada');
-  if(fB.length){grpRow('BRIGÁDNÍCI','#EDE9FE');fB.forEach(empRow);}
+  if(fB.length){grpRow('BRIGÁDNÍCI','EDE9FE');fB.forEach(empRow);}
 
   // Brigada sum
-  html+=`<tr><td class="mr" style="text-align:left">Brigádníci součet</td><td class="mr"></td>`;
+  xml+=`<Row ss:Height="15">`;
+  xml+=tc('Brigádníci součet','mrL')+ec('mr');
   let brigTotal=0;
   for(let d=1;d<=n;d++){
     let s=0;ST.emps.filter(e=>e.prov==='brigada').forEach(e=>{
       const v=e.data[d];const bv=typeof v==='object'&&v?v.h:(typeof v==='number'?v:0);if(bv>0)s+=bv;
-    });html+=nc(s||'','mr');brigTotal+=s;
+    });xml+=nc(s||'','mr');brigTotal+=s;
   }
-  html+=ec('mr')+ec('mr');for(let i=0;i<12;i++)html+=ec('mr');
-  html+=nc(brigTotal||'','celkem');html+=`</tr>`;
+  xml+=ec('mr');for(let i=0;i<13;i++)xml+=ec('mr');
+  xml+=nc(brigTotal||'','celkem');xml+=`</Row>\n`;
 
   mrRow('offwc','Office WC','wc');
   mrRow('offceln','Office Celní','ce');
 
   // Grand total
-  html+=`<tr><td colspan="2" class="grp" style="background:#1E3A5F;color:#fff">CELKEM</td>`;
+  xml+=`<Row ss:Height="20">`;
+  xml+=tc('CELKEM','hdrL')+ec('hdr');
   let grandTotal=0;
   for(let d=1;d<=n;d++){
     const mr4=ST.manualRows['4sm']?.[d]||0,mr2=ST.manualRows['2sm']?.[d]||0;
@@ -2172,15 +2215,14 @@ td,th{font-family:Calibri,Arial;font-size:9pt;border:0.5pt solid #CBD5E1;white-s
     });
     const wc=ST.manualRows['offwc']?.[d]||0,celn=ST.manualRows['offceln']?.[d]||0;
     const tot=r2(mr4+mr2+brig+wc+celn);
-    html+=nc(tot||'','celkem');grandTotal+=tot;
+    xml+=nc(tot||'','celkem');grandTotal+=tot;
   }
-  html+=ec('celkem')+ec('celkem');for(let i=0;i<12;i++)html+=ec('celkem');
-  html+=nc(r2(grandTotal)||'','celkem');html+=`</tr>`;
+  xml+=ec('celkem');for(let i=0;i<13;i++)xml+=ec('celkem');
+  xml+=nc(r2(grandTotal)||'','celkem');xml+=`</Row>\n`;
 
-  html+=`</table></body></html>`;
+  xml+=`</Table></Worksheet></Workbook>`;
 
-  // Use data URI to avoid tracking prevention issues
-  const blob=new Blob([html],{type:'application/vnd.ms-excel;charset=utf-8'});
+  const blob=new Blob([xml],{type:'application/vnd.ms-excel;charset=utf-8'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');a.href=url;
   a.download=`dochazka_${ST.y}_${ST.m}.xls`;
