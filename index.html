@@ -982,7 +982,7 @@ function renderBonusTable(){
     ${th('CZK','#F3F4F6','#374151')}
   </tr></thead><tbody>`;
 
-  const inp=(id,val,w)=>`<td style="padding:2px;border:1px solid #CBD5E1"><input id="${id}" type="number" step="0.01" value="${val}" onchange="updateBonus()" style="width:${w||52}px;text-align:center;border:none;font-size:10px;padding:2px;background:transparent"></td>`;
+  const inp=(id,val,w)=>`<td style="padding:2px;border:1px solid #CBD5E1"><input id="${id}" type="number" step="0.01" value="${val}" oninput="updateBonus()" onchange="updateBonus()" style="width:${w||52}px;text-align:center;border:none;font-size:10px;padding:2px;background:transparent"></td>`;
   const cel=(v,bg,fg,bold)=>`<td style="background:${bg||'#fff'};color:${fg||'#333'};padding:3px 7px;border:1px solid #CBD5E1;text-align:right;font-weight:${bold?700:400};font-size:10px;white-space:nowrap">${v===''||v===null||v===undefined?'':v}</td>`;
   const grpRow=(lbl,bg)=>`<tr><td colspan="23" style="background:${bg};font-weight:700;font-size:11px;padding:5px 10px;border:1px solid #CBD5E1">${lbl}</td></tr>`;
 
@@ -1014,18 +1014,18 @@ function renderBonusTable(){
       html+=`<tr>
         <td style="font-weight:600;font-size:10px;padding:3px 8px;border:1px solid #CBD5E1;background:${ebg};white-space:nowrap">${emp.name}</td>
         <td style="color:#64748B;font-size:9px;padding:3px 6px;border:1px solid #CBD5E1">${emp.pos||''}</td>
-        ${cel(base.kpi,'#EFF6FF')}${inp(id+'kpi',kpiPct)}${cel(kpiV,'#EFF6FF','#1E3A5F',true)}
-        ${cel(base.psk,'#F5F3FF')}${inp(id+'psk',pskPct)}${cel(pskV,'#F5F3FF','#4C1D95',true)}
-        ${cel(base.bozp,'#ECFDF5')}${inp(id+'bozp',bozpPct)}${cel(bozpV,'#ECFDF5','#064E3B',true)}
-        ${cel(base.osob,'#FFFBEB')}${inp(id+'osob',osobPct)}${cel(osobV,'#FFFBEB','#78350F',true)}
+        ${cel(base.kpi,'#EFF6FF')}${inp(id+'kpi',kpiPct)}<td id="${id}kpiV" style="background:#EFF6FF;color:#1E3A5F;padding:3px 7px;border:1px solid #CBD5E1;text-align:right;font-weight:700;font-size:10px">${kpiV}</td>
+        ${cel(base.psk,'#F5F3FF')}${inp(id+'psk',pskPct)}<td id="${id}pskV" style="background:#F5F3FF;color:#4C1D95;padding:3px 7px;border:1px solid #CBD5E1;text-align:right;font-weight:700;font-size:10px">${pskV}</td>
+        ${cel(base.bozp,'#ECFDF5')}${inp(id+'bozp',bozpPct)}<td id="${id}bozpV" style="background:#ECFDF5;color:#064E3B;padding:3px 7px;border:1px solid #CBD5E1;text-align:right;font-weight:700;font-size:10px">${bozpV}</td>
+        ${cel(base.osob,'#FFFBEB')}${inp(id+'osob',osobPct)}<td id="${id}osobV" style="background:#FFFBEB;color:#78350F;padding:3px 7px;border:1px solid #CBD5E1;text-align:right;font-weight:700;font-size:10px">${osobV}</td>
         ${cel(planned,'#EEF2FF')}
         ${cel(actual,'#EEF2FF','#1E3A5F',true)}
         <td style="background:#EEF2FF;color:${dColor};font-weight:700;padding:3px 7px;border:1px solid #CBD5E1;text-align:center;font-size:10px" id="${id}doch">${dPct}%</td>
         <td id="${id}pred" style="background:#E0E7FF;color:#1E3A5F;padding:3px 7px;border:1px solid #CBD5E1;text-align:right;font-weight:700;font-size:10px">${pred}</td>
         <td id="${id}zdoch" style="background:#BAE6FD;color:#0C4A6E;padding:3px 7px;border:1px solid #CBD5E1;text-align:right;font-weight:700;font-size:10px">${zaplatDoch}</td>
-        <td style="padding:2px;border:1px solid #CBD5E1;background:#FEF3C7"><input id="${id}bonus" type="number" step="1" value="${bonus||''}" placeholder="0" onchange="updateBonus()" style="width:65px;text-align:right;border:none;font-size:10px;padding:2px;background:transparent"></td>
+        <td style="padding:2px;border:1px solid #CBD5E1;background:#FEF3C7"><input id="${id}bonus" type="number" step="1" value="${bonus||''}" placeholder="0" oninput="updateBonus()" onchange="updateBonus()" style="width:65px;text-align:right;border:none;font-size:10px;padding:2px;background:transparent"></td>
         <td id="${id}zaplatit" style="background:#D1FAE5;color:#064E3B;padding:3px 7px;border:1px solid #CBD5E1;text-align:right;font-weight:700;font-size:10px">${zaplatit}</td>
-        <td style="padding:2px;border:1px solid #CBD5E1;background:#FCE7F3"><input id="${id}extra" type="number" step="1" value="${extra||''}" placeholder="0" onchange="updateBonus()" style="width:65px;text-align:right;border:none;font-size:10px;padding:2px;background:transparent"></td>
+        <td style="padding:2px;border:1px solid #CBD5E1;background:#FCE7F3"><input id="${id}extra" type="number" step="1" value="${extra||''}" placeholder="0" oninput="updateBonus()" onchange="updateBonus()" style="width:65px;text-align:right;border:none;font-size:10px;padding:2px;background:transparent"></td>
         <td id="${id}celkem" style="background:#FEE2E2;color:#DC2626;font-weight:700;padding:3px 8px;border:1px solid #CBD5E1;text-align:right;font-size:11px">${celkem}</td>
         <td id="${id}doprava" style="background:#F3F4F6;color:#374151;padding:3px 7px;border:1px solid #CBD5E1;text-align:right;font-size:10px">${doprava||''}</td>
       </tr>`;
@@ -1060,7 +1060,7 @@ function updateBonus(){
     else if(base.dist===20)doprava=Math.round(1500*dochPct);
 
     // Update all computed cells by ID
-    const set=(sid,val)=>{const el=document.getElementById(sid);if(el)el.textContent=val;};
+    const set=(sid,val)=>{const el=document.getElementById(sid);if(el)el.textContent=val===''||val===0&&sid.includes('doprava')?'':val;};
     set(id+'kpiV', kpiV);
     set(id+'pskV', pskV);
     set(id+'bozpV', bozpV);
@@ -1078,28 +1078,49 @@ function updateBonus(){
   });
 }
 function saveBonusData(){
-  if(!window._fbDB){alert('Nejste připojeni k Firebase');return;}
-  // First collect current input values
+  // Collect all current input values first
+  updateBonus();
+  // Check Firebase connection
+  if(!window._fbDB){
+    // Try to save via fbSave fallback
+    if(window.fbSave){ fbSave(); showSyncStatus('💰 Bonusy uloženy','#D97706'); return; }
+    alert('Nejste připojeni k Firebase');return;
+  }
   const m=ST.m;
   const bdata=getBonusData(m);
+  // Read all inputs
   ST.emps.filter(e=>e.prov==='4sm'||e.prov==='2sm').forEach(emp=>{
     const base=BONUS_BASE[emp.id];if(!base)return;
-    const id=`b_${emp.id}_`;
-    const gv=(s)=>{const el=document.getElementById(s);return el?parseFloat(el.value)||0:0;};
-    bdata[emp.id]={
-      kpiPct:gv(id+'kpi'),pskPct:gv(id+'psk'),
-      bozpPct:gv(id+'bozp'),osobPct:gv(id+'osob'),
-      bonus:gv(id+'bonus'),extraBonus:gv(id+'extra')
-    };
+    const id='b_'+emp.id+'_';
+    const gv=(s)=>{const el=document.getElementById(s);return el&&el.value!==''?parseFloat(el.value)||0:null;};
+    const rec={};
+    const kpi=gv(id+'kpi');if(kpi!==null)rec.kpiPct=kpi;
+    const psk=gv(id+'psk');if(psk!==null)rec.pskPct=psk;
+    const bozp=gv(id+'bozp');if(bozp!==null)rec.bozpPct=bozp;
+    const osob=gv(id+'osob');if(osob!==null)rec.osobPct=osob;
+    const bon=gv(id+'bonus');if(bon)rec.bonus=bon;
+    const ext=gv(id+'extra');if(ext)rec.extraBonus=ext;
+    if(Object.keys(rec).length>0) bdata[emp.id]=rec;
   });
+  // Build payload — include current month even if empty
+  if(!ST.bonusData) ST.bonusData={};
+  ST.bonusData[String(m)]=bdata;
   const payload={};
-  Object.keys(ST.bonusData||{}).forEach(m=>{
-    if(ST.bonusData[m]&&Object.keys(ST.bonusData[m]).length>0)
-      payload[m]=ST.bonusData[m];
+  Object.keys(ST.bonusData).forEach(mk=>{
+    const md=ST.bonusData[mk];
+    if(md&&typeof md==='object') payload[mk]=md;
   });
+  console.log('Saving bonus payload:', JSON.stringify(payload).slice(0,200));
   window._fbDB.ref('bonus2026').set(payload)
-    .then(()=>{ showSyncStatus('💰 Bonusy uloženy','#D97706'); alert('Bonusy uloženy!'); })
-    .catch((err)=>{ showSyncStatus('✗ Chyba','#DC2626'); alert('Chyba: '+err.message); });
+    .then(()=>{
+      showSyncStatus('💰 Bonusy uloženy','#D97706');
+      alert('Bonusy uloženy!');
+    })
+    .catch((err)=>{
+      console.error('Bonus save error:', err);
+      showSyncStatus('✗ Chyba','#DC2626');
+      alert('Chyba uložení: '+err.message);
+    });
 }
 function exportBonusExcel(){
   const m=ST.m,y=ST.y;
@@ -1308,11 +1329,16 @@ function doPrintBonus(){
 }
 
 function loadBonusData(){
-  if(!window._fbDB)return;
+  if(!window._fbDB){ setTimeout(loadBonusData, 2000); return; }
   window._fbDB.ref('bonus2026').once('value').then(snap=>{
     const data=snap.val();
-    if(data) ST.bonusData=data;
-  });
+    if(data){
+      ST.bonusData={};
+      // Normalize keys to strings
+      Object.keys(data).forEach(k=>{ ST.bonusData[String(k)]=data[k]; });
+      console.log('Bonus data loaded:', Object.keys(ST.bonusData));
+    }
+  }).catch(err=>console.error('Bonus load error:',err));
 }
 
 function twScroll(px){
