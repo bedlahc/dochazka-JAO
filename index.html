@@ -965,7 +965,7 @@ function renderBonusTable(){
     ${th('Jméno','#1E3A5F','#fff')}${th('Pozice','#1E3A5F','#fff')}
     ${th('KPI','#3B82F6','#fff',3)}${th('Poškození','#8B5CF6','#fff',3)}
     ${th('BOZP','#10B981','#fff',3)}${th('OSOB','#F59E0B','#fff',3)}
-    ${th('Docházka','#6366F1','#fff',2)}
+    ${th('Docházka','#6366F1','#fff',3)}
     ${th('Předpoklad','#1E3A5F')}${th('Zaplatit dle doch.','#0EA5E9')}
     ${th('Bonus','#F59E0B')}${th('Zaplatit','#10B981')}
     ${th('Extra bonus','#EC4899')}${th('Celkem zaplatit','#DC2626')}
@@ -976,7 +976,7 @@ function renderBonusTable(){
     ${th('základ','#C4B5FD','#4C1D95')}${th('%','#C4B5FD','#4C1D95')}${th('výp.','#C4B5FD','#4C1D95')}
     ${th('základ','#6EE7B7','#064E3B')}${th('%','#6EE7B7','#064E3B')}${th('výp.','#6EE7B7','#064E3B')}
     ${th('základ','#FDE68A','#78350F')}${th('%','#FDE68A','#78350F')}${th('výp.','#FDE68A','#78350F')}
-    ${th('plán','#A5B4FC','#312E81')}${th('% doch.','#A5B4FC','#312E81')}
+    ${th('plán','#A5B4FC','#312E81')}${th('cíl','#A5B4FC','#312E81')}${th('% doch.','#A5B4FC','#312E81')}
     ${th('CZK','#E0E7FF')}${th('CZK','#BAE6FD')}${th('CZK','#FDE68A')}
     ${th('CZK','#D1FAE5')}${th('CZK','#FCE7F3')}${th('CZK','#FEE2E2','#DC2626')}
     ${th('CZK','#F3F4F6','#374151')}
@@ -1019,14 +1019,15 @@ function renderBonusTable(){
         ${cel(base.bozp,'#ECFDF5')}${inp(id+'bozp',bozpPct)}${cel(bozpV,'#ECFDF5','#064E3B',true)}
         ${cel(base.osob,'#FFFBEB')}${inp(id+'osob',osobPct)}${cel(osobV,'#FFFBEB','#78350F',true)}
         ${cel(planned,'#EEF2FF')}
+        ${cel(actual,'#EEF2FF','#1E3A5F',true)}
         <td style="background:#EEF2FF;color:${dColor};font-weight:700;padding:3px 7px;border:1px solid #CBD5E1;text-align:center;font-size:10px" id="${id}doch">${dPct}%</td>
-        ${cel(pred,'#E0E7FF','#1E3A5F',true)}
-        ${cel(zaplatDoch,'#BAE6FD','#0C4A6E',true)}
+        <td id="${id}pred" style="background:#E0E7FF;color:#1E3A5F;padding:3px 7px;border:1px solid #CBD5E1;text-align:right;font-weight:700;font-size:10px">${pred}</td>
+        <td id="${id}zdoch" style="background:#BAE6FD;color:#0C4A6E;padding:3px 7px;border:1px solid #CBD5E1;text-align:right;font-weight:700;font-size:10px">${zaplatDoch}</td>
         <td style="padding:2px;border:1px solid #CBD5E1;background:#FEF3C7"><input id="${id}bonus" type="number" step="1" value="${bonus||''}" placeholder="0" onchange="updateBonus()" style="width:65px;text-align:right;border:none;font-size:10px;padding:2px;background:transparent"></td>
-        ${cel(zaplatit,'#D1FAE5','#064E3B',true)}
+        <td id="${id}zaplatit" style="background:#D1FAE5;color:#064E3B;padding:3px 7px;border:1px solid #CBD5E1;text-align:right;font-weight:700;font-size:10px">${zaplatit}</td>
         <td style="padding:2px;border:1px solid #CBD5E1;background:#FCE7F3"><input id="${id}extra" type="number" step="1" value="${extra||''}" placeholder="0" onchange="updateBonus()" style="width:65px;text-align:right;border:none;font-size:10px;padding:2px;background:transparent"></td>
-        <td style="background:#FEE2E2;color:#DC2626;font-weight:700;padding:3px 8px;border:1px solid #CBD5E1;text-align:right;font-size:11px" id="${id}celkem">${celkem}</td>
-        ${cel(doprava||'','#F3F4F6','#374151')}
+        <td id="${id}celkem" style="background:#FEE2E2;color:#DC2626;font-weight:700;padding:3px 8px;border:1px solid #CBD5E1;text-align:right;font-size:11px">${celkem}</td>
+        <td id="${id}doprava" style="background:#F3F4F6;color:#374151;padding:3px 7px;border:1px solid #CBD5E1;text-align:right;font-size:10px">${doprava||''}</td>
       </tr>`;
     });
   });
@@ -1042,24 +1043,270 @@ function updateBonus(){
     const kpiPct=gv(id+'kpi'),pskPct=gv(id+'psk'),bozpPct=gv(id+'bozp'),osobPct=gv(id+'osob');
     const bonus=gv(id+'bonus'),extra=gv(id+'extra');
     bdata[emp.id]={kpiPct,pskPct,bozpPct,osobPct,bonus,extraBonus:extra};
+
     const s=calcSums(emp);
     const dochPct=planned>0?Math.min(1,(s.days+(s.dov||0))/planned):1;
-    const pred=Math.round(base.kpi*kpiPct)+Math.round(base.psk*pskPct)+Math.round(base.bozp*bozpPct)+Math.round(base.osob*osobPct);
+
+    const kpiV=Math.round(base.kpi*kpiPct);
+    const pskV=Math.round(base.psk*pskPct);
+    const bozpV=Math.round(base.bozp*bozpPct);
+    const osobV=Math.round(base.osob*osobPct);
+    const pred=kpiV+pskV+bozpV+osobV;
     const zaplatDoch=Math.round(pred*dochPct);
-    const celkem=zaplatDoch+bonus+extra;
-    const el=document.getElementById(id+'celkem');if(el)el.textContent=celkem;
+    const zaplatit=zaplatDoch+bonus;
+    const celkem=zaplatit+extra;
+    let doprava=0;
+    if(base.dist===10)doprava=Math.round(1000*dochPct);
+    else if(base.dist===20)doprava=Math.round(1500*dochPct);
+
+    // Update all computed cells by ID
+    const set=(sid,val)=>{const el=document.getElementById(sid);if(el)el.textContent=val;};
+    set(id+'kpiV', kpiV);
+    set(id+'pskV', pskV);
+    set(id+'bozpV', bozpV);
+    set(id+'osobV', osobV);
+    set(id+'pred', pred);
+    set(id+'zdoch', zaplatDoch);
+    set(id+'zaplatit', zaplatit);
+    set(id+'celkem', celkem);
+    set(id+'doprava', doprava||'');
     const dEl=document.getElementById(id+'doch');
-    if(dEl){dEl.textContent=Math.round(dochPct*100)+'%';dEl.style.color=dochPct<0.9?'#DC2626':dochPct<1?'#D97706':'#059669';}
+    if(dEl){
+      dEl.textContent=Math.round(dochPct*100)+'%';
+      dEl.style.color=dochPct<0.9?'#DC2626':dochPct<1?'#D97706':'#059669';
+    }
   });
 }
 function saveBonusData(){
   if(!window._fbDB){alert('Nejste připojeni k Firebase');return;}
+  // First collect current input values
+  const m=ST.m;
+  const bdata=getBonusData(m);
+  ST.emps.filter(e=>e.prov==='4sm'||e.prov==='2sm').forEach(emp=>{
+    const base=BONUS_BASE[emp.id];if(!base)return;
+    const id=`b_${emp.id}_`;
+    const gv=(s)=>{const el=document.getElementById(s);return el?parseFloat(el.value)||0:0;};
+    bdata[emp.id]={
+      kpiPct:gv(id+'kpi'),pskPct:gv(id+'psk'),
+      bozpPct:gv(id+'bozp'),osobPct:gv(id+'osob'),
+      bonus:gv(id+'bonus'),extraBonus:gv(id+'extra')
+    };
+  });
   const payload={};
-  Object.keys(ST.bonusData||{}).forEach(m=>{payload[m]=ST.bonusData[m];});
+  Object.keys(ST.bonusData||{}).forEach(m=>{
+    if(ST.bonusData[m]&&Object.keys(ST.bonusData[m]).length>0)
+      payload[m]=ST.bonusData[m];
+  });
   window._fbDB.ref('bonus2026').set(payload)
-    .then(()=>showSyncStatus('💰 Bonusy uloženy','#D97706'))
-    .catch(()=>showSyncStatus('✗ Chyba uložení bonusů','#DC2626'));
+    .then(()=>{ showSyncStatus('💰 Bonusy uloženy','#D97706'); alert('Bonusy uloženy!'); })
+    .catch((err)=>{ showSyncStatus('✗ Chyba','#DC2626'); alert('Chyba: '+err.message); });
 }
+function exportBonusExcel(){
+  const m=ST.m,y=ST.y;
+  const bdata=getBonusData(m);
+  const planned=plannedDays(y,m);
+  const e2=(s)=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  let html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">
+<head><meta charset="UTF-8">
+<!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>
+<x:Name>Bonusy ${MCZ[m]} ${y}</x:Name>
+<x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions>
+</x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->
+<style>
+table{border-collapse:collapse}td,th{font-family:Calibri;font-size:9pt;border:0.5pt solid #CBD5E1;padding:3px 7px;white-space:nowrap}
+.hdr{background:#1E3A5F;color:#fff;font-weight:bold;text-align:center}
+.nm{font-weight:bold;text-align:left}.pos{color:#64748B;text-align:left}
+.grp{font-weight:bold;font-size:10pt;text-align:left}
+.num{text-align:right}.celkem{background:#FEE2E2;color:#DC2626;font-weight:bold;text-align:right}
+.pred{background:#E0E7FF;text-align:right;font-weight:bold}
+.zdoch{background:#BAE6FD;text-align:right;font-weight:bold}
+.zap{background:#D1FAE5;text-align:right;font-weight:bold}
+.dop{background:#F3F4F6;text-align:right}
+</style></head><body><table>`;
+
+  // Header
+  html+=`<tr>
+    <th class="hdr">Jméno</th><th class="hdr">Pozice</th>
+    <th class="hdr">KPI základ</th><th class="hdr">KPI %</th><th class="hdr">KPI výp.</th>
+    <th class="hdr">Pošk. základ</th><th class="hdr">Pošk. %</th><th class="hdr">Pošk. výp.</th>
+    <th class="hdr">BOZP základ</th><th class="hdr">BOZP %</th><th class="hdr">BOZP výp.</th>
+    <th class="hdr">OSOB základ</th><th class="hdr">OSOB %</th><th class="hdr">OSOB výp.</th>
+    <th class="hdr">Plán dní</th><th class="hdr">% docházky</th>
+    <th class="hdr">Předpoklad</th><th class="hdr">Zaplatit dle doch.</th>
+    <th class="hdr">Bonus</th><th class="hdr">Zaplatit</th>
+    <th class="hdr">Extra bonus</th><th class="hdr">Celkem zaplatit</th>
+    <th class="hdr">Doprava</th>
+  </tr>`;
+
+  [['4sm','4-SMĚNNÝ PROVOZ'],['2sm','2-SMĚNNÝ PROVOZ']].forEach(([prov,lbl])=>{
+    html+=`<tr><td colspan="23" class="grp" style="background:${prov==='4sm'?'#BFDBFE':'#FED7AA'}">${lbl}</td></tr>`;
+    ST.emps.filter(e=>e.prov===prov).forEach(emp=>{
+      const base=BONUS_BASE[emp.id];if(!base)return;
+      const bd=bdata[emp.id]||{};
+      const s=calcSums(emp);
+      const actual=s.days+(s.dov||0);
+      const dochPct=planned>0?Math.min(1,actual/planned):1;
+      const kpiPct=bd.kpiPct!==undefined?bd.kpiPct:1;
+      const pskPct=bd.pskPct!==undefined?bd.pskPct:1;
+      const bozpPct=bd.bozpPct!==undefined?bd.bozpPct:1;
+      const osobPct=bd.osobPct!==undefined?bd.osobPct:1;
+      const kpiV=Math.round(base.kpi*kpiPct),pskV=Math.round(base.psk*pskPct);
+      const bozpV=Math.round(base.bozp*bozpPct),osobV=Math.round(base.osob*osobPct);
+      const pred=kpiV+pskV+bozpV+osobV;
+      const zaplatDoch=Math.round(pred*dochPct);
+      const bonus=bd.bonus||0,extra=bd.extraBonus||0;
+      const zaplatit=zaplatDoch+bonus,celkem=zaplatit+extra;
+      let doprava=0;
+      if(base.dist===10)doprava=Math.round(1000*dochPct);
+      else if(base.dist===20)doprava=Math.round(1500*dochPct);
+      html+=`<tr>
+        <td class="nm">${e2(emp.name)}</td><td class="pos">${e2(emp.pos||'')}</td>
+        <td class="num">${base.kpi}</td><td class="num">${kpiPct}</td><td class="num">${kpiV}</td>
+        <td class="num">${base.psk}</td><td class="num">${pskPct}</td><td class="num">${pskV}</td>
+        <td class="num">${base.bozp}</td><td class="num">${bozpPct}</td><td class="num">${bozpV}</td>
+        <td class="num">${base.osob}</td><td class="num">${osobPct}</td><td class="num">${osobV}</td>
+        <td class="num">${planned}</td><td class="num">${Math.round(dochPct*100)}%</td>
+        <td class="pred">${pred}</td><td class="zdoch">${zaplatDoch}</td>
+        <td class="num">${bonus||''}</td><td class="zap">${zaplatit}</td>
+        <td class="num">${extra||''}</td><td class="celkem">${celkem}</td>
+        <td class="dop">${doprava||''}</td>
+      </tr>`;
+    });
+  });
+
+  html+=`</table></body></html>`;
+  const blob=new Blob([html],{type:'application/vnd.ms-excel;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;
+  a.download=`bonusy_${y}_${m}.xls`;
+  document.body.appendChild(a);a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url),2000);
+}
+
+function printBonus(){
+  // Show print selection modal
+  document.getElementById('bonusPrintMod').style.display='flex';
+}
+
+function doPrintBonus(){
+  const fullCols = document.getElementById('bpFull').checked;
+  document.getElementById('bonusPrintMod').style.display='none';
+
+  const m=ST.m,y=ST.y;
+  const bdata=getBonusData(m);
+  const planned=plannedDays(y,m);
+
+  let html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <title>Bonusy — ${MCZ[m]} ${y}</title>
+    <style>
+      body{font-family:'Calibri',Arial;font-size:9pt;margin:8mm}
+      h2{font-size:12pt;margin-bottom:6px;color:#1E3A5F}
+      table{border-collapse:collapse}
+      td,th{border:0.5pt solid #CBD5E1;padding:3px 6px;font-size:8pt;white-space:nowrap}
+      .hdr{background:#1E3A5F;color:#fff;font-weight:bold;text-align:center}
+      .nm{font-weight:bold;text-align:left}.pos{color:#64748B;font-size:8pt}
+      .grp{font-weight:bold;font-size:9pt;text-align:left}
+      .num{text-align:right}
+      .pred{background:#E0E7FF;text-align:right;font-weight:bold}
+      .zdoch{background:#BAE6FD;text-align:right;font-weight:bold}
+      .zap{background:#D1FAE5;text-align:right;font-weight:bold}
+      .celkem{background:#FEE2E2;color:#DC2626;font-weight:bold;text-align:right}
+      .dop{background:#F3F4F6;text-align:right}
+      .dochbg{background:#EEF2FF;text-align:right}
+      @media print{@page{size:A3 landscape;margin:6mm}body{margin:0}}
+    </style></head><body>
+    <h2>💰 Bonusy — ${MCZ[m]} ${y} — Damco Jaroměř</h2>
+    <table>`;
+
+  if(fullCols){
+    // Full table - all columns
+    html+=`<thead><tr>
+      <th class="hdr">Jméno</th><th class="hdr">Pozice</th>
+      <th class="hdr">KPI základ</th><th class="hdr">KPI %</th><th class="hdr">KPI výp.</th>
+      <th class="hdr">Pošk. základ</th><th class="hdr">Pošk. %</th><th class="hdr">Pošk. výp.</th>
+      <th class="hdr">BOZP základ</th><th class="hdr">BOZP %</th><th class="hdr">BOZP výp.</th>
+      <th class="hdr">OSOB základ</th><th class="hdr">OSOB %</th><th class="hdr">OSOB výp.</th>
+      <th class="hdr">Plán</th><th class="hdr">Cíl</th><th class="hdr">% doch.</th>
+      <th class="hdr">Předpoklad</th><th class="hdr">Zaplatit dle doch.</th>
+      <th class="hdr">Bonus</th><th class="hdr">Zaplatit</th>
+      <th class="hdr">Extra bonus</th><th class="hdr">Celkem zaplatit</th>
+      <th class="hdr">Doprava</th>
+    </tr></thead>`;
+  } else {
+    // Simplified - only key columns
+    html+=`<thead><tr>
+      <th class="hdr">Jméno</th><th class="hdr">Pozice</th>
+      <th class="hdr">Plán</th><th class="hdr">Cíl</th><th class="hdr">% doch.</th>
+      <th class="hdr">Bonus</th><th class="hdr">Zaplatit</th>
+      <th class="hdr">Extra bonus</th><th class="hdr">Celkem zaplatit</th>
+      <th class="hdr">Doprava</th>
+    </tr></thead>`;
+  }
+
+  html+=`<tbody>`;
+  [['4sm','4-SMĚNNÝ PROVOZ','#BFDBFE'],['2sm','2-SMĚNNÝ PROVOZ','#FED7AA']].forEach(([prov,lbl,bg])=>{
+    const cols=fullCols?24:10;
+    html+=`<tr><td colspan="${cols}" class="grp" style="background:${bg}">${lbl}</td></tr>`;
+    ST.emps.filter(e=>e.prov===prov).forEach(emp=>{
+      const base=BONUS_BASE[emp.id];if(!base)return;
+      const bd=bdata[emp.id]||{};
+      const s=calcSums(emp);
+      const actual=s.days+(s.dov||0);
+      const dochPct=planned>0?Math.min(1,actual/planned):1;
+      const kpiPct=bd.kpiPct!==undefined?bd.kpiPct:1;
+      const pskPct=bd.pskPct!==undefined?bd.pskPct:1;
+      const bozpPct=bd.bozpPct!==undefined?bd.bozpPct:1;
+      const osobPct=bd.osobPct!==undefined?bd.osobPct:1;
+      const kpiV=Math.round(base.kpi*kpiPct),pskV=Math.round(base.psk*pskPct);
+      const bozpV=Math.round(base.bozp*bozpPct),osobV=Math.round(base.osob*osobPct);
+      const pred=kpiV+pskV+bozpV+osobV;
+      const zaplatDoch=Math.round(pred*dochPct);
+      const bonus=bd.bonus||0,extra=bd.extraBonus||0;
+      const zaplatit=zaplatDoch+bonus,celkem=zaplatit+extra;
+      let doprava=0;
+      if(base.dist===10)doprava=Math.round(1000*dochPct);
+      else if(base.dist===20)doprava=Math.round(1500*dochPct);
+      const dPct=Math.round(dochPct*100);
+      const dColor=dochPct<0.9?'#DC2626':dochPct<1?'#D97706':'#059669';
+
+      if(fullCols){
+        html+=`<tr>
+          <td class="nm">${emp.name}</td><td class="pos">${emp.pos||''}</td>
+          <td class="num">${base.kpi}</td><td class="num">${kpiPct}</td><td class="num">${kpiV}</td>
+          <td class="num">${base.psk}</td><td class="num">${pskPct}</td><td class="num">${pskV}</td>
+          <td class="num">${base.bozp}</td><td class="num">${bozpPct}</td><td class="num">${bozpV}</td>
+          <td class="num">${base.osob}</td><td class="num">${osobPct}</td><td class="num">${osobV}</td>
+          <td class="dochbg">${planned}</td><td class="dochbg" style="font-weight:bold">${actual}</td>
+          <td class="dochbg" style="color:${dColor};font-weight:bold">${dPct}%</td>
+          <td class="pred">${pred}</td><td class="zdoch">${zaplatDoch}</td>
+          <td class="num">${bonus||''}</td><td class="zap">${zaplatit}</td>
+          <td class="num">${extra||''}</td><td class="celkem">${celkem}</td>
+          <td class="dop">${doprava||''}</td>
+        </tr>`;
+      } else {
+        html+=`<tr>
+          <td class="nm">${emp.name}</td><td class="pos">${emp.pos||''}</td>
+          <td class="dochbg">${planned}</td><td class="dochbg" style="font-weight:bold">${actual}</td>
+          <td class="dochbg" style="color:${dColor};font-weight:bold">${dPct}%</td>
+          <td class="num">${bonus||''}</td><td class="zap">${zaplatit}</td>
+          <td class="num">${extra||''}</td><td class="celkem">${celkem}</td>
+          <td class="dop">${doprava||''}</td>
+        </tr>`;
+      }
+    });
+  });
+
+  html+=`</tbody></table>
+    <script>window.onload=()=>{window.print();}<\/script>
+    </body></html>`;
+
+  const w=window.open('','_blank','width=1400,height=800');
+  w.document.write(html);
+  w.document.close();
+}
+
 function loadBonusData(){
   if(!window._fbDB)return;
   window._fbDB.ref('bonus2026').once('value').then(snap=>{
@@ -2730,10 +2977,39 @@ document.getElementById('loginEmail').focus();
       <button onclick="closeBonusPage()" style="padding:4px 12px;background:var(--bg3);border:1px solid var(--b2);border-radius:6px;cursor:pointer;color:var(--tx2);font-size:12px">✕ Zavřít</button>
       <span style="font-weight:700;font-size:15px;color:var(--tx)">💰 Bonusy — <span id="bonusMonthLabel"></span></span>
       <button onclick="saveBonusData()" style="padding:4px 12px;background:#fef3c7;border:1px solid #fbbf24;border-radius:6px;cursor:pointer;color:#92400e;font-size:12px;font-weight:600">☁ Uložit bonusy</button>
+      <button onclick="exportBonusExcel()" style="padding:4px 12px;background:#dcfce7;border:1px solid #86efac;border-radius:6px;cursor:pointer;color:#166534;font-size:12px;font-weight:600">↓ Excel</button>
+      <button onclick="printBonus()" style="padding:4px 12px;background:#e0e7ff;border:1px solid #a5b4fc;border-radius:6px;cursor:pointer;color:#3730a3;font-size:12px;font-weight:600">🖨 Tisk</button>
     </div>
     <!-- Bonus table container -->
     <div style="overflow:auto;padding:12px">
       <table id="bonusTable" style="border-collapse:collapse;font-size:11px;font-family:'DM Mono',monospace;white-space:nowrap"></table>
+    </div>
+  </div>
+</div>
+
+<!-- BONUS PRINT MODAL -->
+<div id="bonusPrintMod" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:300;align-items:center;justify-content:center">
+  <div style="background:var(--bg);border-radius:12px;padding:24px;width:340px;box-shadow:0 8px 32px rgba(0,0,0,.2)">
+    <div style="font-weight:700;font-size:15px;margin-bottom:16px">🖨 Tisk bonusů — výběr</div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px">
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px;border:1px solid var(--b2);border-radius:8px">
+        <input type="radio" name="bpMode" id="bpSimple" checked style="width:16px;height:16px">
+        <div>
+          <div style="font-weight:600;font-size:13px">Zjednodušený výpis</div>
+          <div style="font-size:11px;color:var(--tx3)">Jméno, Plán, Cíl, % docházky, Bonus, Zaplatit, Extra bonus, Celkem, Doprava</div>
+        </div>
+      </label>
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px;border:1px solid var(--b2);border-radius:8px">
+        <input type="radio" name="bpMode" id="bpFull" style="width:16px;height:16px">
+        <div>
+          <div style="font-weight:600;font-size:13px">Kompletní výpis</div>
+          <div style="font-size:11px;color:var(--tx3)">Všechny sloupce — KPI, Poškození, BOZP, OSOB, Docházka, Bonusy</div>
+        </div>
+      </label>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button onclick="document.getElementById('bonusPrintMod').style.display='none'" style="padding:8px 16px;background:var(--bg3);border:1px solid var(--b2);border-radius:6px;cursor:pointer;font-size:13px">Zrušit</button>
+      <button onclick="doPrintBonus()" style="padding:8px 16px;background:#e0e7ff;border:1px solid #a5b4fc;border-radius:6px;cursor:pointer;color:#3730a3;font-size:13px;font-weight:600">🖨 Tisknout</button>
     </div>
   </div>
 </div>
