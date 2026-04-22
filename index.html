@@ -1092,15 +1092,23 @@ function saveBonusData(){
   ST.emps.filter(e=>e.prov==='4sm'||e.prov==='2sm').forEach(emp=>{
     const base=BONUS_BASE[emp.id];if(!base)return;
     const id='b_'+emp.id+'_';
-    const gv=(s)=>{const el=document.getElementById(s);return el&&el.value!==''?parseFloat(el.value)||0:null;};
-    const rec={};
-    const kpi=gv(id+'kpi');if(kpi!==null)rec.kpiPct=kpi;
-    const psk=gv(id+'psk');if(psk!==null)rec.pskPct=psk;
-    const bozp=gv(id+'bozp');if(bozp!==null)rec.bozpPct=bozp;
-    const osob=gv(id+'osob');if(osob!==null)rec.osobPct=osob;
-    const bon=gv(id+'bonus');if(bon)rec.bonus=bon;
-    const ext=gv(id+'extra');if(ext)rec.extraBonus=ext;
-    if(Object.keys(rec).length>0) bdata[emp.id]=rec;
+    const gv=(s)=>{const el=document.getElementById(s);return el&&el.value!==''?parseFloat(el.value)||0:0;};
+    const kpi=gv(id+'kpi')??1;
+    const psk=gv(id+'psk')??1;
+    const bozp=gv(id+'bozp')??1;
+    const osob=gv(id+'osob')??1;
+    const bon=gv(id+'bonus')??0;
+    const ext=gv(id+'extra')??0;
+    // Only save if something differs from defaults
+    const isDefault=kpi===1&&psk===1&&bozp===1&&osob===1&&bon===0&&ext===0;
+    if(!isDefault){
+      bdata[String(emp.id)]={kpiPct:kpi,pskPct:psk,bozpPct:bozp,osobPct:osob,
+        ...(bon?{bonus:bon}:{}),
+        ...(ext?{extraBonus:ext}:{})
+      };
+    } else {
+      delete bdata[String(emp.id)];
+    }
   });
   // Build payload — include current month even if empty
   if(!ST.bonusData) ST.bonusData={};
