@@ -1010,10 +1010,8 @@ function renderBonusTable(){
       const bd=bdata[emp.id]||{};
       const s=calcSums(emp);
       const planned=plannedDays(y,m,emp.prov,emp.grp);
-      // Cíl = planned - sick days - vacation days
-      const actual=emp.prov==='4sm'
-        ? Math.max(0, planned-(s.nem||0)-(s.dov||0))
-        : s.days+(s.dov||0);
+      // Cíl = planned - sick days - vacation days (same for both 4sm and 2sm)
+      const actual=Math.max(0, planned-(s.nem||0)-(s.dov||0));
       const dochPct=planned>0?Math.min(1,actual/planned):1;
       const kpiPct=bd.kpiPct!==undefined?bd.kpiPct:1;
       const pskPct=bd.pskPct!==undefined?bd.pskPct:1;
@@ -1126,7 +1124,7 @@ function updateBonus(){
 
     const s=calcSums(emp);
     const planned=plannedDays(ST.y,m,emp.prov,emp.grp);
-    const actual2=emp.prov==='4sm'?Math.max(0,planned-(s.nem||0)-(s.dov||0)):s.days+(s.dov||0);
+    const actual2=Math.max(0,planned-(s.nem||0)-(s.dov||0));
     const dochPct=planned>0?Math.min(1,actual2/planned):1;
 
     const kpiV=Math.round(base.kpi*kpiPct);
@@ -1310,10 +1308,8 @@ table{border-collapse:collapse}td,th{font-family:Calibri;font-size:9pt;border:0.
       const bd=bdata[emp.id]||{};
       const s=calcSums(emp);
       const planned=plannedDays(y,m,emp.prov,emp.grp);
-      // Cíl = planned - sick days - vacation days
-      const actual=emp.prov==='4sm'
-        ? Math.max(0, planned-(s.nem||0)-(s.dov||0))
-        : s.days+(s.dov||0);
+      // Cíl = planned - sick days - vacation days (same for both 4sm and 2sm)
+      const actual=Math.max(0, planned-(s.nem||0)-(s.dov||0));
       const dochPct=planned>0?Math.min(1,actual/planned):1;
       const kpiPct=bd.kpiPct!==undefined?bd.kpiPct:1;
       const pskPct=bd.pskPct!==undefined?bd.pskPct:1;
@@ -1447,10 +1443,8 @@ function doPrintBonus(){
       const bd=bdata[emp.id]||{};
       const s=calcSums(emp);
       const planned=plannedDays(y,m,emp.prov,emp.grp);
-      // Cíl = planned - sick days - vacation days
-      const actual=emp.prov==='4sm'
-        ? Math.max(0, planned-(s.nem||0)-(s.dov||0))
-        : s.days+(s.dov||0);
+      // Cíl = planned - sick days - vacation days (same for both 4sm and 2sm)
+      const actual=Math.max(0, planned-(s.nem||0)-(s.dov||0));
       const dochPct=planned>0?Math.min(1,actual/planned):1;
       const kpiPct=bd.kpiPct!==undefined?bd.kpiPct:1;
       const pskPct=bd.pskPct!==undefined?bd.pskPct:1;
