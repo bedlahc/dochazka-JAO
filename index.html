@@ -231,7 +231,6 @@ tr:hover td.cn{filter:none;background:var(--bg4)!important;box-shadow:4px 0 8px 
 /* Force scrollbar visible on all platforms */
 .tw{scrollbar-width:thick !important;scrollbar-color:#334155 #cbd5e1 !important}
 </style>
-<script src="https://cdn.jsdelivr.net/npm/exceljs@4.3.0/dist/exceljs.min.js"></script>
 </head>
 <body>
 <div class="topbar">
@@ -1428,207 +1427,155 @@ function executePrint(){
 function doExportXLS(){
   const n=dInM(ST.m,ST.y);
   const DN2=['Ne','Po','Út','St','Čt','Pá','So'];
+  const e=(s)=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
-  if(typeof ExcelJS==='undefined'){
-    alert('ExcelJS se načítá, zkuste za chvíli...');return;
-  }
+  const bgMap={sd:'#93C5FD',sn:'#94A3B8',swd:'#93C5FD',swn:'#94A3B8','sof-we':'#86EFAC',
+    cN:'#FECACA',cD:'#BBF7D0',cD2:'#DCF2E7',cP:'#DDD6FE',cSV:'#FED7AA',cbh:'#EDE9FE'};
 
-  const wb=new ExcelJS.Workbook();
-  wb.creator='Damco JAO';
-  const ws=wb.addWorksheet(`${MCZ[ST.m]} ${ST.y}`);
+  // Build complete HTML document for Excel
+  let html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta charset="UTF-8">
+<!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>
+<x:Name>${MCZ[ST.m]} ${ST.y}</x:Name>
+<x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions>
+</x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->
+<style>
+table{border-collapse:collapse}
+td,th{font-family:Calibri,Arial;font-size:9pt;border:0.5pt solid #CBD5E1;white-space:nowrap;padding:2px 6px}
+.hdr{background:#1E3A5F;color:#FFFFFF;font-weight:bold;text-align:center}
+.nm{font-weight:bold;text-align:left;background:#F8FAFC}
+.pos{color:#64748B;text-align:left}
+.grp{font-weight:bold;font-size:10pt;text-align:left}
+.sd{background:#93C5FD}.sn{background:#94A3B8}.swe{background:#86EFAC}
+.cN{background:#FECACA;font-weight:bold}.cD{background:#BBF7D0;font-weight:bold}
+.cD2{background:#DCF2E7;font-weight:bold}.cP{background:#DDD6FE;font-weight:bold}
+.cSV{background:#FED7AA;font-weight:bold}.ot{background:#EDE9FE;font-weight:bold}
+.neg{color:#DC2626;font-weight:bold}.sv{background:#FFF7ED}
+.celkem{background:#DBEAFE;color:#1D4ED8;font-weight:bold;text-align:right}
+.mr{background:#FEF9C3;font-weight:bold}.wc{background:#DBEAFE}.ce{background:#DCFCE7}
+.num{text-align:right}.txt{text-align:center}
+</style></head><body><table>`;
 
-  // Color definitions
-  const COLORS={
-    hdrBg:'1E3A5F',hdrFg:'FFFFFF',
-    sd:'93C5FD',sn:'94A3B8',swe:'86EFAC',
-    cN:'FECACA',cD:'BBF7D0',cD2:'DCF2E7',cP:'DDD6FE',cSV:'FED7AA',
-    ot:'EDE9FE',neg_fg:'DC2626',sv:'FFF7ED',
-    celkem:'DBEAFE',celkem_fg:'1D4ED8',
-    mr:'FEF9C3',offwc:'DBEAFE',offwc_fg:'1E40AF',
-    offceln:'DCFCE7',offceln_fg:'14532D',
-    grp4sm:'BFDBFE',grp2sm:'FED7AA',grpBrig:'EDE9FE',
-    empBlue:'DBEAFE',empBlack:'E2E8F0',empGreen:'DCFCE7',empRed:'FEE2E2',
-  };
-
-  const border={top:{style:'thin',color:{argb:'FFCBD5E1'}},bottom:{style:'thin',color:{argb:'FFCBD5E1'}},left:{style:'thin',color:{argb:'FFCBD5E1'}},right:{style:'thin',color:{argb:'FFCBD5E1'}}};
-
-  function cell(row,col,val,bgColor,fgColor,bold,align){
-    const c2=ws.getCell(row,col);
-    if(val!==null&&val!==undefined&&val!=='') c2.value=String(val);
-    c2.border=border;
-    c2.font={size:9,bold:!!bold,color:{argb:'FF'+(fgColor||'000000')}};
-    c2.alignment={horizontal:align||'center',vertical:'middle'};
-    if(bgColor) c2.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF'+bgColor}};
-    return c2;
-  }
-  function numCell(row,col,val,bgColor,fgColor,bold){
-    const c2=ws.getCell(row,col);
-    if(val!==null&&val!==undefined&&val!=='') c2.value=typeof val==='number'?val:Number(val)||0;
-    c2.border=border;
-    c2.font={size:9,bold:!!bold,color:{argb:'FF'+(fgColor||'000000')}};
-    c2.alignment={horizontal:'center',vertical:'middle'};
-    if(bgColor) c2.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF'+bgColor}};
-    return c2;
-  }
-
-  // Column widths
-  ws.getColumn(1).width=20;ws.getColumn(2).width=12;
-  for(let d=1;d<=n;d++) ws.getColumn(d+2).width=4;
-  ws.getColumn(n+3).width=20;// second name
-  const sumCols=['Dny','Noční h','Víkend h','Př 25%','Př So','Př Ne','Př sv','Mínus','N','D','P h','Svátek h','CELKEM h'];
-  sumCols.forEach((_,i)=>ws.getColumn(n+4+i).width=8);
-
-  let rowIdx=1;
+  // Helper functions
+  const tc=(v,cls)=>`<td class="txt ${cls||''}" x:str="${e(v===null||v===undefined?'':v)}">${e(v===null||v===undefined?'':v)}</td>`;
+  const nc=(v,cls)=>`<td class="num ${cls||''}">${v===null||v===undefined||v===''?'':v}</td>`;
+  const ec=(cls)=>`<td class="${cls||''}"></td>`;
 
   // Header row
-  cell(rowIdx,1,'Jméno',COLORS.hdrBg,COLORS.hdrFg,true,'left');
-  cell(rowIdx,2,'Pozice',COLORS.hdrBg,COLORS.hdrFg,true);
+  html+=`<tr>`;
+  html+=`<th class="hdr nm">Jméno</th><th class="hdr pos">Pozice</th>`;
   for(let d=1;d<=n;d++){
-    const w=dow(ST.y,ST.m,d);
-    const sv=isSv(ST.m,d);
-    const wk=w===6||w===0;
-    const bg=sv?COLORS.cSV:wk?COLORS.swe:COLORS.hdrBg;
-    const fg=sv?'7C2D12':wk?'14532D':COLORS.hdrFg;
-    cell(rowIdx,d+2,d,bg,fg,true);
+    const w=dow(ST.y,ST.m,d);const sv=isSv(ST.m,d);const wk=w===6||w===0;
+    const bg=sv?'background:#FED7AA;color:#7C2D12':wk?'background:#86EFAC;color:#14532D':'';
+    html+=`<th class="hdr" style="${bg}" x:str="${d}">${d}</th>`;
   }
-  cell(rowIdx,n+3,'Jméno',COLORS.hdrBg,COLORS.hdrFg,true,'left');
-  sumCols.forEach((h,i)=>cell(rowIdx,n+4+i,h,COLORS.hdrBg,COLORS.hdrFg,true));
-  ws.getRow(rowIdx).height=20;
-  rowIdx++;
+  html+=`<th class="hdr nm">Jméno</th>`;
+  ['Dny','Noční h','Víkend h','Př 25%','Př So','Př Ne','Př sv','Mínus','N','D','P h','Svátek h','CELKEM h'].forEach(h=>html+=`<th class="hdr">${h}</th>`);
+  html+=`</tr>`;
 
-  const bgMap={sd:COLORS.sd,sn:COLORS.sn,swd:COLORS.sd,swn:COLORS.sn,'sof-we':COLORS.swe,
-    cN:COLORS.cN,cD:COLORS.cD,cD2:COLORS.cD2,cP:COLORS.cP,cSV:COLORS.cSV,cbh:COLORS.ot};
-
-  const grpEmpBg={blue:COLORS.empBlue,black:COLORS.empBlack,green:COLORS.empGreen,red:COLORS.empRed};
-
-  function addEmpRow(emp){
-    const s=calcSums(emp);
-    const isBr=emp.prov==='brigada';
-    const empBg=grpEmpBg[emp.grp]||'FFFFFF';
-    cell(rowIdx,1,emp.name,empBg,null,true,'left');
-    cell(rowIdx,2,emp.pos||'',null,'64748B');
+  function empRow(emp){
+    const s=calcSums(emp);const isBr=emp.prov==='brigada';
+    const gbg={blue:'#DBEAFE',black:'#F1F5F9',green:'#DCFCE7',red:'#FEE2E2'}[emp.grp]||'';
+    html+=`<tr>`;
+    html+=`<td class="nm" style="background:${gbg}">${e(emp.name)}</td>`;
+    html+=`<td class="pos">${e(emp.pos||'')}</td>`;
     for(let d=1;d<=n;d++){
-      const rec=emp.data[d];
-      const disp=cellDisp(emp,d,rec);
-      const cls=cellCls(emp,d,rec);
-      let bg=null;
-      for(const[k,v] of Object.entries(bgMap)){if(cls.includes(k)){bg=v;break;}}
-      const w=dow(ST.y,ST.m,d);
-      if(!bg&&(w===6||w===0)) bg=COLORS.swe;
-      const dispVal=disp!==null?disp:'';
-      // Use string for N,D,P etc; number for numeric values
-      const numVal=typeof dispVal==='number'||(typeof dispVal==='string'&&/^-?[0-9.]+$/.test(String(dispVal))&&dispVal!=='')?parseFloat(dispVal):null;
-      if(numVal!==null&&!isNaN(numVal)) numCell(rowIdx,d+2,numVal,bg);
-      else cell(rowIdx,d+2,dispVal,bg);
+      const rec=emp.data[d];const disp=cellDisp(emp,d,rec);const cls2=cellCls(emp,d,rec);
+      let cls='';for(const[k,v] of Object.entries(bgMap)){if(cls2.includes(k)){cls=k.replace('-','_');break;}}
+      const w=dow(ST.y,ST.m,d);if(!cls&&(w===6||w===0))cls='swe';
+      html+=tc(disp!==null?disp:'',cls);
     }
-    cell(rowIdx,n+3,emp.name,empBg,null,true,'left');
+    html+=`<td class="nm" style="background:${gbg}">${e(emp.name)}</td>`;
     if(isBr){
-      for(let i=0;i<12;i++) cell(rowIdx,n+4+i,'');
-      numCell(rowIdx,n+16,r2(s.brig-s.negH)||'',COLORS.celkem,COLORS.celkem_fg,true);
+      for(let i=0;i<12;i++)html+=ec();
+      html+=nc(r2(s.brig-s.negH)||'','celkem');
     } else {
-      numCell(rowIdx,n+4,s.days||'');
-      numCell(rowIdx,n+5,s.nightH>0?s.nightH:'',COLORS.sn);
-      numCell(rowIdx,n+6,s.weH>0?s.weH:'',COLORS.swe);
-      numCell(rowIdx,n+7,s.otW>0?s.otW:'',COLORS.ot);
-      numCell(rowIdx,n+8,s.otSo>0?s.otSo:'',COLORS.ot);
-      numCell(rowIdx,n+9,s.otNe>0?s.otNe:'',COLORS.ot);
-      numCell(rowIdx,n+10,s.otSv>0?s.otSv:'',COLORS.ot);
-      numCell(rowIdx,n+11,s.negH>0?-s.negH:'',null,COLORS.neg_fg,true);
-      numCell(rowIdx,n+12,s.nem||'',COLORS.cN);
-      numCell(rowIdx,n+13,s.dov||'',COLORS.cD);
-      numCell(rowIdx,n+14,s.prop||'',COLORS.cP);
-      numCell(rowIdx,n+15,s.svatekH>0?s.svatekH:'',COLORS.sv);
-      numCell(rowIdx,n+16,r2((s.otW||0)+(s.otSo||0)+(s.otNe||0)+(s.otSv||0))||'',COLORS.celkem,COLORS.celkem_fg,true);
+      html+=nc(s.days||'');
+      html+=nc(s.nightH>0?s.nightH:'','sn');
+      html+=nc(s.weH>0?s.weH:'','swe');
+      html+=nc(s.otW>0?s.otW:'','ot');
+      html+=nc(s.otSo>0?s.otSo:'','ot');
+      html+=nc(s.otNe>0?s.otNe:'','ot');
+      html+=nc(s.otSv>0?s.otSv:'','ot');
+      html+=nc(s.negH>0?'-'+s.negH:'','neg');
+      html+=nc(s.nem||'','cN');
+      html+=nc(s.dov||'','cD');
+      html+=nc(s.prop||'','cP');
+      html+=nc(s.svatekH>0?s.svatekH:'','sv');
+      html+=nc(r2((s.otW||0)+(s.otSo||0)+(s.otNe||0)+(s.otSv||0))||'','celkem');
     }
-    ws.getRow(rowIdx).height=16;
-    rowIdx++;
+    html+=`</tr>`;
   }
 
-  function addGrpRow(label,bg){
-    ws.mergeCells(rowIdx,1,rowIdx,n+16);
-    cell(rowIdx,1,label,bg,null,true,'left');
-    ws.getRow(rowIdx).height=18;
-    rowIdx++;
+  function grpRow(label,bg){
+    html+=`<tr><td colspan="${n+16}" class="grp" style="background:${bg};border:0.5pt solid #CBD5E1">${e(label)}</td></tr>`;
   }
 
-  function addMrRow(key,label,bg,fgColor){
-    const mr=ST.manualRows[key]||{};
-    cell(rowIdx,1,label,bg,fgColor,true,'left');
-    cell(rowIdx,2,'',bg);
-    for(let d=1;d<=n;d++){
-      const v=mr[d];
-      numCell(rowIdx,d+2,typeof v==='number'&&v>0?v:'',bg,fgColor);
-    }
-    cell(rowIdx,n+3,'',bg);
-    for(let i=0;i<13;i++) cell(rowIdx,n+4+i,'',bg);
-    ws.getRow(rowIdx).height=16;
-    rowIdx++;
+  function mrRow(key,label,cls){
+    const mr=ST.manualRows[key]||{};let tot=0;
+    html+=`<tr><td class="${cls}" style="text-align:left">${e(label)}</td><td class="${cls}"></td>`;
+    for(let d=1;d<=n;d++){const v=mr[d];if(v>0)tot+=v;html+=nc(v>0?v:'',cls);}
+    html+=ec(cls)+ec(cls);for(let i=0;i<12;i++)html+=ec(cls);
+    html+=nc(tot||'','celkem');html+=`</tr>`;
   }
 
   const G4=['blue','black','green','red'];
   const GL={blue:'MODRÁ',black:'ČERNÁ',green:'ZELENÁ',red:'ČERVENÁ'};
-  const gc={blue:COLORS.grp4sm,black:'CBD5E1',green:'BBF7D0',red:COLORS.cN};
+  const gc={blue:'#BFDBFE',black:'#CBD5E1',green:'#BBF7D0',red:'#FECACA'};
   G4.forEach(g=>{
     const list=ST.emps.filter(e=>e.prov==='4sm'&&e.grp===g);
     if(!list.length)return;
-    addGrpRow(`4-SMĚNNÝ — ${GL[g]}`,gc[g]);
-    list.forEach(addEmpRow);
+    grpRow(`4-SMĚNNÝ — ${GL[g]}`,gc[g]);
+    list.forEach(empRow);
   });
-  addMrRow('4sm','Ruční hodiny 4-směnný',COLORS.mr);
+  mrRow('4sm','Ruční hodiny 4-směnný','mr');
 
   const f2=ST.emps.filter(e=>e.prov==='2sm');
-  if(f2.length){addGrpRow('2-SMĚNNÝ PROVOZ',COLORS.grp2sm);f2.forEach(addEmpRow);}
-  addMrRow('2sm','Ruční hodiny 2-směnný',COLORS.mr);
+  if(f2.length){grpRow('2-SMĚNNÝ PROVOZ','#FED7AA');f2.forEach(empRow);}
+  mrRow('2sm','Ruční hodiny 2-směnný','mr');
 
   const fB=ST.emps.filter(e=>e.prov==='brigada');
-  if(fB.length){addGrpRow('BRIGÁDNÍCI',COLORS.grpBrig);fB.forEach(addEmpRow);}
+  if(fB.length){grpRow('BRIGÁDNÍCI','#EDE9FE');fB.forEach(empRow);}
 
-  // Brigada sum row
-  cell(rowIdx,1,'Brigádníci součet',COLORS.mr,null,true,'left');
-  cell(rowIdx,2,'',COLORS.mr);
+  // Brigada sum
+  html+=`<tr><td class="mr" style="text-align:left">Brigádníci součet</td><td class="mr"></td>`;
   let brigTotal=0;
   for(let d=1;d<=n;d++){
     let s=0;ST.emps.filter(e=>e.prov==='brigada').forEach(e=>{
       const v=e.data[d];const bv=typeof v==='object'&&v?v.h:(typeof v==='number'?v:0);if(bv>0)s+=bv;
-    });numCell(rowIdx,d+2,s||'',COLORS.mr);brigTotal+=s;
+    });html+=nc(s||'','mr');brigTotal+=s;
   }
-  cell(rowIdx,n+3,'',COLORS.mr);
-  for(let i=0;i<12;i++) cell(rowIdx,n+4+i,'',COLORS.mr);
-  numCell(rowIdx,n+16,brigTotal||'',COLORS.celkem,COLORS.celkem_fg,true);
-  ws.getRow(rowIdx).height=16;rowIdx++;
+  html+=ec('mr')+ec('mr');for(let i=0;i<12;i++)html+=ec('mr');
+  html+=nc(brigTotal||'','celkem');html+=`</tr>`;
 
-  addMrRow('offwc','Office WC',COLORS.offwc,COLORS.offwc_fg);
-  addMrRow('offceln','Office Celní',COLORS.offceln,COLORS.offceln_fg);
+  mrRow('offwc','Office WC','wc');
+  mrRow('offceln','Office Celní','ce');
 
-  // Grand total row
-  cell(rowIdx,1,'CELKEM',COLORS.hdrBg,COLORS.hdrFg,true,'left');
-  cell(rowIdx,2,'',COLORS.hdrBg);
+  // Grand total
+  html+=`<tr><td colspan="2" class="grp" style="background:#1E3A5F;color:#fff">CELKEM</td>`;
   let grandTotal=0;
   for(let d=1;d<=n;d++){
-    const mr4=ST.manualRows['4sm']?.[d]||0;
-    const mr2=ST.manualRows['2sm']?.[d]||0;
+    const mr4=ST.manualRows['4sm']?.[d]||0,mr2=ST.manualRows['2sm']?.[d]||0;
     let brig=0;ST.emps.filter(e=>e.prov==='brigada').forEach(e=>{
       const v=e.data[d];const bv=typeof v==='object'&&v?v.h:(typeof v==='number'?v:0);if(bv>0)brig+=bv;
     });
-    const wc=ST.manualRows['offwc']?.[d]||0;
-    const celn=ST.manualRows['offceln']?.[d]||0;
+    const wc=ST.manualRows['offwc']?.[d]||0,celn=ST.manualRows['offceln']?.[d]||0;
     const tot=r2(mr4+mr2+brig+wc+celn);
-    numCell(rowIdx,d+2,tot||'',COLORS.celkem,COLORS.celkem_fg,true);
-    grandTotal+=tot;
+    html+=nc(tot||'','celkem');grandTotal+=tot;
   }
-  cell(rowIdx,n+3,'',COLORS.hdrBg);
-  for(let i=0;i<12;i++) cell(rowIdx,n+4+i,'',COLORS.celkem);
-  numCell(rowIdx,n+16,r2(grandTotal)||'',COLORS.celkem,COLORS.celkem_fg,true);
-  ws.getRow(rowIdx).height=20;rowIdx++;
+  html+=ec('celkem')+ec('celkem');for(let i=0;i<12;i++)html+=ec('celkem');
+  html+=nc(r2(grandTotal)||'','celkem');html+=`</tr>`;
 
-  // Generate file
-  wb.xlsx.writeBuffer().then(buffer=>{
-    const blob=new Blob([buffer],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');
-    a.href=url;a.download=`dochazka_${ST.y}_${ST.m}.xlsx`;a.click();
-    setTimeout(()=>URL.revokeObjectURL(url),1000);
-  });
+  html+=`</table></body></html>`;
+
+  // Use data URI to avoid tracking prevention issues
+  const blob=new Blob([html],{type:'application/vnd.ms-excel;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;
+  a.download=`dochazka_${ST.y}_${ST.m}.xls`;
+  document.body.appendChild(a);a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url),2000);
 }
 
 
@@ -2356,8 +2303,8 @@ function loadScript(src){
       window._isTomas = user.email === 'tomas.bedlek@lns.maersk.com';
       const bonusBtn=document.getElementById('bonusTabBtn');
       if(bonusBtn) bonusBtn.style.display=window._isTomas?'inline-flex':'none';
-      // Load bonus data
-      setTimeout(loadBonusData, 1000);
+      // Load bonus data (safe call after Firebase init)
+      setTimeout(()=>{ if(typeof loadBonusData==='function') loadBonusData(); }, 1500);
     } else {
       document.getElementById('loginScreen').style.display='flex';
       const bonusBtn=document.getElementById('bonusTabBtn');
