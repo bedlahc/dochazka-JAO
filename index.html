@@ -231,6 +231,7 @@ tr:hover td.cn{filter:none;background:var(--bg4)!important;box-shadow:4px 0 8px 
 /* Force scrollbar visible on all platforms */
 .tw{scrollbar-width:thick !important;scrollbar-color:#334155 #cbd5e1 !important}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.3.0/dist/exceljs.min.js"></script>
 </head>
 <body>
 <div class="topbar">
@@ -1427,241 +1428,208 @@ function doExportXLS(){
   const n=dInM(ST.m,ST.y);
   const DN2=['Ne','Po','Út','St','Čt','Pá','So'];
 
-  // XML Spreadsheet format - supports full formatting AND explicit text type
-  const esc=(s)=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  if(typeof ExcelJS==='undefined'){
+    alert('ExcelJS se načítá, zkuste za chvíli...');return;
+  }
 
-  // Smart cell - numbers as Number type, text as String type
-  const cell=(v,style)=>{
-    if(v===''||v===null||v===undefined) return `<Cell ss:StyleID="${style||'s1'}"/>`;
-    const s=String(v);
-    const num=parseFloat(s.replace(',','.'));
-    if(!isNaN(num)&&s.trim()!==''&&!/[^0-9.\-]/.test(s.trim())){
-      return `<Cell ss:StyleID="${style||'s1'}"><Data ss:Type="Number">${num}</Data></Cell>`;
-    }
-    return `<Cell ss:StyleID="${style||'s1'}"><Data ss:Type="String">${esc(s)}</Data></Cell>`;
+  const wb=new ExcelJS.Workbook();
+  wb.creator='Damco JAO';
+  const ws=wb.addWorksheet(`${MCZ[ST.m]} ${ST.y}`);
+
+  // Color definitions
+  const COLORS={
+    hdrBg:'1E3A5F',hdrFg:'FFFFFF',
+    sd:'93C5FD',sn:'94A3B8',swe:'86EFAC',
+    cN:'FECACA',cD:'BBF7D0',cD2:'DCF2E7',cP:'DDD6FE',cSV:'FED7AA',
+    ot:'EDE9FE',neg_fg:'DC2626',sv:'FFF7ED',
+    celkem:'DBEAFE',celkem_fg:'1D4ED8',
+    mr:'FEF9C3',offwc:'DBEAFE',offwc_fg:'1E40AF',
+    offceln:'DCFCE7',offceln_fg:'14532D',
+    grp4sm:'BFDBFE',grp2sm:'FED7AA',grpBrig:'EDE9FE',
+    empBlue:'DBEAFE',empBlack:'E2E8F0',empGreen:'DCFCE7',empRed:'FEE2E2',
   };
-  const strCell=(v,style)=>`<Cell ss:StyleID="${style||'s1'}"><Data ss:Type="String">${esc(v)}</Data></Cell>`;
-  const numCell=(v,style)=>`<Cell ss:StyleID="${style||'s1'}"><Data ss:Type="Number">${v}</Data></Cell>`;
-  const emptyCell=(style)=>`<Cell ss:StyleID="${style||'s1'}"/>`;
 
-  // Build XML
-  let xml=`<?xml version="1.0"?>
-<?mso-application progid="Excel.Sheet"?>
-<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
- xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
- xmlns:x="urn:schemas-microsoft-com:office:excel">
-<Styles>
-  <Style ss:ID="s1"><Alignment ss:Horizontal="Center"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/></Borders><Font ss:Size="9"/></Style>
-  <Style ss:ID="hdr"><Alignment ss:Horizontal="Center"/><Font ss:Bold="1" ss:Color="#FFFFFF" ss:Size="9"/><Interior ss:Color="#1E3A5F" ss:Pattern="Solid"/></Style>
-  <Style ss:ID="hdrL"><Alignment ss:Horizontal="Left"/><Font ss:Bold="1" ss:Color="#FFFFFF" ss:Size="9"/><Interior ss:Color="#1E3A5F" ss:Pattern="Solid"/></Style>
-  <Style ss:ID="sd"><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/></Borders><Alignment ss:Horizontal="Center"/><Interior ss:Color="#93C5FD" ss:Pattern="Solid"/><Font ss:Size="9"/></Style>
-  <Style ss:ID="sn"><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/></Borders><Alignment ss:Horizontal="Center"/><Interior ss:Color="#94A3B8" ss:Pattern="Solid"/><Font ss:Size="9"/></Style>
-  <Style ss:ID="swe"><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/></Borders><Alignment ss:Horizontal="Center"/><Interior ss:Color="#86EFAC" ss:Pattern="Solid"/><Font ss:Size="9"/></Style>
-  <Style ss:ID="cN"><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/></Borders><Alignment ss:Horizontal="Center"/><Interior ss:Color="#FECACA" ss:Pattern="Solid"/><Font ss:Bold="1" ss:Size="9"/></Style>
-  <Style ss:ID="cD"><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/></Borders><Alignment ss:Horizontal="Center"/><Interior ss:Color="#BBF7D0" ss:Pattern="Solid"/><Font ss:Bold="1" ss:Size="9"/></Style>
-  <Style ss:ID="cD2"><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/></Borders><Alignment ss:Horizontal="Center"/><Interior ss:Color="#DCF2E7" ss:Pattern="Solid"/><Font ss:Bold="1" ss:Size="9"/></Style>
-  <Style ss:ID="cP"><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/></Borders><Alignment ss:Horizontal="Center"/><Interior ss:Color="#DDD6FE" ss:Pattern="Solid"/><Font ss:Bold="1" ss:Size="9"/></Style>
-  <Style ss:ID="cSV"><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/></Borders><Alignment ss:Horizontal="Center"/><Interior ss:Color="#FED7AA" ss:Pattern="Solid"/><Font ss:Bold="1" ss:Size="9"/></Style>
-  <Style ss:ID="ot"><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/></Borders><Alignment ss:Horizontal="Center"/><Interior ss:Color="#EDE9FE" ss:Pattern="Solid"/><Font ss:Bold="1" ss:Size="9"/></Style>
-  <Style ss:ID="neg"><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/></Borders><Alignment ss:Horizontal="Center"/><Font ss:Bold="1" ss:Color="#DC2626" ss:Size="9"/></Style>
-  <Style ss:ID="sv"><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/></Borders><Alignment ss:Horizontal="Center"/><Interior ss:Color="#FFF7ED" ss:Pattern="Solid"/><Font ss:Size="9"/></Style>
-  <Style ss:ID="celkem"><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/></Borders><Alignment ss:Horizontal="Center"/><Interior ss:Color="#DBEAFE" ss:Pattern="Solid"/><Font ss:Bold="1" ss:Color="#1D4ED8" ss:Size="9"/></Style>
-  <Style ss:ID="mr"><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/></Borders><Alignment ss:Horizontal="Center"/><Interior ss:Color="#FEF9C3" ss:Pattern="Solid"/><Font ss:Bold="1" ss:Size="9"/></Style>
-  <Style ss:ID="mrL"><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/></Borders><Alignment ss:Horizontal="Left"/><Interior ss:Color="#FEF9C3" ss:Pattern="Solid"/><Font ss:Bold="1" ss:Size="9"/></Style>
-  <Style ss:ID="grp"><Alignment ss:Horizontal="Left"/><Font ss:Bold="1" ss:Size="10"/></Style>
-  <Style ss:ID="nm"><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/></Borders><Alignment ss:Horizontal="Left"/><Font ss:Bold="1" ss:Size="9"/></Style>
-  <Style ss:ID="pos"><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/></Borders><Alignment ss:Horizontal="Left"/><Font ss:Size="8" ss:Color="#64748B"/></Style>
-  <Style ss:ID="wknd"><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/></Borders><Alignment ss:Horizontal="Center"/><Interior ss:Color="#86EFAC" ss:Pattern="Solid"/><Font ss:Size="9"/></Style>
-  <Style ss:ID="hdrWknd"><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/></Borders><Alignment ss:Horizontal="Center"/><Interior ss:Color="#86EFAC" ss:Pattern="Solid"/><Font ss:Bold="1" ss:Size="9" ss:Color="#14532D"/></Style>
-  <Style ss:ID="hdrSv"><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/></Borders><Alignment ss:Horizontal="Center"/><Interior ss:Color="#FED7AA" ss:Pattern="Solid"/><Font ss:Bold="1" ss:Size="9" ss:Color="#7C2D12"/></Style>
-</Styles>
-<Worksheet ss:Name="${MCZ[ST.m]} ${ST.y}">
-<Table>
-`;
+  const border={top:{style:'thin',color:{argb:'FFCBD5E1'}},bottom:{style:'thin',color:{argb:'FFCBD5E1'}},left:{style:'thin',color:{argb:'FFCBD5E1'}},right:{style:'thin',color:{argb:'FFCBD5E1'}}};
 
-  // Col widths
-  xml+=`<Column ss:Width="140"/><Column ss:Width="80"/>`;
-  for(let d=0;d<n;d++) xml+=`<Column ss:Width="28"/>`;
-  for(let i=0;i<13;i++) xml+=`<Column ss:Width="55"/>`;
+  function cell(row,col,val,bgColor,fgColor,bold,align){
+    const c2=ws.getCell(row,col);
+    if(val!==null&&val!==undefined&&val!=='') c2.value=String(val);
+    c2.border=border;
+    c2.font={size:9,bold:!!bold,color:{argb:'FF'+(fgColor||'000000')}};
+    c2.alignment={horizontal:align||'center',vertical:'middle'};
+    if(bgColor) c2.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF'+bgColor}};
+    return c2;
+  }
+  function numCell(row,col,val,bgColor,fgColor,bold){
+    const c2=ws.getCell(row,col);
+    if(val!==null&&val!==undefined&&val!=='') c2.value=typeof val==='number'?val:Number(val)||0;
+    c2.border=border;
+    c2.font={size:9,bold:!!bold,color:{argb:'FF'+(fgColor||'000000')}};
+    c2.alignment={horizontal:'center',vertical:'middle'};
+    if(bgColor) c2.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF'+bgColor}};
+    return c2;
+  }
 
-  // Header
-  xml+=`<Row ss:Height="28">`;
-  xml+=strCell('Jméno','hdrL')+strCell('Pozice','hdr');
+  // Column widths
+  ws.getColumn(1).width=20;ws.getColumn(2).width=12;
+  for(let d=1;d<=n;d++) ws.getColumn(d+2).width=4;
+  ws.getColumn(n+3).width=20;// second name
+  const sumCols=['Dny','Noční h','Víkend h','Př 25%','Př So','Př Ne','Př sv','Mínus','N','D','P h','Svátek h','CELKEM h'];
+  sumCols.forEach((_,i)=>ws.getColumn(n+4+i).width=8);
+
+  let rowIdx=1;
+
+  // Header row
+  cell(rowIdx,1,'Jméno',COLORS.hdrBg,COLORS.hdrFg,true,'left');
+  cell(rowIdx,2,'Pozice',COLORS.hdrBg,COLORS.hdrFg,true);
   for(let d=1;d<=n;d++){
     const w=dow(ST.y,ST.m,d);
     const sv=isSv(ST.m,d);
-    const wknd=w===6||w===0;
-    const st=sv?'hdrSv':wknd?'hdrWknd':'hdr';
-    xml+=strCell(d,'hdr');
+    const wk=w===6||w===0;
+    const bg=sv?COLORS.cSV:wk?COLORS.swe:COLORS.hdrBg;
+    const fg=sv?'7C2D12':wk?'14532D':COLORS.hdrFg;
+    cell(rowIdx,d+2,d,bg,fg,true);
   }
-  ['Dny','Noční h','Víkend h','Př 25%','Př So','Př Ne','Př sv','Mínus','N','D','P h','Svátek h','CELKEM h'].forEach(h=>xml+=strCell(h,'hdr'));
-  xml+=`</Row>
-`;
+  cell(rowIdx,n+3,'Jméno',COLORS.hdrBg,COLORS.hdrFg,true,'left');
+  sumCols.forEach((h,i)=>cell(rowIdx,n+4+i,h,COLORS.hdrBg,COLORS.hdrFg,true));
+  ws.getRow(rowIdx).height=20;
+  rowIdx++;
 
-  function getCellStyle(cls){
-    if(cls.includes('cN')) return 'cN';
-    if(cls.includes('cD2')) return 'cD2';
-    if(cls.includes('cD')) return 'cD';
-    if(cls.includes('cP')) return 'cP';
-    if(cls.includes('cSV')) return 'cSV';
-    if(cls.includes('cbh')) return 'ot';
-    if(cls.includes('sn')||cls.includes('swn')) return 'sn';
-    if(cls.includes('sd')||cls.includes('swd')) return 'sd';
-    if(cls.includes('sof-we')||cls.includes('swd')||cls.includes('woff')) return 'swe';
-    return 's1';
-  }
+  const bgMap={sd:COLORS.sd,sn:COLORS.sn,swd:COLORS.sd,swn:COLORS.sn,'sof-we':COLORS.swe,
+    cN:COLORS.cN,cD:COLORS.cD,cD2:COLORS.cD2,cP:COLORS.cP,cSV:COLORS.cSV,cbh:COLORS.ot};
 
-  function empRow(emp){
+  const grpEmpBg={blue:COLORS.empBlue,black:COLORS.empBlack,green:COLORS.empGreen,red:COLORS.empRed};
+
+  function addEmpRow(emp){
     const s=calcSums(emp);
     const isBr=emp.prov==='brigada';
-    xml+=`<Row ss:Height="16">`;
-    xml+=strCell(emp.name,'nm')+strCell(emp.pos||'','pos');
+    const empBg=grpEmpBg[emp.grp]||'FFFFFF';
+    cell(rowIdx,1,emp.name,empBg,null,true,'left');
+    cell(rowIdx,2,emp.pos||'',null,'64748B');
     for(let d=1;d<=n;d++){
       const rec=emp.data[d];
       const disp=cellDisp(emp,d,rec);
       const cls=cellCls(emp,d,rec);
-      const st=getCellStyle(cls);
-      xml+=cell(disp!==null?disp:'',st);
+      let bg=null;
+      for(const[k,v] of Object.entries(bgMap)){if(cls.includes(k)){bg=v;break;}}
+      const w=dow(ST.y,ST.m,d);
+      if(!bg&&(w===6||w===0)) bg=COLORS.swe;
+      const dispVal=disp!==null?disp:'';
+      // Use string for N,D,P etc; number for numeric values
+      const numVal=typeof dispVal==='number'||(typeof dispVal==='string'&&/^-?[0-9.]+$/.test(String(dispVal))&&dispVal!=='')?parseFloat(dispVal):null;
+      if(numVal!==null&&!isNaN(numVal)) numCell(rowIdx,d+2,numVal,bg);
+      else cell(rowIdx,d+2,dispVal,bg);
     }
+    cell(rowIdx,n+3,emp.name,empBg,null,true,'left');
     if(isBr){
-      for(let i=0;i<12;i++) xml+=emptyCell('s1');
-      xml+=cell(r2(s.brig-s.negH)||'','celkem');
+      for(let i=0;i<12;i++) cell(rowIdx,n+4+i,'');
+      numCell(rowIdx,n+16,r2(s.brig-s.negH)||'',COLORS.celkem,COLORS.celkem_fg,true);
     } else {
-      xml+=cell(s.days||'','s1');
-      xml+=cell(s.nightH>0?s.nightH:'','sn');
-      xml+=cell(s.weH>0?s.weH:'','swe');
-      xml+=cell(s.otW>0?s.otW:'','ot');
-      xml+=cell(s.otSo>0?s.otSo:'','ot');
-      xml+=cell(s.otNe>0?s.otNe:'','ot');
-      xml+=cell(s.otSv>0?s.otSv:'','ot');
-      xml+=cell(s.negH>0?'-'+s.negH:'','neg');
-      xml+=cell(s.nem||'','cN');
-      xml+=cell(s.dov||'','cD');
-      xml+=cell(s.prop||'','cP');
-      xml+=cell(s.svatekH>0?s.svatekH:'','sv');
-      xml+=emptyCell('celkem');// CELKEM per employee empty - shown in summary row
+      numCell(rowIdx,n+4,s.days||'');
+      numCell(rowIdx,n+5,s.nightH>0?s.nightH:'',COLORS.sn);
+      numCell(rowIdx,n+6,s.weH>0?s.weH:'',COLORS.swe);
+      numCell(rowIdx,n+7,s.otW>0?s.otW:'',COLORS.ot);
+      numCell(rowIdx,n+8,s.otSo>0?s.otSo:'',COLORS.ot);
+      numCell(rowIdx,n+9,s.otNe>0?s.otNe:'',COLORS.ot);
+      numCell(rowIdx,n+10,s.otSv>0?s.otSv:'',COLORS.ot);
+      numCell(rowIdx,n+11,s.negH>0?-s.negH:'',null,COLORS.neg_fg,true);
+      numCell(rowIdx,n+12,s.nem||'',COLORS.cN);
+      numCell(rowIdx,n+13,s.dov||'',COLORS.cD);
+      numCell(rowIdx,n+14,s.prop||'',COLORS.cP);
+      numCell(rowIdx,n+15,s.svatekH>0?s.svatekH:'',COLORS.sv);
+      numCell(rowIdx,n+16,r2((s.otW||0)+(s.otSo||0)+(s.otNe||0)+(s.otSv||0))||'',COLORS.celkem,COLORS.celkem_fg,true);
     }
-    xml+=`</Row>
-`;
+    ws.getRow(rowIdx).height=16;
+    rowIdx++;
   }
 
-  function grpRow(label,color){
-    xml+=`<Row ss:Height="18"><Cell ss:MergeAcross="${n+14}" ss:StyleID="grp"><Data ss:Type="String">${esc(label)}</Data></Cell></Row>
-`;
+  function addGrpRow(label,bg){
+    ws.mergeCells(rowIdx,1,rowIdx,n+16);
+    cell(rowIdx,1,label,bg,null,true,'left');
+    ws.getRow(rowIdx).height=18;
+    rowIdx++;
   }
 
-  function mrRow(key,label){
+  function addMrRow(key,label,bg,fgColor){
     const mr=ST.manualRows[key]||{};
-    xml+=`<Row ss:Height="16">`;
-    xml+=strCell(label,'mrL')+strCell('','mr');
-    for(let d=1;d<=n;d++) xml+=cell(mr[d]||'','mr');
-    for(let i=0;i<13;i++) xml+=emptyCell('mr');
-    xml+=`</Row>
-`;
+    cell(rowIdx,1,label,bg,fgColor,true,'left');
+    cell(rowIdx,2,'',bg);
+    for(let d=1;d<=n;d++){
+      const v=mr[d];
+      numCell(rowIdx,d+2,typeof v==='number'&&v>0?v:'',bg,fgColor);
+    }
+    cell(rowIdx,n+3,'',bg);
+    for(let i=0;i<13;i++) cell(rowIdx,n+4+i,'',bg);
+    ws.getRow(rowIdx).height=16;
+    rowIdx++;
   }
 
   const G4=['blue','black','green','red'];
   const GL={blue:'MODRÁ',black:'ČERNÁ',green:'ZELENÁ',red:'ČERVENÁ'};
+  const gc={blue:COLORS.grp4sm,black:'CBD5E1',green:'BBF7D0',red:COLORS.cN};
   G4.forEach(g=>{
     const list=ST.emps.filter(e=>e.prov==='4sm'&&e.grp===g);
     if(!list.length)return;
-    grpRow(`4-SMĚNNÝ — ${GL[g]}`);
-    list.forEach(empRow);
+    addGrpRow(`4-SMĚNNÝ — ${GL[g]}`,gc[g]);
+    list.forEach(addEmpRow);
   });
-  // Ruční hodiny jen pod poslední (červenou) skupinou
-  mrRow('4sm','Ruční hodiny 4-směnný');
+  addMrRow('4sm','Ruční hodiny 4-směnný',COLORS.mr);
 
   const f2=ST.emps.filter(e=>e.prov==='2sm');
-  if(f2.length){grpRow('2-SMĚNNÝ PROVOZ');f2.forEach(empRow);mrRow('2sm','Ruční hodiny');}
+  if(f2.length){addGrpRow('2-SMĚNNÝ PROVOZ',COLORS.grp2sm);f2.forEach(addEmpRow);}
+  addMrRow('2sm','Ruční hodiny 2-směnný',COLORS.mr);
 
   const fB=ST.emps.filter(e=>e.prov==='brigada');
-  if(fB.length){grpRow('BRIGÁDNÍCI');fB.forEach(empRow);}
+  if(fB.length){addGrpRow('BRIGÁDNÍCI',COLORS.grpBrig);fB.forEach(addEmpRow);}
 
-  // ── SUMMARY ROWS ──
-  // Brigádníci součet
-  const brigSum=[];let brigTotal=0;
+  // Brigada sum row
+  cell(rowIdx,1,'Brigádníci součet',COLORS.mr,null,true,'left');
+  cell(rowIdx,2,'',COLORS.mr);
+  let brigTotal=0;
   for(let d=1;d<=n;d++){
-    let s=0;
-    ST.emps.filter(e=>e.prov==='brigada').forEach(e=>{
-      const v=e.data[d];
-      const bv=typeof v==='object'&&v!==null?v.h:(typeof v==='number'?v:0);
-      if(bv>0)s+=bv;
-    });
-    brigSum.push(s||'');
-    brigTotal+=s;
+    let s=0;ST.emps.filter(e=>e.prov==='brigada').forEach(e=>{
+      const v=e.data[d];const bv=typeof v==='object'&&v?v.h:(typeof v==='number'?v:0);if(bv>0)s+=bv;
+    });numCell(rowIdx,d+2,s||'',COLORS.mr);brigTotal+=s;
   }
-  // Office WC
-  const mrWC=ST.manualRows['offwc']||{};
-  let wcTotal=0;
-  // Office Celní
-  const mrCeln=ST.manualRows['offceln']||{};
-  let celnTotal=0;
+  cell(rowIdx,n+3,'',COLORS.mr);
+  for(let i=0;i<12;i++) cell(rowIdx,n+4+i,'',COLORS.mr);
+  numCell(rowIdx,n+16,brigTotal||'',COLORS.celkem,COLORS.celkem_fg,true);
+  ws.getRow(rowIdx).height=16;rowIdx++;
 
-  function sumRow(label,mr,color){
-    let total=0;
-    xml+=`<Row ss:Height="16">`;
-    xml+=strCell(label,color+'L');
-    xml+=emptyCell(color);
-    for(let d=1;d<=n;d++){
-      const v=typeof mr==='object'&&!Array.isArray(mr)?mr[d]:mr[d-1];
-      const num=typeof v==='number'?v:(parseFloat(v)||0);
-      if(num>0)total+=num;
-      xml+=cell(num||'',color);
-    }
-    for(let i=0;i<12;i++) xml+=emptyCell(color);
-    xml+=cell(total||'','celkem');
-    xml+=`</Row>
-`;
-    return total;
-  }
-
-  // Brigádníci row
-  xml+=`<Row ss:Height="16">`;
-  xml+=strCell('Brigádníci součet','mrL')+emptyCell('mr');
-  for(let d=0;d<n;d++) xml+=cell(brigSum[d]||'','mr');
-  for(let i=0;i<12;i++) xml+=emptyCell('mr');
-  xml+=cell(brigTotal||'','celkem');
-  xml+=`</Row>
-`;
-
-  // Office WC
-  wcTotal=sumRow('Office WC',mrWC,'offwc');
-  // Office Celní
-  celnTotal=sumRow('Office Celní',mrCeln,'offceln');
-
-  // 4sm manual row total
-  const mr4=ST.manualRows['4sm']||{};
-  let total4=0;Object.values(mr4).forEach(v=>{if(v>0)total4+=v;});
-  // 2sm manual row total
-  const mr2=ST.manualRows['2sm']||{};
-  let total2=0;Object.values(mr2).forEach(v=>{if(v>0)total2+=v;});
+  addMrRow('offwc','Office WC',COLORS.offwc,COLORS.offwc_fg);
+  addMrRow('offceln','Office Celní',COLORS.offceln,COLORS.offceln_fg);
 
   // Grand total row
-  const grandTotal=r2(total4+total2+brigTotal+wcTotal+celnTotal);
-  xml+=`<Row ss:Height="20">`;
-  xml+=strCell('CELKEM','hdrL')+emptyCell('hdr');
+  cell(rowIdx,1,'CELKEM',COLORS.hdrBg,COLORS.hdrFg,true,'left');
+  cell(rowIdx,2,'',COLORS.hdrBg);
+  let grandTotal=0;
   for(let d=1;d<=n;d++){
-    const mr4v=mr4[d]||0;
-    const mr2v=mr2[d]||0;
-    const brigv=typeof brigSum[d-1]==='number'?brigSum[d-1]:0;
-    const wcv=mrWC[d]||0;
-    const celnv=mrCeln[d]||0;
-    const tot=r2(mr4v+mr2v+brigv+wcv+celnv);
-    xml+=cell(tot||'','hdr');
+    const mr4=ST.manualRows['4sm']?.[d]||0;
+    const mr2=ST.manualRows['2sm']?.[d]||0;
+    let brig=0;ST.emps.filter(e=>e.prov==='brigada').forEach(e=>{
+      const v=e.data[d];const bv=typeof v==='object'&&v?v.h:(typeof v==='number'?v:0);if(bv>0)brig+=bv;
+    });
+    const wc=ST.manualRows['offwc']?.[d]||0;
+    const celn=ST.manualRows['offceln']?.[d]||0;
+    const tot=r2(mr4+mr2+brig+wc+celn);
+    numCell(rowIdx,d+2,tot||'',COLORS.celkem,COLORS.celkem_fg,true);
+    grandTotal+=tot;
   }
-  for(let i=0;i<12;i++) xml+=emptyCell('hdr');
-  xml+=cell(grandTotal||'','celkem');
-  xml+=`</Row>
-`;
+  cell(rowIdx,n+3,'',COLORS.hdrBg);
+  for(let i=0;i<12;i++) cell(rowIdx,n+4+i,'',COLORS.celkem);
+  numCell(rowIdx,n+16,r2(grandTotal)||'',COLORS.celkem,COLORS.celkem_fg,true);
+  ws.getRow(rowIdx).height=20;rowIdx++;
 
-  xml+=`</Table></Worksheet></Workbook>`;
-
-  const blob=new Blob([xml],{type:'application/vnd.ms-excel;charset=utf-8'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url;a.download=`dochazka_${ST.y}_${ST.m}.xls`;a.click();
-  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  // Generate file
+  wb.xlsx.writeBuffer().then(buffer=>{
+    const blob=new Blob([buffer],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;a.download=`dochazka_${ST.y}_${ST.m}.xlsx`;a.click();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+  });
 }
+
 
 function doExportExcel(){
   const n=dInM(ST.m,ST.y);
