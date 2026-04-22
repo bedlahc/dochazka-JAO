@@ -485,8 +485,8 @@ let ST={m:4,y:2026,fp:'all',fg:'all',fn:'',emps:[
   {id:19,name:'Kosek Tomáš',pos:'Operator C',prov:'4sm',grp:'red',data:{}},
   {id:20,name:'Sekera Miroslav',pos:'Operator C',prov:'4sm',grp:'red',data:{}},
   // === 2-SMĚNNÝ ===
-  {id:21,name:'Čapek Jan',pos:'2sm',prov:'2sm',grp:'none',data:{}},
-  {id:22,name:'Hetfleis Luděk',pos:'2sm',prov:'2sm',grp:'none',data:{}},
+  {id:21,name:'Čapek Jan',pos:'Operator B',prov:'2sm',grp:'none',data:{}},
+  {id:22,name:'Hetfleis Luděk',pos:'Kontrolor',prov:'2sm',grp:'none',data:{}},
   {id:23,name:'Havlíček Patrik',pos:'Operator B',prov:'2sm',grp:'none',data:{}},
   {id:24,name:'Hirsl Roman',pos:'Operator B',prov:'2sm',grp:'none',data:{}},
   {id:25,name:'Křičenský David',pos:'Kontrolor',prov:'2sm',grp:'none',data:{}},
@@ -1072,7 +1072,9 @@ function render(){
     for(let d=1;d<=n;d++){
       let bs=0;
       ST.emps.filter(e=>e.prov==='brigada').forEach(e=>{
-        const v=e.data[d];if(typeof v==='number'&&v>0)bs+=v;
+        const v=e.data[d];
+        const bv=typeof v==='object'&&v!==null?v.h:(typeof v==='number'?v:0);
+        if(bv>0)bs+=bv;
       });
       brigDayH[d]=r2(bs);
     }
