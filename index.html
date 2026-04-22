@@ -1009,8 +1009,11 @@ function renderBonusTable(){
       const base=BONUS_BASE[emp.id];if(!base)return;
       const bd=bdata[emp.id]||{};
       const s=calcSums(emp);
-      const actual=s.days+(s.dov||0);
       const planned=plannedDays(y,m,emp.prov,emp.grp);
+      // Cíl = planned - sick days - vacation days
+      const actual=emp.prov==='4sm'
+        ? Math.max(0, planned-(s.nem||0)-(s.dov||0))
+        : s.days+(s.dov||0);
       const dochPct=planned>0?Math.min(1,actual/planned):1;
       const kpiPct=bd.kpiPct!==undefined?bd.kpiPct:1;
       const pskPct=bd.pskPct!==undefined?bd.pskPct:1;
@@ -1064,7 +1067,8 @@ function updateBonus(){
 
     const s=calcSums(emp);
     const planned=plannedDays(ST.y,m,emp.prov,emp.grp);
-    const dochPct=planned>0?Math.min(1,(s.days+(s.dov||0))/planned):1;
+    const actual2=emp.prov==='4sm'?Math.max(0,planned-(s.nem||0)-(s.dov||0)):s.days+(s.dov||0);
+    const dochPct=planned>0?Math.min(1,actual2/planned):1;
 
     const kpiV=Math.round(base.kpi*kpiPct);
     const pskV=Math.round(base.psk*pskPct);
@@ -1203,8 +1207,11 @@ table{border-collapse:collapse}td,th{font-family:Calibri;font-size:9pt;border:0.
       const base=BONUS_BASE[emp.id];if(!base)return;
       const bd=bdata[emp.id]||{};
       const s=calcSums(emp);
-      const actual=s.days+(s.dov||0);
       const planned=plannedDays(y,m,emp.prov,emp.grp);
+      // Cíl = planned - sick days - vacation days
+      const actual=emp.prov==='4sm'
+        ? Math.max(0, planned-(s.nem||0)-(s.dov||0))
+        : s.days+(s.dov||0);
       const dochPct=planned>0?Math.min(1,actual/planned):1;
       const kpiPct=bd.kpiPct!==undefined?bd.kpiPct:1;
       const pskPct=bd.pskPct!==undefined?bd.pskPct:1;
@@ -1312,8 +1319,11 @@ function doPrintBonus(){
       const base=BONUS_BASE[emp.id];if(!base)return;
       const bd=bdata[emp.id]||{};
       const s=calcSums(emp);
-      const actual=s.days+(s.dov||0);
       const planned=plannedDays(y,m,emp.prov,emp.grp);
+      // Cíl = planned - sick days - vacation days
+      const actual=emp.prov==='4sm'
+        ? Math.max(0, planned-(s.nem||0)-(s.dov||0))
+        : s.days+(s.dov||0);
       const dochPct=planned>0?Math.min(1,actual/planned):1;
       const kpiPct=bd.kpiPct!==undefined?bd.kpiPct:1;
       const pskPct=bd.pskPct!==undefined?bd.pskPct:1;
