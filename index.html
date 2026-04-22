@@ -1052,6 +1052,65 @@ function renderBonusTable(){
       </tr>`;
     });
   });
+  // ── OFFICE section ──
+  html+=`<tr><td colspan="23" style="background:#F0F9FF;font-weight:700;font-size:11px;padding:5px 10px;border:1px solid #CBD5E1">OFFICE</td></tr>`;
+
+  const officeEmps=[
+    {id:'tomas',  name:'Tomas Bedlek',    pos:'Manager',            pred:8600, dist:10},
+    {id:'renata', name:'Renata Hornychova',pos:'Client Coordinator', pred:0,    dist:10},
+  ];
+
+  officeEmps.forEach(off=>{
+    const bd=bdata['off_'+off.id]||{};
+    const actualDays=bd.actualDays||0;
+    const planned2sm=plannedDays(y,m,'2sm',null);
+    const dochPct=planned2sm>0?Math.min(1,actualDays/planned2sm):0;
+    const dPct=Math.round(dochPct*100);
+    const dColor=dochPct<0.9?'#DC2626':dochPct<1?'#D97706':'#059669';
+    const zaplatDoch=off.pred>0?Math.round(off.pred*dochPct):0;
+    const bonus=bd.bonus||0,extra=bd.extraBonus||0;
+    const zaplatit=zaplatDoch+bonus,celkem=zaplatit+extra;
+    const doprava=Math.round(1000*dochPct);
+    const oid='boff_'+off.id+'_';
+
+    html+=`<tr style="background:#F0F9FF">
+      <td style="font-weight:600;font-size:10px;padding:3px 8px;border:1px solid #CBD5E1;white-space:nowrap">${off.name}</td>
+      <td style="color:#64748B;font-size:9px;padding:3px 6px;border:1px solid #CBD5E1">${off.pos}</td>
+      <!-- KPI/PSK/BOZP/OSOB = empty (not applicable) -->
+      <td colspan="12" style="border:1px solid #CBD5E1;background:#F8FAFC;text-align:center;color:#94A3B8;font-size:9px">—</td>
+      <!-- Docházka: Plán, Cíl (manual), % -->
+      <td style="background:#EEF2FF;text-align:right;padding:3px 7px;border:1px solid #CBD5E1;font-size:10px">${planned2sm}</td>
+      <td style="padding:2px;border:1px solid #CBD5E1;background:#EEF2FF">
+        <input id="${oid}days" type="number" step="1" min="0" value="${actualDays||''}" placeholder="0"
+          oninput="updateOfficeBonus()" onchange="updateOfficeBonus()"
+          style="width:48px;text-align:center;border:none;font-size:10px;padding:2px;background:transparent;font-weight:700">
+      </td>
+      <td id="${oid}doch" style="background:#EEF2FF;color:${dColor};font-weight:700;padding:3px 7px;border:1px solid #CBD5E1;text-align:center;font-size:10px">${dPct}%</td>
+      <!-- Předpoklad -->
+      <td style="background:#E0E7FF;color:#1E3A5F;padding:3px 7px;border:1px solid #CBD5E1;text-align:right;font-weight:700;font-size:10px">${off.pred||'—'}</td>
+      <!-- Zaplatit dle doch -->
+      <td id="${oid}zdoch" style="background:#BAE6FD;color:#0C4A6E;padding:3px 7px;border:1px solid #CBD5E1;text-align:right;font-weight:700;font-size:10px">${zaplatDoch||'—'}</td>
+      <!-- Bonus -->
+      <td style="padding:2px;border:1px solid #CBD5E1;background:#FEF3C7">
+        <input id="${oid}bonus" type="number" step="1" value="${bonus||''}" placeholder="0"
+          oninput="updateOfficeBonus()" onchange="updateOfficeBonus()"
+          style="width:65px;text-align:right;border:none;font-size:10px;padding:2px;background:transparent">
+      </td>
+      <!-- Zaplatit -->
+      <td id="${oid}zaplatit" style="background:#D1FAE5;color:#064E3B;padding:3px 7px;border:1px solid #CBD5E1;text-align:right;font-weight:700;font-size:10px">${zaplatit||'—'}</td>
+      <!-- Extra bonus -->
+      <td style="padding:2px;border:1px solid #CBD5E1;background:#FCE7F3">
+        <input id="${oid}extra" type="number" step="1" value="${extra||''}" placeholder="0"
+          oninput="updateOfficeBonus()" onchange="updateOfficeBonus()"
+          style="width:65px;text-align:right;border:none;font-size:10px;padding:2px;background:transparent">
+      </td>
+      <!-- Celkem zaplatit -->
+      <td id="${oid}celkem" style="background:#FEE2E2;color:#DC2626;font-weight:700;padding:3px 8px;border:1px solid #CBD5E1;text-align:right;font-size:11px">${celkem||'—'}</td>
+      <!-- Doprava -->
+      <td id="${oid}doprava" style="background:#F3F4F6;color:#374151;padding:3px 7px;border:1px solid #CBD5E1;text-align:right;font-size:10px">${doprava||''}</td>
+    </tr>`;
+  });
+
   html+='</tbody>';
   document.getElementById('bonusTable').innerHTML=html;
 }
@@ -1100,6 +1159,39 @@ function updateBonus(){
     }
   });
 }
+function updateOfficeBonus(){
+  const m=ST.m;
+  const bdata=getBonusData(m);
+  const planned2sm=plannedDays(ST.y,m,'2sm',null);
+  const officeEmps=[
+    {id:'tomas', pred:8600, dist:10},
+    {id:'renata', pred:0,   dist:10},
+  ];
+  officeEmps.forEach(off=>{
+    const oid='boff_'+off.id+'_';
+    const gv=(s)=>{const el=document.getElementById(s);return el&&el.value!==''?parseFloat(el.value)||0:0;};
+    const actualDays=gv(oid+'days');
+    const bonus=gv(oid+'bonus');
+    const extra=gv(oid+'extra');
+    const dochPct=planned2sm>0?Math.min(1,actualDays/planned2sm):0;
+    const zaplatDoch=off.pred>0?Math.round(off.pred*dochPct):0;
+    const zaplatit=zaplatDoch+bonus;
+    const celkem=zaplatit+extra;
+    const doprava=Math.round(1000*dochPct);
+    const dPct=Math.round(dochPct*100);
+    const dColor=dochPct<0.9?'#DC2626':dochPct<1?'#D97706':'#059669';
+    const set=(sid,val)=>{const el=document.getElementById(sid);if(el)el.textContent=val===0&&sid.includes('doprava')?'':val||'—';};
+    const dEl=document.getElementById(oid+'doch');
+    if(dEl){dEl.textContent=dPct+'%';dEl.style.color=dColor;}
+    set(oid+'zdoch', zaplatDoch||'—');
+    set(oid+'zaplatit', zaplatit||'—');
+    set(oid+'celkem', celkem||'—');
+    set(oid+'doprava', doprava||'');
+    // Save to bdata
+    bdata['off_'+off.id]={actualDays,bonus,extraBonus:extra};
+  });
+}
+
 function saveBonusData(){
   // Collect all current input values first
   updateBonus();
@@ -1111,6 +1203,16 @@ function saveBonusData(){
   }
   const m=ST.m;
   const bdata=getBonusData(m);
+  // Read office inputs
+  const offIds=['tomas','renata'];
+  offIds.forEach(oid=>{
+    const id='boff_'+oid+'_';
+    const gv2=(s)=>{const el=document.getElementById(s);return el&&el.value!==''?parseFloat(el.value)||0:0;};
+    const actualDays=gv2(id+'days');
+    const bonus=gv2(id+'bonus');
+    const extra=gv2(id+'extra');
+    if(actualDays||bonus||extra) bdata['off_'+oid]={actualDays,bonus,extraBonus:extra};
+  });
   // Read all inputs
   ST.emps.filter(e=>e.prov==='4sm'||e.prov==='2sm').forEach(emp=>{
     const base=BONUS_BASE[emp.id];if(!base)return;
