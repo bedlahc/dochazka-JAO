@@ -2077,13 +2077,20 @@ function saveCell(){
   if(!ET)return;
   const emp=ST.emps.find(e=>e.id===ET.empId);
   if(emp.prov==='brigada'){
-    const h=parseFloat(document.getElementById('brH').value);
-    const so=document.getElementById('brSo').checked;
-    const ne=document.getElementById('brNe').checked;
-    const sv=document.getElementById('brSv').checked;
-    if(!h||h<=0) delete emp.data[ET.day];
-    else if(so||ne||sv) emp.data[ET.day]={h,so,ne,sv};
-    else emp.data[ET.day]=h;
+    // Check propuska first (David Hetfleis id=32)
+    const propOn=document.getElementById('brPropOn')?.checked;
+    const propH=parseFloat(document.getElementById('brPropH')?.value)||0;
+    if(propOn && propH>0){
+      emp.data[ET.day]={t:'P',h:propH};
+    } else {
+      const h=parseFloat(document.getElementById('brH').value);
+      const so=document.getElementById('brSo').checked;
+      const ne=document.getElementById('brNe').checked;
+      const sv=document.getElementById('brSv').checked;
+      if(!h||h<=0) delete emp.data[ET.day];
+      else if(so||ne||sv) emp.data[ET.day]={h,so,ne,sv};
+      else emp.data[ET.day]=h;
+    }
   }
   else{
     const t=document.getElementById('ct').value;
