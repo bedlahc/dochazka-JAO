@@ -325,6 +325,14 @@ tr:hover td.cn{filter:none;background:var(--bg4)!important;box-shadow:4px 0 8px 
       </div>
     </div>
     <div class="note">0 nebo prázdné = nepracoval</div>
+    <!-- Propuska for brigada -->
+    <div id="brPropRow" style="display:none;margin-top:8px">
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:#ede9fe;border:1px solid #c4b5fd;border-radius:7px;cursor:pointer" onclick="document.getElementById('brPropOn').checked=!document.getElementById('brPropOn').checked">
+        <input type="checkbox" id="brPropOn" style="width:16px;height:16px;accent-color:#7c3aed;cursor:pointer">
+        <label for="brPropOn" style="font-size:13px;font-weight:600;color:#4c1d95;cursor:pointer">🟣 Propustka</label>
+        <input type="number" id="brPropH" step="0.5" min="0" placeholder="h" style="width:60px;border:1px solid #c4b5fd;border-radius:4px;padding:4px;font-size:12px;background:#f5f3ff">
+      </div>
+    </div>
   </div>
   <div id="cmNorm">
     <div class="fr"><label>Typ</label>
@@ -1605,10 +1613,13 @@ function getNote(m,empId,day){
 }
 function openNoteModal(){
   if(!ET) return;
-  // Store note target before closing cell modal
+  // Store note target BEFORE closing cell modal
   window._noteTarget={empId:ET.empId,day:ET.day,m:ST.m};
   const note=getNote(ST.m,ET.empId,ET.day);
   const emp=ST.emps.find(e=>e.id===ET.empId);
+  // Close cell modal first
+  document.getElementById('cmMod').style.display='none';
+  // ET is now null but we have _noteTarget
   document.getElementById('noteInfo').textContent=`${emp?.name||''} — den ${ET.day}`;
   document.getElementById('noteText').value=note;
   document.getElementById('noteMod').style.display='flex';
@@ -1968,10 +1979,22 @@ function openCell(empId,day){
   document.getElementById('cmNorm').style.display=isBr?'none':'block';
   if(isBr){
     const brVal=typeof rec==='object'&&rec!==null?rec.h:(typeof rec==='number'?rec:0);
-    document.getElementById('brH').value=brVal>0?brVal:'';
-    document.getElementById('brSo').checked=typeof rec==='object'&&rec!==null?!!rec.so:false;
-    document.getElementById('brNe').checked=typeof rec==='object'&&rec!==null?!!rec.ne:false;
-    document.getElementById('brSv').checked=typeof rec==='object'&&rec!==null?!!rec.sv:false;
+    // Show propuska for David Hetfleis (id=32)
+    const brPropRow=document.getElementById('brPropRow');
+    if(brPropRow) brPropRow.style.display=empId===32?'block':'none';
+    // Pre-fill propuska if record is P type
+    if(rec?.t==='P'){
+      document.getElementById('brH').value='';
+      document.getElementById('brPropOn').checked=true;
+      document.getElementById('brPropH').value=rec.h||'';
+    } else {
+      if(document.getElementById('brPropOn')) document.getElementById('brPropOn').checked=false;
+      if(document.getElementById('brPropH')) document.getElementById('brPropH').value='';
+    }
+    document.getElementById('brH').value=rec?.t==='P'?'':brVal>0?brVal:'';
+    document.getElementById('brSo').checked=typeof rec==='object'&&rec!==null&&rec.t!=='P'?!!rec.so:false;
+    document.getElementById('brNe').checked=typeof rec==='object'&&rec!==null&&rec.t!=='P'?!!rec.ne:false;
+    document.getElementById('brSv').checked=typeof rec==='object'&&rec!==null&&rec.t!=='P'?!!rec.sv:false;
     // Auto-check based on day of week
     const w=dow(ST.y,ST.m,day);
     if(!rec){
