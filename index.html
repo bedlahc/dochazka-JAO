@@ -2900,8 +2900,6 @@ if(!ST.monthData) ST.monthData={};
     ST.monthData[m][id][day]=rec;
   };
   // Měsíc 1
-  se(3,1,13,{t:'neg',h:1.0});
-  se(3,1,27,{t:'neg',h:1.5});
   se(7,1,7,{t:'ot',h:8.0});
   se(8,1,16,{t:'ot',h:9.0});
   se(10,1,8,{t:'ot',h:6.0});
@@ -2953,9 +2951,6 @@ if(!ST.monthData) ST.monthData={};
   se(30,1,24,{t:'ot',h:8.0});
   se(30,1,25,{t:'ot',h:8.0});
   // Měsíc 2
-  se(3,2,10,{t:'neg',h:1.0});
-  se(3,2,21,{t:'ot',h:8.0});
-  se(3,2,24,{t:'neg',h:1.5});
   se(13,2,23,{t:'neg',h:4.0});
   se(15,2,7,{t:'ot',h:6.0});
   se(15,2,8,{t:'ot',h:8.0});
@@ -2994,8 +2989,6 @@ if(!ST.monthData) ST.monthData={};
   se(23,2,18,{t:'ot',h:0.5});
   se(23,2,22,{t:'ot',h:8.0});
   // Měsíc 3
-  se(3,3,10,{t:'neg',h:1.0});
-  se(3,3,11,{t:'ot',h:8.0});
   se(7,3,13,{t:'ot',h:7.0});
   se(8,3,3,{t:'neg',h:1.0});
   se(8,3,19,{t:'ot',h:9.0});
@@ -3038,6 +3031,13 @@ if(!ST.monthData) ST.monthData={};
   se(23,3,29,{t:'ot',h:8.0});
   se(30,3,14,{t:'ot',h:8.0});
   se(30,3,28,{t:'ot',h:7.0});
+  // Měsíc 1 - Zilvar Jakub (1), Base Roman (3) - aktualizováno
+  se(1,1,13,{t:'neg',h:1});se(1,1,27,{t:'neg',h:1.5});se(1,1,30,{t:'D'});se(1,1,31,{t:'D'});
+  // Měsíc 2 - Zilvar, Base
+  se(1,2,1,{t:'D'});se(1,2,10,{t:'neg',h:1});se(1,2,21,{t:'ot',h:8});se(1,2,24,{t:'neg',h:1.5});
+  // Měsíc 3 - Zilvar, Base
+  se(1,3,10,{t:'neg',h:1});se(1,3,11,{t:'ot',h:8});se(1,3,19,{t:'D'});se(1,3,23,{t:'D'});se(1,3,24,{t:'D'});
+  se(3,3,4,{t:'D'});se(3,3,5,{t:'D'});
   // Save to _localImport
   if(window._localImport) window._localImport[1] = ST.monthData[1] ? Object.assign({},ST.monthData[1]) : {};
   if(window._localImport) window._localImport[2] = ST.monthData[2] ? Object.assign({},ST.monthData[2]) : {};
