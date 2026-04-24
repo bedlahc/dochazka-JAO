@@ -353,6 +353,7 @@ tr:hover td.cn{filter:none;background:var(--bg4)!important;box-shadow:4px 0 8px 
   <div class="mbtns">
     <button class="bcl" onclick="closeMod()">Zrušit</button>
     <button class="bdl" onclick="clearCell()">Smazat</button>
+    <button onclick="openNoteModal()" style="padding:6px 12px;background:#f0fdf4;border:1px solid #86efac;border-radius:6px;cursor:pointer;color:#166534;font-size:12px">📝 Poznámka</button>
     <button class="bsv" onclick="saveCell()">Uložit</button>
   </div>
 </div></div>
@@ -1091,6 +1092,13 @@ function renderBonusTable(){
           oninput="updateVranaBonus()" onchange="updateVranaBonus()"
           style="width:55px;text-align:right;border:none;font-size:10px;padding:2px;background:transparent">
       </td>
+      <!-- Víkend - manual -->
+      <td style="border:1px solid #CBD5E1;background:#86EFAC;text-align:center;font-size:9px;color:#14532D;font-weight:600">Víkend</td>
+      <td style="padding:2px;border:1px solid #CBD5E1;background:#F0FDF4">
+        <input id="${vid}vikend" type="number" step="1" value="${bd.vikend||''}" placeholder="0"
+          oninput="updateVranaBonus()" onchange="updateVranaBonus()"
+          style="width:55px;text-align:right;border:none;font-size:10px;padding:2px;background:transparent">
+      </td>
       <!-- Celkem + Bonus -->
       <td style="border:1px solid #CBD5E1;background:#FEE2E2;text-align:center;font-size:9px;color:#64748B;font-weight:600">Celkem+bonus</td>
       <td id="${vid}celkemBonus" style="background:#FEE2E2;color:#DC2626;padding:3px 8px;border:1px solid #CBD5E1;text-align:right;font-weight:700;font-size:11px">${celkemBonus||''}</td>
@@ -1244,9 +1252,10 @@ function updateVranaBonus(){
   const docH=gv(vid+'docH');
   const sazba=gv(vid+'sazba');
   const bonusV=gv(vid+'bonus');
+  const vikend=gv(vid+'vikend');
   const celkem=Math.round(docH*sazba);
-  const celkemBonus=celkem+bonusV;
-  bdata['vrana']={docH,sazba,bonus:bonusV};
+  const celkemBonus=celkem+bonusV+vikend;
+  bdata['vrana']={docH,sazba,bonus:bonusV,vikend};
   const set=(sid,val)=>{const el=document.getElementById(sid);if(el)el.textContent=val||'';};
   set(vid+'celkem', celkem||'');
   set(vid+'celkemBonus', celkemBonus||'');
@@ -1268,7 +1277,8 @@ function saveBonusData(){
     const vid='bvrana_';
     const gvv=(s)=>{const el=document.getElementById(s);return el&&el.value!==''?parseFloat(el.value)||0:0;};
     const docH=gvv(vid+'docH'),sazba=gvv(vid+'sazba'),bonusV=gvv(vid+'bonus');
-    if(docH||sazba||bonusV) bdata['vrana']={docH,sazba,bonus:bonusV};
+    const vikendV=gvv(vid+'vikend');
+    if(docH||sazba||bonusV||vikendV) bdata['vrana']={docH,sazba,bonus:bonusV,vikend:vikendV};
   }
   // Read office inputs
   const offIds=['tomas','renata'];
@@ -1587,6 +1597,8 @@ function getNote(m,empId,day){
 }
 function openNoteModal(){
   if(!ET) return;
+  // Store note target before closing cell modal
+  window._noteTarget={empId:ET.empId,day:ET.day,m:ST.m};
   const note=getNote(ST.m,ET.empId,ET.day);
   const emp=ST.emps.find(e=>e.id===ET.empId);
   document.getElementById('noteInfo').textContent=`${emp?.name||''} — den ${ET.day}`;
@@ -1595,18 +1607,20 @@ function openNoteModal(){
 }
 function closeNoteMod(){ document.getElementById('noteMod').style.display='none'; }
 function saveNote(){
-  if(!ET) return;
+  const nt=window._noteTarget;
+  if(!nt) return;
   if(!ST.notes) ST.notes={};
-  const key=getNoteKey(ST.m,ET.empId,ET.day);
+  const key=getNoteKey(nt.m,nt.empId,nt.day);
   const val=document.getElementById('noteText').value.trim();
   if(val) ST.notes[key]=val; else delete ST.notes[key];
   if(window.fbSave) fbSave();
   closeNoteMod();render();
 }
 function deleteNote(){
-  if(!ET) return;
+  const nt=window._noteTarget;
+  if(!nt) return;
   if(!ST.notes) ST.notes={};
-  delete ST.notes[getNoteKey(ST.m,ET.empId,ET.day)];
+  delete ST.notes[getNoteKey(nt.m,nt.empId,nt.day)];
   if(window.fbSave) fbSave();
   closeNoteMod();render();
 }
