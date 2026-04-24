@@ -501,6 +501,7 @@ let ST={m:4,y:2026,fp:'all',fg:'all',fn:'',emps:[
   {id:32,name:'Hetfleis David',pos:'Brigádník',prov:'brigada',grp:'brigada',data:{}},
 ]};
 ST.monthData = {};
+ST.notes = {};
 
 // Manual hour rows (keyed by row ID, value = {day: hours})
 if(!ST.monthManualRows) ST.monthManualRows={};
@@ -1050,6 +1051,52 @@ function renderBonusTable(){
       </tr>`;
     });
   });
+  // ── VRÁNA PAVEL section ──
+  html+=`<tr><td colspan="23" style="background:#F5F3FF;font-weight:700;font-size:11px;padding:5px 10px;border:1px solid #CBD5E1">BRIGÁDNÍK</td></tr>`;
+  {
+    const vrana=ST.emps.find(e=>e.id===31);
+    const bd=bdata['vrana']||{};
+    const docH=bd.docH||0;
+    const sazba=bd.sazba||0;
+    const bonusV=bd.bonus||0;
+    const celkem=Math.round(docH*sazba);
+    const celkemBonus=celkem+bonusV;
+    const vid='bvrana_';
+    html+=`<tr style="background:#F5F3FF">
+      <td style="font-weight:600;font-size:10px;padding:3px 8px;border:1px solid #CBD5E1;white-space:nowrap">${vrana?vrana.name:'Vrána Pavel'}</td>
+      <td style="color:#64748B;font-size:9px;padding:3px 6px;border:1px solid #CBD5E1">Brigádník</td>
+      <!-- KPI/PSK/BOZP/OSOB/Docházka/Předpoklad/Zaplatit dle doch empty -->
+      <td colspan="6" style="border:1px solid #CBD5E1;background:#F8FAFC;text-align:center;color:#94A3B8;font-size:9px">—</td>
+      <!-- Docházka hodiny - manual -->
+      <td style="border:1px solid #CBD5E1;background:#EEF2FF;text-align:center;font-size:9px;color:#64748B;font-weight:600">Doch. h</td>
+      <td style="padding:2px;border:1px solid #CBD5E1;background:#EEF2FF">
+        <input id="${vid}docH" type="number" step="0.5" min="0" value="${docH||''}" placeholder="0"
+          oninput="updateVranaBonus()" onchange="updateVranaBonus()"
+          style="width:55px;text-align:center;border:none;font-size:10px;padding:2px;background:transparent;font-weight:700">
+      </td>
+      <!-- Sazba na hodinu - manual -->
+      <td style="border:1px solid #CBD5E1;background:#FEF3C7;text-align:center;font-size:9px;color:#64748B;font-weight:600">Sazba/h</td>
+      <td style="padding:2px;border:1px solid #CBD5E1;background:#FEF3C7">
+        <input id="${vid}sazba" type="number" step="1" min="0" value="${sazba||''}" placeholder="0"
+          oninput="updateVranaBonus()" onchange="updateVranaBonus()"
+          style="width:55px;text-align:center;border:none;font-size:10px;padding:2px;background:transparent;font-weight:700">
+      </td>
+      <!-- Celkem = docH * sazba -->
+      <td style="border:1px solid #CBD5E1;background:#D1FAE5;text-align:center;font-size:9px;color:#64748B;font-weight:600">Celkem</td>
+      <td id="${vid}celkem" style="background:#D1FAE5;color:#064E3B;padding:3px 7px;border:1px solid #CBD5E1;text-align:right;font-weight:700;font-size:10px">${celkem||''}</td>
+      <!-- Bonus - manual -->
+      <td style="border:1px solid #CBD5E1;background:#FEF3C7;text-align:center;font-size:9px;color:#64748B;font-weight:600">Bonus</td>
+      <td style="padding:2px;border:1px solid #CBD5E1;background:#FEF3C7">
+        <input id="${vid}bonus" type="number" step="1" value="${bonusV||''}" placeholder="0"
+          oninput="updateVranaBonus()" onchange="updateVranaBonus()"
+          style="width:55px;text-align:right;border:none;font-size:10px;padding:2px;background:transparent">
+      </td>
+      <!-- Celkem + Bonus -->
+      <td style="border:1px solid #CBD5E1;background:#FEE2E2;text-align:center;font-size:9px;color:#64748B;font-weight:600">Celkem+bonus</td>
+      <td id="${vid}celkemBonus" style="background:#FEE2E2;color:#DC2626;padding:3px 8px;border:1px solid #CBD5E1;text-align:right;font-weight:700;font-size:11px">${celkemBonus||''}</td>
+    </tr>`;
+  }
+
   // ── OFFICE section ──
   html+=`<tr><td colspan="23" style="background:#F0F9FF;font-weight:700;font-size:11px;padding:5px 10px;border:1px solid #CBD5E1">OFFICE</td></tr>`;
 
@@ -1190,6 +1237,21 @@ function updateOfficeBonus(){
   });
 }
 
+function updateVranaBonus(){
+  const m=ST.m;const bdata=getBonusData(m);
+  const gv=(s)=>{const el=document.getElementById(s);return el&&el.value!==''?parseFloat(el.value)||0:0;};
+  const vid='bvrana_';
+  const docH=gv(vid+'docH');
+  const sazba=gv(vid+'sazba');
+  const bonusV=gv(vid+'bonus');
+  const celkem=Math.round(docH*sazba);
+  const celkemBonus=celkem+bonusV;
+  bdata['vrana']={docH,sazba,bonus:bonusV};
+  const set=(sid,val)=>{const el=document.getElementById(sid);if(el)el.textContent=val||'';};
+  set(vid+'celkem', celkem||'');
+  set(vid+'celkemBonus', celkemBonus||'');
+}
+
 function saveBonusData(){
   // Collect all current input values first
   updateBonus();
@@ -1201,6 +1263,13 @@ function saveBonusData(){
   }
   const m=ST.m;
   const bdata=getBonusData(m);
+  // Read vrana inputs
+  {
+    const vid='bvrana_';
+    const gvv=(s)=>{const el=document.getElementById(s);return el&&el.value!==''?parseFloat(el.value)||0:0;};
+    const docH=gvv(vid+'docH'),sazba=gvv(vid+'sazba'),bonusV=gvv(vid+'bonus');
+    if(docH||sazba||bonusV) bdata['vrana']={docH,sazba,bonus:bonusV};
+  }
   // Read office inputs
   const offIds=['tomas','renata'];
   offIds.forEach(oid=>{
@@ -1511,6 +1580,37 @@ function loadBonusData(){
   }).catch(err=>console.error('Bonus load error:',err));
 }
 
+function getNoteKey(m,empId,day){ return `${m}_${empId}_${day}`; }
+function getNote(m,empId,day){
+  if(!ST.notes) ST.notes={};
+  return ST.notes[getNoteKey(m,empId,day)]||'';
+}
+function openNoteModal(){
+  if(!ET) return;
+  const note=getNote(ST.m,ET.empId,ET.day);
+  const emp=ST.emps.find(e=>e.id===ET.empId);
+  document.getElementById('noteInfo').textContent=`${emp?.name||''} — den ${ET.day}`;
+  document.getElementById('noteText').value=note;
+  document.getElementById('noteMod').style.display='flex';
+}
+function closeNoteMod(){ document.getElementById('noteMod').style.display='none'; }
+function saveNote(){
+  if(!ET) return;
+  if(!ST.notes) ST.notes={};
+  const key=getNoteKey(ST.m,ET.empId,ET.day);
+  const val=document.getElementById('noteText').value.trim();
+  if(val) ST.notes[key]=val; else delete ST.notes[key];
+  if(window.fbSave) fbSave();
+  closeNoteMod();render();
+}
+function deleteNote(){
+  if(!ET) return;
+  if(!ST.notes) ST.notes={};
+  delete ST.notes[getNoteKey(ST.m,ET.empId,ET.day)];
+  if(window.fbSave) fbSave();
+  closeNoteMod();render();
+}
+
 function twScroll(px){
   var tw=document.getElementById('mainTw');
   if(!tw){tw=document.querySelector('.tw');};
@@ -1586,7 +1686,9 @@ function render(){
         const wbl=w===6?'border-left:3px solid #16a34a;':'';
         const isToday=d===_todayD;
         const todayTint=isToday?'outline:2px solid #fbbf24;outline-offset:-2px;':'';
-        html+=`<td class="${cls} day-col" onclick="openCell(${emp.id},${d})" style="cursor:pointer;${wbl}${todayTint}">${disp||'<span style="color:#d1d5db">·</span>'}</td>`;
+        const noteVal=getNote(ST.m,emp.id,d);
+        const noteIcon=noteVal?'<span style="position:absolute;top:1px;right:1px;font-size:7px;opacity:.7">📝</span>':'';
+        html+=`<td class="${cls} day-col" onclick="openCell(${emp.id},${d})" style="cursor:pointer;${wbl}${todayTint};position:relative">${disp||'<span style="color:#d1d5db">·</span>'}${noteIcon}</td>`;
       }
       // Second name column before summary
       const grpColor2=gcol(emp.grp);
@@ -2995,6 +3097,7 @@ function loadScript(src){
       if(e.shiftOv && Object.keys(e.shiftOv).length>0)
         data.emps_shiftOv[String(e.id)] = e.shiftOv;
     });
+    if(ST.notes && Object.keys(ST.notes).length>0) data.notes=ST.notes;
     return data;
   }
 
@@ -3003,6 +3106,7 @@ function loadScript(src){
     if(data.monthManualRows) ST.monthManualRows = data.monthManualRows;
     else if(data.manualRows) ST.monthManualRows[ST.m] = data.manualRows;// backwards compat
     if(data.monthData)  ST.monthData  = data.monthData;
+    if(data.notes) ST.notes=data.notes;
     const cm = String(ST.m);
     ST.emps.forEach(e=>{
       const saved = data.monthData?.[cm]?.[String(e.id)];
@@ -3206,6 +3310,20 @@ function doFirebaseLogin(){
 }
 document.getElementById('loginEmail').focus();
 </script>
+
+<!-- NOTE MODAL -->
+<div id="noteMod" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.4);z-index:300;align-items:center;justify-content:center">
+  <div style="background:var(--bg);border-radius:12px;padding:20px;width:320px;box-shadow:0 8px 32px rgba(0,0,0,.2)">
+    <div style="font-weight:700;font-size:14px;margin-bottom:12px">📝 Poznámka k buňce</div>
+    <div id="noteInfo" style="font-size:11px;color:var(--tx3);margin-bottom:8px"></div>
+    <textarea id="noteText" rows="4" style="width:100%;box-sizing:border-box;border:1px solid var(--b2);border-radius:6px;padding:8px;font-size:12px;font-family:'DM Sans',sans-serif;resize:vertical;background:var(--bg);color:var(--tx)" placeholder="Zadejte poznámku..."></textarea>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+      <button onclick="deleteNote()" style="padding:6px 12px;background:#fef2f2;border:1px solid #fecaca;border-radius:6px;cursor:pointer;color:#dc2626;font-size:12px">🗑 Smazat</button>
+      <button onclick="closeNoteMod()" style="padding:6px 12px;background:var(--bg3);border:1px solid var(--b2);border-radius:6px;cursor:pointer;font-size:12px">Zrušit</button>
+      <button onclick="saveNote()" style="padding:6px 12px;background:#166534;border:none;border-radius:6px;cursor:pointer;color:#fff;font-size:12px;font-weight:600">Uložit</button>
+    </div>
+  </div>
+</div>
 
 <!-- BONUS PAGE MODAL -->
 <div id="bonusMod" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:200;overflow:auto">
