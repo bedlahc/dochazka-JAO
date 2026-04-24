@@ -534,6 +534,12 @@ function calcSums(emp){
     const rec=emp.data[d],t=rec?.t||null;
     const h=rec?.h||0;
     if(emp.prov==='brigada'){
+      // Propuska for brigada: adds to prop AND to brig (doesn't reduce hours)
+      if(t==='P'){
+        prop+=h;
+        brig+=h;// counts as worked hours for brigada
+        continue;
+      }
       const bv=typeof rec==='object'&&rec!==null?rec.h:(typeof rec==='number'?rec:0);
       const bSo=typeof rec==='object'&&rec!==null&&rec.so;
       const bNe=typeof rec==='object'&&rec!==null&&rec.ne;
@@ -602,6 +608,8 @@ function calcSums(emp){
 
 function cellCls(emp,d,rec){
   if(emp.prov==='brigada'){
+    const t2=rec?.t||null;
+    if(t2==='P') return 'cP';// propuska = purple
     const bv=typeof rec==='object'&&rec!==null?rec.h:(typeof rec==='number'?rec:0);
     const bSo=typeof rec==='object'&&rec!==null&&rec.so;
     const bNe=typeof rec==='object'&&rec!==null&&rec.ne;
@@ -1254,7 +1262,7 @@ function updateVranaBonus(){
   const bonusV=gv(vid+'bonus');
   const vikend=gv(vid+'vikend');
   const celkem=Math.round(docH*sazba);
-  const celkemBonus=celkem+bonusV+vikend;
+  const celkemBonus=celkem+bonusV;// Víkend is standalone, not added to Celkem+bonus
   bdata['vrana']={docH,sazba,bonus:bonusV,vikend};
   const set=(sid,val)=>{const el=document.getElementById(sid);if(el)el.textContent=val||'';};
   set(vid+'celkem', celkem||'');
