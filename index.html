@@ -1068,12 +1068,12 @@ function renderBonusTable(){
         ${cel(planned,'#EEF2FF')}
         ${cel(actual,'#EEF2FF','#1E3A5F',true)}
         <td style="background:#EEF2FF;color:${dColor};font-weight:700;padding:3px 7px;border:1px solid #CBD5E1;text-align:center;font-size:10px" id="${id}doch">${dPct}%</td>
-        <td id="${id}pred" class="bn-cell${getBonusCellNote(m,emp.id,'pred')!==''?' bn-has-note':''}" style="background:#E0E7FF;color:#1E3A5F;padding:3px 7px;border:1px solid #CBD5E1;text-align:right;font-weight:700;font-size:10px">${pred}<span class="bn-icon" onclick="event.stopPropagation();openBonusNoteModal(${emp.id},'${emp.name}','pred','Předpoklad')">📝</span></td>
-        <td id="${id}zdoch" class="bn-cell${getBonusCellNote(m,emp.id,'zdoch')!==''?' bn-has-note':''}" style="background:#BAE6FD;color:#0C4A6E;padding:3px 7px;border:1px solid #CBD5E1;text-align:right;font-weight:700;font-size:10px">${zaplatDoch}<span class="bn-icon" onclick="event.stopPropagation();openBonusNoteModal(${emp.id},'${emp.name}','zdoch','Zaplatit dle doch.')">📝</span></td>
-        <td class="bn-cell${getBonusCellNote(m,emp.id,'bonus')!==''?' bn-has-note':''}" style="padding:2px;border:1px solid #CBD5E1;background:#FEF3C7;position:relative"><input id="${id}bonus" type="number" step="1" value="${bonus||''}" placeholder="0" oninput="updateBonus()" onchange="updateBonus()" style="width:55px;text-align:right;border:none;font-size:10px;padding:2px;background:transparent"><span class="bn-icon" onclick="event.stopPropagation();openBonusNoteModal(${emp.id},'${emp.name}','bonus','Bonus')" title="Poznámka: Bonus">📝</span></td>
+        <td id="${id}pred" style="background:#E0E7FF;color:#1E3A5F;padding:3px 7px;border:1px solid #CBD5E1;text-align:right;font-weight:700;font-size:10px;cursor:pointer;position:relative" onclick="openBonusNoteModal(${emp.id},'${emp.name}','pred','Předpoklad')">${hasBonusNote(m,emp.id,'pred')?'<span style=\"position:absolute;top:1px;left:2px;width:6px;height:6px;background:#f59e0b;border-radius:50%\" ></span>':''}${pred}</td>
+        <td id="${id}zdoch" style="background:#BAE6FD;color:#0C4A6E;padding:3px 7px;border:1px solid #CBD5E1;text-align:right;font-weight:700;font-size:10px;cursor:pointer;position:relative" onclick="openBonusNoteModal(${emp.id},'${emp.name}','zdoch','Zaplatit dle doch.')">${hasBonusNote(m,emp.id,'zdoch')?'<span style=\"position:absolute;top:1px;left:2px;width:6px;height:6px;background:#f59e0b;border-radius:50%\" ></span>':''}${zaplatDoch}</td>
+        <td style="padding:2px;border:1px solid #CBD5E1;background:#FEF3C7;position:relative">${hasBonusNote(m,emp.id,'bonus')?'<span style=\"position:absolute;top:1px;left:2px;width:6px;height:6px;background:#f59e0b;border-radius:50%;z-index:1\" ></span>':''}<input id="${id}bonus" type="number" step="1" value="${bonus||''}" placeholder="0" oninput="updateBonus()" onchange="updateBonus()" style="width:50px;text-align:right;border:none;font-size:10px;padding:2px;background:transparent"><span style="cursor:pointer;font-size:9px;opacity:.5;margin-left:1px" onclick="openBonusNoteModal(${emp.id},'${emp.name}','bonus','Bonus')">📝</span></td>
         <td id="${id}zaplatit" style="background:#D1FAE5;color:#064E3B;padding:3px 7px;border:1px solid #CBD5E1;text-align:right;font-weight:700;font-size:10px">${zaplatit}</td>
-        <td class="bn-cell${getBonusCellNote(m,emp.id,'extra')!==''?' bn-has-note':''}" style="padding:2px;border:1px solid #CBD5E1;background:#FCE7F3;position:relative"><input id="${id}extra" type="number" step="1" value="${extra||''}" placeholder="0" oninput="updateBonus()" onchange="updateBonus()" style="width:55px;text-align:right;border:none;font-size:10px;padding:2px;background:transparent"><span class="bn-icon" onclick="event.stopPropagation();openBonusNoteModal(${emp.id},'${emp.name}','extra','Extra bonus')" title="Poznámka: Extra bonus">📝</span></td>
-        <td id="${id}celkem" class="bn-cell${getBonusCellNote(m,emp.id,'celkem')!==''?' bn-has-note':''}" style="background:#FEE2E2;color:#DC2626;font-weight:700;padding:3px 8px;border:1px solid #CBD5E1;text-align:right;font-size:11px">${celkem}<span class="bn-icon" onclick="event.stopPropagation();openBonusNoteModal(${emp.id},'${emp.name}','celkem','Celkem zaplatit')">📝</span></td>
+        <td style="padding:2px;border:1px solid #CBD5E1;background:#FCE7F3;position:relative">${hasBonusNote(m,emp.id,'extra')?'<span style=\"position:absolute;top:1px;left:2px;width:6px;height:6px;background:#f59e0b;border-radius:50%;z-index:1\" ></span>':''}<input id="${id}extra" type="number" step="1" value="${extra||''}" placeholder="0" oninput="updateBonus()" onchange="updateBonus()" style="width:50px;text-align:right;border:none;font-size:10px;padding:2px;background:transparent"><span style="cursor:pointer;font-size:9px;opacity:.5;margin-left:1px" onclick="openBonusNoteModal(${emp.id},'${emp.name}','extra','Extra bonus')">📝</span></td>
+        <td id="${id}celkem" style="background:#FEE2E2;color:#DC2626;font-weight:700;padding:3px 8px;border:1px solid #CBD5E1;text-align:right;font-size:11px;cursor:pointer;position:relative" onclick="openBonusNoteModal(${emp.id},'${emp.name}','celkem','Celkem zaplatit')">${hasBonusNote(m,emp.id,'celkem')?'<span style=\"position:absolute;top:1px;left:2px;width:6px;height:6px;background:#f59e0b;border-radius:50%\" ></span>':''}${celkem}</td>
         <td id="${id}doprava" style="background:#F3F4F6;color:#374151;padding:3px 7px;border:1px solid #CBD5E1;text-align:right;font-size:10px">${doprava||''}</td>
       </tr>`;
     });
@@ -1378,9 +1378,14 @@ function getBonusNotes(m){
   return ST.bonusNotes[m];
 }
 function getBonusCellNote(m,empId,field){
-  const notes=getBonusNotes(m);
+  if(!ST.bonusNotes) return '';
+  const notes=ST.bonusNotes[String(m)];
+  if(!notes) return '';
   const key=String(empId)+'_'+String(field);
-  return (notes&&notes[key])||'';
+  return notes[key]||'';
+}
+function hasBonusNote(m,empId,field){
+  return getBonusCellNote(m,empId,field)!=='';
 }
 function openBonusNoteModal(empId, empName, field, fieldLabel){
   const m=ST.m;
