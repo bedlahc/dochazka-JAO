@@ -1021,6 +1021,14 @@ function renderBonusTable(){
 
   const inp=(id,val,w)=>`<td style="padding:2px;border:1px solid #CBD5E1"><input id="${id}" type="number" step="0.01" value="${val}" oninput="updateBonus()" onchange="updateBonus()" style="width:${w||52}px;text-align:center;border:none;font-size:10px;padding:2px;background:transparent"></td>`;
   const cel=(v,bg,fg,bold)=>`<td style="background:${bg||'#fff'};color:${fg||'#333'};padding:3px 7px;border:1px solid #CBD5E1;text-align:right;font-weight:${bold?700:400};font-size:10px;white-space:nowrap">${v===''||v===null||v===undefined?'':v}</td>`;
+  // Cell with note support: celN(value, bg, fg, bold, empId, field, fieldLabel)
+  const celN=(v,bg,fg,bold,eid,fld,flbl)=>{
+    const hasNote=getBonusCellNote(m,eid,fld)!=='';
+    return `<td class="bn-cell${hasNote?' bn-has-note':''}" style="background:${bg||'#fff'};color:${fg||'#333'};padding:3px 7px;border:1px solid #CBD5E1;text-align:right;font-weight:${bold?700:400};font-size:10px;white-space:nowrap">
+      ${v===''||v===null||v===undefined?'':v}
+      <span class="bn-icon" onclick="event.stopPropagation();openBonusNoteModal(${eid},'${flbl}','${fld}','${flbl}')" title="Poznámka: ${flbl}">📝</span>
+    </td>`;
+  };
   const grpRow=(lbl,bg)=>`<tr><td colspan="23" style="background:${bg};font-weight:700;font-size:11px;padding:5px 10px;border:1px solid #CBD5E1">${lbl}</td></tr>`;
 
   [['4sm','4-SMĚNNÝ PROVOZ','#BFDBFE'],['2sm','2-SMĚNNÝ PROVOZ','#FED7AA']].forEach(([prov,lbl,bg])=>{
@@ -1060,12 +1068,12 @@ function renderBonusTable(){
         ${cel(planned,'#EEF2FF')}
         ${cel(actual,'#EEF2FF','#1E3A5F',true)}
         <td style="background:#EEF2FF;color:${dColor};font-weight:700;padding:3px 7px;border:1px solid #CBD5E1;text-align:center;font-size:10px" id="${id}doch">${dPct}%</td>
-        <td id="${id}pred" style="background:#E0E7FF;color:#1E3A5F;padding:3px 7px;border:1px solid #CBD5E1;text-align:right;font-weight:700;font-size:10px">${pred}</td>
-        <td id="${id}zdoch" style="background:#BAE6FD;color:#0C4A6E;padding:3px 7px;border:1px solid #CBD5E1;text-align:right;font-weight:700;font-size:10px">${zaplatDoch}</td>
-        <td style="padding:2px;border:1px solid #CBD5E1;background:#FEF3C7"><input id="${id}bonus" type="number" step="1" value="${bonus||''}" placeholder="0" oninput="updateBonus()" onchange="updateBonus()" style="width:65px;text-align:right;border:none;font-size:10px;padding:2px;background:transparent"></td>
+        <td id="${id}pred" class="bn-cell${getBonusCellNote(m,emp.id,'pred')?' bn-has-note':''}" style="background:#E0E7FF;color:#1E3A5F;padding:3px 7px;border:1px solid #CBD5E1;text-align:right;font-weight:700;font-size:10px">${pred}<span class="bn-icon" onclick="event.stopPropagation();openBonusNoteModal(${emp.id},'${emp.name}','pred','Předpoklad')">📝</span></td>
+        <td id="${id}zdoch" class="bn-cell${getBonusCellNote(m,emp.id,'zdoch')?' bn-has-note':''}" style="background:#BAE6FD;color:#0C4A6E;padding:3px 7px;border:1px solid #CBD5E1;text-align:right;font-weight:700;font-size:10px">${zaplatDoch}<span class="bn-icon" onclick="event.stopPropagation();openBonusNoteModal(${emp.id},'${emp.name}','zdoch','Zaplatit dle doch.')">📝</span></td>
+        <td class="bn-cell${getBonusCellNote(m,emp.id,'bonus')?' bn-has-note':''}" style="padding:2px;border:1px solid #CBD5E1;background:#FEF3C7;position:relative"><input id="${id}bonus" type="number" step="1" value="${bonus||''}" placeholder="0" oninput="updateBonus()" onchange="updateBonus()" style="width:55px;text-align:right;border:none;font-size:10px;padding:2px;background:transparent"><span class="bn-icon" onclick="event.stopPropagation();openBonusNoteModal(${emp.id},'${emp.name}','bonus','Bonus')" title="Poznámka: Bonus">📝</span></td>
         <td id="${id}zaplatit" style="background:#D1FAE5;color:#064E3B;padding:3px 7px;border:1px solid #CBD5E1;text-align:right;font-weight:700;font-size:10px">${zaplatit}</td>
-        <td style="padding:2px;border:1px solid #CBD5E1;background:#FCE7F3"><input id="${id}extra" type="number" step="1" value="${extra||''}" placeholder="0" oninput="updateBonus()" onchange="updateBonus()" style="width:65px;text-align:right;border:none;font-size:10px;padding:2px;background:transparent"></td>
-        <td id="${id}celkem" style="background:#FEE2E2;color:#DC2626;font-weight:700;padding:3px 8px;border:1px solid #CBD5E1;text-align:right;font-size:11px">${celkem}</td>
+        <td class="bn-cell${getBonusCellNote(m,emp.id,'extra')?' bn-has-note':''}" style="padding:2px;border:1px solid #CBD5E1;background:#FCE7F3;position:relative"><input id="${id}extra" type="number" step="1" value="${extra||''}" placeholder="0" oninput="updateBonus()" onchange="updateBonus()" style="width:55px;text-align:right;border:none;font-size:10px;padding:2px;background:transparent"><span class="bn-icon" onclick="event.stopPropagation();openBonusNoteModal(${emp.id},'${emp.name}','extra','Extra bonus')" title="Poznámka: Extra bonus">📝</span></td>
+        <td id="${id}celkem" class="bn-cell${getBonusCellNote(m,emp.id,'celkem')?' bn-has-note':''}" style="background:#FEE2E2;color:#DC2626;font-weight:700;padding:3px 8px;border:1px solid #CBD5E1;text-align:right;font-size:11px">${celkem}<span class="bn-icon" onclick="event.stopPropagation();openBonusNoteModal(${emp.id},'${emp.name}','celkem','Celkem zaplatit')">📝</span></td>
         <td id="${id}doprava" style="background:#F3F4F6;color:#374151;padding:3px 7px;border:1px solid #CBD5E1;text-align:right;font-size:10px">${doprava||''}</td>
       </tr>`;
     });
@@ -1347,6 +1355,10 @@ function saveBonusData(){
     }
   });
   console.log('Saving bonus payload:', JSON.stringify(payload).slice(0,200));
+  // Save bonusNotes too
+  if(ST.bonusNotes && Object.keys(ST.bonusNotes).length>0){
+    if(window._fbDB) window._fbDB.ref('bonusNotes2026').set(ST.bonusNotes).catch(()=>{});
+  }
   const syncEl=document.getElementById('syncStatus');
   const setStat=(msg,col)=>{if(syncEl){syncEl.textContent=msg;syncEl.style.color=col;syncEl.style.opacity='1';}};
   window._fbDB.ref('bonus2026').set(payload)
@@ -1360,6 +1372,48 @@ function saveBonusData(){
       alert('Chyba: '+err.message);
     });
 }
+function getBonusNotes(m){
+  if(!ST.bonusNotes) ST.bonusNotes={};
+  if(!ST.bonusNotes[m]) ST.bonusNotes[m]={};
+  return ST.bonusNotes[m];
+}
+function getBonusCellNote(m,empId,field){
+  const notes=getBonusNotes(m);
+  const key=`${empId}_${field}`;
+  return notes[key]||'';
+}
+function openBonusNoteModal(empId, empName, field, fieldLabel){
+  const m=ST.m;
+  if(!ST.bonusNotes) ST.bonusNotes={};
+  if(!ST.bonusNotes[m]) ST.bonusNotes[m]={};
+  // key: if field provided = empId_field, else empId or 'general'
+  const key=field?`${empId}_${field}`:(empId||'general');
+  const label=fieldLabel?`${empName} — ${fieldLabel}`:(empName||'Obecná poznámka');
+  window._bonusNoteTarget={m,key,name:label};
+  document.getElementById('bonusNoteInfo').textContent=`${label} — ${MCZ[m]} ${ST.y}`;
+  document.getElementById('bonusNoteText').value=ST.bonusNotes[m][key]||'';
+  document.getElementById('bonusNoteMod').style.display='flex';
+}
+function closeBonusNoteMod(){
+  document.getElementById('bonusNoteMod').style.display='none';
+}
+function saveBonusNote(){
+  const nt=window._bonusNoteTarget;if(!nt)return;
+  if(!ST.bonusNotes) ST.bonusNotes={};
+  if(!ST.bonusNotes[nt.m]) ST.bonusNotes[nt.m]={};
+  const val=document.getElementById('bonusNoteText').value.trim();
+  if(val) ST.bonusNotes[nt.m][nt.key]=val;
+  else delete ST.bonusNotes[nt.m][nt.key];
+  closeBonusNoteMod();
+  renderBonusTable();// re-render to show note icons
+}
+function deleteBonusNote(){
+  const nt=window._bonusNoteTarget;if(!nt)return;
+  if(ST.bonusNotes?.[nt.m]) delete ST.bonusNotes[nt.m][nt.key];
+  closeBonusNoteMod();
+  renderBonusTable();
+}
+
 function exportBonusExcel(){
   const m=ST.m,y=ST.y;
   const bdata=getBonusData(m);
@@ -1606,6 +1660,13 @@ function loadBonusData(){
       console.log('Bonus data loaded:', Object.keys(ST.bonusData));
     }
   }).catch(err=>console.error('Bonus load error:',err));
+  // Load bonus notes
+  if(window._fbDB){
+    window._fbDB.ref('bonusNotes2026').once('value').then(snap=>{
+      const d=snap.val();
+      if(d){ST.bonusNotes={};Object.keys(d).forEach(k=>{ST.bonusNotes[String(k)]=d[k];});}
+    }).catch(()=>{});
+  }
 }
 
 function getNoteKey(m,empId,day){ return `${m}_${empId}_${day}`; }
@@ -3385,10 +3446,25 @@ document.getElementById('loginEmail').focus();
       <button onclick="saveBonusData()" style="padding:4px 12px;background:#fef3c7;border:1px solid #fbbf24;border-radius:6px;cursor:pointer;color:#92400e;font-size:12px;font-weight:600">☁ Uložit bonusy</button>
       <button onclick="exportBonusExcel()" style="padding:4px 12px;background:#dcfce7;border:1px solid #86efac;border-radius:6px;cursor:pointer;color:#166534;font-size:12px;font-weight:600">↓ Excel</button>
       <button onclick="printBonus()" style="padding:4px 12px;background:#e0e7ff;border:1px solid #a5b4fc;border-radius:6px;cursor:pointer;color:#3730a3;font-size:12px;font-weight:600">🖨 Tisk</button>
+      <button onclick="openBonusNoteModal(null,'Obecná poznámka')" id="btnBonusNote" style="padding:4px 12px;background:#f0fdf4;border:1px solid #86efac;border-radius:6px;cursor:pointer;color:#166534;font-size:12px;font-weight:600">📝 Poznámka</button>
     </div>
     <!-- Bonus table container -->
     <div style="overflow:auto;padding:12px">
       <table id="bonusTable" style="border-collapse:collapse;font-size:11px;font-family:'DM Mono',monospace;white-space:nowrap"></table>
+    </div>
+  </div>
+</div>
+
+<!-- BONUS NOTE MODAL -->
+<div id="bonusNoteMod" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.4);z-index:400;align-items:center;justify-content:center">
+  <div style="background:var(--bg);border-radius:12px;padding:20px;width:340px;box-shadow:0 8px 32px rgba(0,0,0,.2)">
+    <div style="font-weight:700;font-size:14px;margin-bottom:8px">📝 Poznámka — bonusy</div>
+    <div id="bonusNoteInfo" style="font-size:11px;color:var(--tx3);margin-bottom:8px"></div>
+    <textarea id="bonusNoteText" rows="4" style="width:100%;box-sizing:border-box;border:1px solid var(--b2);border-radius:6px;padding:8px;font-size:12px;font-family:'DM Sans',sans-serif;resize:vertical;background:var(--bg);color:var(--tx)" placeholder="Zadejte poznámku k bonusu..."></textarea>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+      <button onclick="deleteBonusNote()" style="padding:6px 12px;background:#fef2f2;border:1px solid #fecaca;border-radius:6px;cursor:pointer;color:#dc2626;font-size:12px">🗑 Smazat</button>
+      <button onclick="closeBonusNoteMod()" style="padding:6px 12px;background:var(--bg3);border:1px solid var(--b2);border-radius:6px;cursor:pointer;font-size:12px">Zrušit</button>
+      <button onclick="saveBonusNote()" style="padding:6px 12px;background:#166534;border:none;border-radius:6px;cursor:pointer;color:#fff;font-size:12px;font-weight:600">Uložit</button>
     </div>
   </div>
 </div>
