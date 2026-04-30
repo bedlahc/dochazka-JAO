@@ -575,11 +575,11 @@ function calcSums(emp){
       if(t==='P'){prop+=h;if(!we&&!sv)days++;continue;}// Propuska: odprac. den (ne svátek)
       if(t==='ot'){// weekday OT 25%
         otW+=h;if(!we&&!sv&&h<12)days++;// full shift (12h) = no extra day
-        if(emp.prov==='4sm'){const sh2=getShift(emp,ST.m,d);if(isNightT(sh2))nightH+=h;}
+        if(emp.prov==='4sm'){const sh2=getShift(emp,ST.m,d);if(isNightT(sh2))nightH+=8;}
         continue;}
-      if(t==='otso'){weH+=h;otSo+=h;if(emp.prov==='4sm'){const sh2=getShift(emp,ST.m,d);if(isNightT(sh2))nightH+=h;}continue;}// So OT 25%
-      if(t==='otne'){weH+=h;otNe+=h;if(emp.prov==='4sm'){const sh2=getShift(emp,ST.m,d);if(isNightT(sh2))nightH+=h;}continue;}// Ne OT 50%
-      if(t==='otsv'){otSv+=h;if(sv)svatekH+=h;if(emp.prov==='4sm'){const sh2=getShift(emp,ST.m,d);if(isNightT(sh2))nightH+=h;}continue;}// svátek OT
+      if(t==='otso'){weH+=h;otSo+=h;if(emp.prov==='4sm'){const sh2=getShift(emp,ST.m,d);if(isNightT(sh2))nightH+=8;}continue;}// So OT 25%
+      if(t==='otne'){weH+=h;otNe+=h;if(emp.prov==='4sm'){const sh2=getShift(emp,ST.m,d);if(isNightT(sh2))nightH+=8;}continue;}// Ne OT 50%
+      if(t==='otsv'){otSv+=h;if(sv)svatekH+=h;if(emp.prov==='4sm'){const sh2=getShift(emp,ST.m,d);if(isNightT(sh2))nightH+=8;}continue;}// svátek OT
       if(t==='sv'){// shouldn't happen for 2sm but handle
         if(sv)svatekH+=h;continue;}
       if(t==='neg'){negH+=h;if(!we&&!sv)days++;continue;}
@@ -596,15 +596,19 @@ function calcSums(emp){
     if(t==='D2'){dov+=0.5;if(!off){days+=0.5;if(night)nightH+=6;if(isWknd)weH+=6;}continue;}// D/2: 6h odprac., půl den vol.
     if(t==='P'){prop+=h;if(!off){days++;if(night)nightH+=8;if(isWknd)weH+=12;}continue;}// Propuska: odprac. den + noční/víkend příplatky
     if(t==='ot'){// weekday OT 25%
-      otW+=h;if(!off&&h<12){days++;if(night)nightH+=8;}// full 12h shift = no extra day
-      if(!off&&h>=12&&night)nightH+=h;// but still add night bonus for full night shift
+      otW+=h;
+      if(!off&&h<12){days++;if(night)nightH+=8;}// partial OT: add day + 8h night bonus
+      else if(!off&&h>=12&&night)nightH+=8;// full 12h OT: no day, but 8h night bonus
       continue;}
-    if(t==='otso'){// Saturday OT 25% → weH + otSo
-      weH+=h;otSo+=h;if(!off&&night)nightH+=h>=12?h:8;continue;}
-    if(t==='otne'){// Sunday OT 50% → weH + otNe
-      weH+=h;otNe+=h;if(!off&&night)nightH+=h>=12?h:8;continue;}
-    if(t==='otsv'){// Holiday OT → otSv + svatekH
-      otSv+=h;if(sv)svatekH+=h;continue;}
+    if(t==='otso'){// Saturday OT 25% → weH=12h + otSo + nightH=8h
+      weH+=h;otSo+=h;if(!off&&night)nightH+=8;continue;}
+    if(t==='otne'){// Sunday OT 50% → weH=12h + otNe + nightH=8h
+      weH+=h;otNe+=h;if(!off&&night)nightH+=8;continue;}
+    if(t==='otsv'){// Holiday OT → otSv + svatekH + night/weekend bonus
+      otSv+=h;if(sv)svatekH+=h;
+      if(!off&&night)nightH+=8;// night bonus 8h
+      if(isWknd)weH+=h;// if holiday falls on weekend, add weekend bonus too
+      continue;}
     if(t==='sv'){// Manual holiday hours (4sm only)
       const svh=h||11;svatekH+=svh;days++;if(night)nightH+=8;if(isWknd)weH+=12;continue;}
     if(t==='neg'){negH+=h;if(!off){days++;if(night)nightH+=8;}continue;}
