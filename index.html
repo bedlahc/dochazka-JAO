@@ -611,7 +611,15 @@ function calcSums(emp){
       continue;}
     if(t==='sv'){// Manual holiday hours (4sm only)
       const svh=h||11;svatekH+=svh;days++;if(night)nightH+=8;if(isWknd)weH+=12;continue;}
-    if(t==='neg'){negH+=h;if(!off){days++;if(night)nightH+=8;}continue;}
+    if(t==='neg'){
+      negH+=h;
+      if(!off){
+        days++;
+        if(night)nightH+=8;
+        if(isWknd){const remH=Math.max(0,12-h);if(remH>0)weH+=remH;}// weekend: only remaining hours
+      }
+      continue;
+    }
     if(!off){
       days++;if(night)nightH+=8;if(isWknd)weH+=12;
       if(sv){// auto 11h on holiday for 4sm (no special record = worked normally)
