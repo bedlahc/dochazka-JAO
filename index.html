@@ -150,6 +150,8 @@ tr:hover td.cn{filter:none;background:var(--bg4)!important;box-shadow:4px 0 8px 
 .print-nodays .day-col{ display:none !important; }
 .print-nodays th.cp{ display:none !important; }
 .print-nodays td.cp{ display:none !important; }
+.print-nodays td.cn.day-col{ display:none !important; }
+.print-nodays th.cn.day-col{ display:none !important; }
 @media print{
   body{height:auto;overflow:visible;font-size:9px}
   .topbar,.sbar,.leg-bar,#loginScreen,.badd,button{display:none!important}
@@ -1785,7 +1787,7 @@ function render(){
       const s=calcSums(emp);const isBr=emp.prov==='brigada';const is2=emp.prov==='2sm';
       const grpColor=gcol(emp.grp);
       const grpBg=emp.grp==='blue'?'rgba(59,130,246,.07)':emp.grp==='black'?'rgba(100,116,139,.07)':emp.grp==='green'?'rgba(34,197,94,.07)':emp.grp==='red'?'rgba(239,68,68,.07)':'';
-      html+=`<tr data-prov="${emp.prov}" data-grp="${emp.grp}"><td class="cn" style="border-left:3px solid ${grpColor};${grpBg?'background:'+grpBg:''}">${emp.name}</td>`;
+      html+=`<tr data-prov="${emp.prov}" data-grp="${emp.grp}"><td class="cn day-col" style="border-left:3px solid ${grpColor};${grpBg?'background:'+grpBg:''}">${emp.name}</td>`;
       html+=`<td class="cp"><span class="pos ${pCls(emp.pos)}">${emp.pos}</span></td>`;
       const _today=new Date();
       const _todayD=ST.y===_today.getFullYear()&&ST.m===(_today.getMonth()+1)?_today.getDate():-1;
@@ -1804,7 +1806,7 @@ function render(){
       // Second name column before summary
       const grpColor2=gcol(emp.grp);
       const grpBg2=emp.grp==='blue'?'rgba(59,130,246,.07)':emp.grp==='black'?'rgba(100,116,139,.07)':emp.grp==='green'?'rgba(34,197,94,.07)':emp.grp==='red'?'rgba(239,68,68,.07)':'';
-      html+=`<td class="cn" style="border-left:3px solid ${grpColor2};${grpBg2?'background:'+grpBg2:''}">${emp.name}</td>`;
+      html+=`<td class="cn day-col" style="border-left:3px solid ${grpColor2};${grpBg2?'background:'+grpBg2:''}">${emp.name}</td>`;
       if(isBr){
         // Dny | D | N | Noční | Víkend | Př25% | PřSo | PřNe | PřSv | Mínus | Ph | Svátek | CELKEM
         html+=`<td class="ts">—</td>`;// Dny
@@ -2235,6 +2237,8 @@ function executePrint(){
   existStyle.textContent=`.print-nodays .day-col{ display:none !important; }
 .print-nodays th.cp{ display:none !important; }
 .print-nodays td.cp{ display:none !important; }
+.print-nodays td.cn.day-col{ display:none !important; }
+.print-nodays th.cn.day-col{ display:none !important; }
 @media print{@page{size:${sizes[fmt]};margin:6mm}}`;
 
   // Mark rows to hide/show using print-hide class
