@@ -2197,6 +2197,30 @@ function saveEmp(){
 let printSel={provoz:{_4sm:true,_2sm:true,brig:true},groups:{blue:true,black:true,green:true,red:true},sum:true};
 
 function doPrint(){
+  // Sync group buttons with current app filter (ST.fp=provoz, ST.fg=group)
+  const curGrp=ST.fg||'all';
+  const curProv=ST.fp||'all';
+  ['Blue','Black','Green','Red'].forEach(g=>{
+    const btn=document.getElementById('pg'+g);
+    if(!btn) return;
+    if(curGrp==='all'||curGrp===g.toLowerCase()){
+      btn.classList.add('sel');
+    } else {
+      btn.classList.remove('sel');
+    }
+  });
+  const cb4sm=document.getElementById('po4sm');
+  const cb2sm=document.getElementById('po2sm');
+  const cbBrig=document.getElementById('pobrig');
+  if(curProv!=='all'){
+    if(cb4sm) cb4sm.checked=curProv==='4sm';
+    if(cb2sm) cb2sm.checked=curProv==='2sm';
+    if(cbBrig) cbBrig.checked=curProv==='brigada';
+  } else {
+    if(cb4sm) cb4sm.checked=true;
+    if(cb2sm) cb2sm.checked=true;
+    if(cbBrig) cbBrig.checked=true;
+  }
   document.getElementById('printMod').style.display='flex';
 }
 function closePrintMod(){
