@@ -148,6 +148,8 @@ tr:hover td.cn{filter:none;background:var(--bg4)!important;box-shadow:4px 0 8px 
 .print-grp-btn{padding:5px 12px;border-radius:5px;border:1px solid var(--b2);font-size:12px;font-weight:500;cursor:pointer;background:var(--bg3);color:var(--tx2);transition:all .15s}
 .print-grp-btn.sel{border-color:var(--acc);background:#dbeafe;color:#1d4ed8;font-weight:700}
 .print-nodays .day-col{ display:none !important; }
+.print-nodays th.cp{ display:none !important; }
+.print-nodays td.cp{ display:none !important; }
 @media print{
   body{height:auto;overflow:visible;font-size:9px}
   .topbar,.sbar,.leg-bar,#loginScreen,.badd,button{display:none!important}
@@ -2231,6 +2233,8 @@ function executePrint(){
   if(!existStyle){existStyle=document.createElement('style');existStyle.id='printPageStyle';document.head.appendChild(existStyle);}
   const sizes={A3L:'A3 landscape',A4L:'A4 landscape',A4P:'A4 portrait'};
   existStyle.textContent=`.print-nodays .day-col{ display:none !important; }
+.print-nodays th.cp{ display:none !important; }
+.print-nodays td.cp{ display:none !important; }
 @media print{@page{size:${sizes[fmt]};margin:6mm}}`;
 
   // Mark rows to hide/show using print-hide class
