@@ -1094,6 +1094,48 @@ function renderBonusTable(){
       </tr>`;
     });
   });
+  // ── CELKEM ŘÁDEK pro 4sm + 2sm ──
+  {
+    let totPred=0,totZdoch=0,totBonus=0,totZaplatit=0,totExtra=0,totCelkem=0,totDoprava=0;
+    const bdata2=getBonusData(m);
+    const planned2=plannedDays(y,m,'2sm',null);
+    ST.emps.filter(e=>e.prov==='4sm'||e.prov==='2sm').forEach(emp=>{
+      const base=BONUS_BASE[emp.id];if(!base)return;
+      const bd=bdata2[emp.id]||{};
+      const s=calcSums(emp);
+      const actual=Math.max(0,plannedDays(y,m,emp.prov,emp.grp)-(s.nem||0)-(s.dov||0));
+      const planned=plannedDays(y,m,emp.prov,emp.grp);
+      const dochPct=planned>0?Math.min(1,actual/planned):1;
+      const kpiPct=bd.kpiPct!==undefined?bd.kpiPct:1;
+      const pskPct=bd.pskPct!==undefined?bd.pskPct:1;
+      const bozpPct=bd.bozpPct!==undefined?bd.bozpPct:1;
+      const osobPct=bd.osobPct!==undefined?bd.osobPct:1;
+      const pred=Math.round(base.kpi*kpiPct)+Math.round(base.psk*pskPct)+Math.round(base.bozp*bozpPct)+Math.round(base.osob*osobPct);
+      const zaplatDoch=Math.round(pred*dochPct);
+      const bonus=bd.bonus||0,extra=bd.extraBonus||0;
+      const zaplatit=zaplatDoch+bonus,celkem=zaplatit+extra;
+      let doprava=0;
+      if(base.dist===10)doprava=Math.round(1000*dochPct);
+      else if(base.dist===20)doprava=Math.round(1500*dochPct);
+      totPred+=pred;totZdoch+=zaplatDoch;totBonus+=bonus;
+      totZaplatit+=zaplatit;totExtra+=extra;totCelkem+=celkem;totDoprava+=doprava;
+    });
+    const TS=(v,bg,fg)=>`<td style="background:${bg||'#1E3A5F'};color:${fg||'#fff'};padding:4px 8px;border:1px solid #CBD5E1;text-align:right;font-weight:700;font-size:10px">${v||''}</td>`;
+    const TE=()=>`<td style="background:#1E3A5F;border:1px solid #CBD5E1"></td>`;
+    html+=`<tr>
+      <td colspan="2" style="background:#1E3A5F;color:#fff;font-weight:700;font-size:10px;padding:4px 10px;border:1px solid #CBD5E1">CELKEM 4SM + 2SM</td>
+      ${TE()}${TE()}${TE()}${TE()}${TE()}${TE()}${TE()}${TE()}${TE()}${TE()}${TE()}${TE()}
+      ${TE()}${TE()}
+      ${TS(totPred,'#E0E7FF','#1E3A5F')}
+      ${TS(totZdoch,'#BAE6FD','#0C4A6E')}
+      ${TS(totBonus,'#FEF3C7','#92400E')}
+      ${TS(totZaplatit,'#D1FAE5','#064E3B')}
+      ${TS(totExtra,'#FCE7F3','#831843')}
+      ${TS(totCelkem,'#FEE2E2','#DC2626')}
+      ${TS(totDoprava,'#F3F4F6','#374151')}
+    </tr>`;
+  }
+
   // ── VRÁNA PAVEL section ──
   html+=`<tr><td colspan="23" style="background:#F5F3FF;font-weight:700;font-size:11px;padding:5px 10px;border:1px solid #CBD5E1">BRIGÁDNÍK</td></tr>`;
   {
@@ -2329,6 +2371,48 @@ function printNodays(show4sm,show2sm,showBrig,showSum,grps){
       fB.forEach(addRow);
     }
   }
+  // Bonus totals row
+  {
+    let totPred=0,totZdoch=0,totBonus=0,totZaplatit=0,totExtra=0,totCelkem=0,totDoprava=0;
+    const bdataP=getBonusData(m);
+    ST.emps.filter(e=>e.prov==='4sm'||e.prov==='2sm').forEach(emp=>{
+      if(emp.prov==='4sm'&&!grps[emp.grp]) return;
+      const base=BONUS_BASE[emp.id];if(!base)return;
+      const bd=bdataP[emp.id]||{};
+      const s=calcSums(emp);
+      const planned=plannedDays(y,m,emp.prov,emp.grp);
+      const actual=Math.max(0,planned-(s.nem||0)-(s.dov||0));
+      const dochPct=planned>0?Math.min(1,actual/planned):1;
+      const kpiPct=bd.kpiPct!==undefined?bd.kpiPct:1;
+      const pskPct=bd.pskPct!==undefined?bd.pskPct:1;
+      const bozpPct=bd.bozpPct!==undefined?bd.bozpPct:1;
+      const osobPct=bd.osobPct!==undefined?bd.osobPct:1;
+      const pred=Math.round(base.kpi*kpiPct)+Math.round(base.psk*pskPct)+Math.round(base.bozp*bozpPct)+Math.round(base.osob*osobPct);
+      const zaplatDoch=Math.round(pred*dochPct);
+      const bonus=bd.bonus||0,extra=bd.extraBonus||0;
+      totPred+=pred;totZdoch+=zaplatDoch;totBonus+=bonus;
+      totZaplatit+=zaplatDoch+bonus;totExtra+=extra;totCelkem+=zaplatDoch+bonus+extra;
+      if(base.dist===10)totDoprava+=Math.round(1000*dochPct);
+      else if(base.dist===20)totDoprava+=Math.round(1500*dochPct);
+    });
+    if(fullCols){
+      html+=`<tr style="background:#1E3A5F;color:#fff;font-weight:700">
+        <td colspan="16">CELKEM 4SM + 2SM</td>
+        <td class="pred">${totPred}</td><td class="zdoch">${totZdoch}</td>
+        <td class="num">${totBonus||''}</td><td class="zap">${totZaplatit}</td>
+        <td class="num">${totExtra||''}</td><td class="celkem">${totCelkem}</td>
+        <td class="dop">${totDoprava||''}</td>
+      </tr>`;
+    } else {
+      html+=`<tr style="background:#1E3A5F;color:#fff;font-weight:700">
+        <td colspan="5">CELKEM 4SM + 2SM</td>
+        <td class="num">${totBonus||''}</td><td class="zap">${totZaplatit}</td>
+        <td class="num">${totExtra||''}</td><td class="celkem">${totCelkem}</td>
+        <td class="dop">${totDoprava||''}</td>
+      </tr>`;
+    }
+  }
+
   if(showSum){
     // CELKEM row
     let tD=0,tN=0,tW=0,tOtW=0,tOtSo=0,tOtNe=0,tOtSv=0,tM=0,tNem=0,tDov=0,tPr=0,tSv=0;
