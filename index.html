@@ -574,10 +574,12 @@ function calcSums(emp){
       if(t==='D2'){dov+=0.5;if(!we)days+=0.5;continue;}// D/2: půl den vol., 4h odprac.
       if(t==='P'){prop+=h;if(!we&&!sv)days++;continue;}// Propuska: odprac. den (ne svátek)
       if(t==='ot'){// weekday OT 25%
-        otW+=h;if(!we&&!sv)days++;continue;}
-      if(t==='otso'){weH+=h;otSo+=h;continue;}// So OT 25% → also weH
-      if(t==='otne'){weH+=h;otNe+=h;continue;}// Ne OT 50% → also weH
-      if(t==='otsv'){otSv+=h;if(sv)svatekH+=h;continue;}// svátek OT
+        otW+=h;if(!we&&!sv&&h<12)days++;// full shift (12h) = no extra day
+        if(sh&&isNightT(sh))nightH+=h;// night OT adds night bonus
+        continue;}
+      if(t==='otso'){weH+=h;otSo+=h;if(sh&&isNightT(sh))nightH+=h;continue;}// So OT 25%
+      if(t==='otne'){weH+=h;otNe+=h;if(sh&&isNightT(sh))nightH+=h;continue;}// Ne OT 50%
+      if(t==='otsv'){otSv+=h;if(sv)svatekH+=h;if(sh&&isNightT(sh))nightH+=h;continue;}// svátek OT
       if(t==='sv'){// shouldn't happen for 2sm but handle
         if(sv)svatekH+=h;continue;}
       if(t==='neg'){negH+=h;if(!we&&!sv)days++;continue;}
