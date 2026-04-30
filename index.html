@@ -1120,12 +1120,23 @@ function renderBonusTable(){
       totPred+=pred;totZdoch+=zaplatDoch;totBonus+=bonus;
       totZaplatit+=zaplatit;totExtra+=extra;totCelkem+=celkem;totDoprava+=doprava;
     });
+    // Also calculate totals for Plan and Cil
+    let totPlanned=0,totActual=0;
+    ST.emps.filter(e=>e.prov==='4sm'||e.prov==='2sm').forEach(emp=>{
+      const base=BONUS_BASE[emp.id];if(!base)return;
+      const s=calcSums(emp);
+      const planned=plannedDays(y,m,emp.prov,emp.grp);
+      const actual=Math.max(0,planned-(s.nem||0)-(s.dov||0));
+      totPlanned+=planned;totActual+=actual;
+    });
     const TS=(v,bg,fg)=>`<td style="background:${bg||'#1E3A5F'};color:${fg||'#fff'};padding:4px 8px;border:1px solid #CBD5E1;text-align:right;font-weight:700;font-size:10px">${v||''}</td>`;
     const TE=()=>`<td style="background:#1E3A5F;border:1px solid #CBD5E1"></td>`;
     html+=`<tr>
       <td colspan="2" style="background:#1E3A5F;color:#fff;font-weight:700;font-size:10px;padding:4px 10px;border:1px solid #CBD5E1">CELKEM 4SM + 2SM</td>
       ${TE()}${TE()}${TE()}${TE()}${TE()}${TE()}${TE()}${TE()}${TE()}${TE()}${TE()}${TE()}
-      ${TE()}${TE()}${TE()}
+      ${TS(totPlanned,'#A5B4FC','#312E81')}
+      ${TS(totActual,'#A5B4FC','#312E81')}
+      ${TE()}
       ${TS(totPred,'#E0E7FF','#1E3A5F')}
       ${TS(totZdoch,'#BAE6FD','#0C4A6E')}
       ${TS(totBonus,'#FEF3C7','#92400E')}
@@ -1727,9 +1738,20 @@ function doPrintBonus(){
       if(base.dist===10)tDoprava+=Math.round(1000*dochPct);
       else if(base.dist===20)tDoprava+=Math.round(1500*dochPct);
     });
+    // Plan/Cil totals
+    let tPlanned=0,tActual=0;
+    ST.emps.filter(e=>e.prov==='4sm'||e.prov==='2sm').forEach(emp=>{
+      const base2=BONUS_BASE[emp.id];if(!base2)return;
+      const s2=calcSums(emp);
+      const pl=plannedDays(y,m,emp.prov,emp.grp);
+      tPlanned+=pl;tActual+=Math.max(0,pl-(s2.nem||0)-(s2.dov||0));
+    });
     if(fullCols){
       html+=`<tr style="background:#1E3A5F;color:#fff;font-weight:700;font-size:9pt">
-        <td colspan="17">CELKEM 4SM + 2SM</td>
+        <td colspan="15">CELKEM 4SM + 2SM</td>
+        <td style="text-align:right;background:#4F46E5">${tPlanned}</td>
+        <td style="text-align:right;background:#4F46E5">${tActual}</td>
+        <td></td>
         <td style="text-align:right">${tPred}</td><td style="text-align:right">${tZdoch}</td>
         <td style="text-align:right">${tBonus||''}</td><td style="text-align:right">${tZaplatit}</td>
         <td style="text-align:right">${tExtra||''}</td>
@@ -1738,7 +1760,10 @@ function doPrintBonus(){
       </tr>`;
     } else {
       html+=`<tr style="background:#1E3A5F;color:#fff;font-weight:700;font-size:9pt">
-        <td colspan="5">CELKEM 4SM + 2SM</td>
+        <td colspan="2">CELKEM 4SM + 2SM</td>
+        <td style="text-align:right;background:#4F46E5">${tPlanned}</td>
+        <td style="text-align:right;background:#4F46E5">${tActual}</td>
+        <td></td>
         <td style="text-align:right">${tBonus||''}</td>
         <td style="text-align:right">${tZaplatit}</td>
         <td style="text-align:right">${tExtra||''}</td>
