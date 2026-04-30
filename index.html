@@ -596,11 +596,13 @@ function calcSums(emp){
     if(t==='D2'){dov+=0.5;if(!off){days+=0.5;if(night)nightH+=6;if(isWknd)weH+=6;}continue;}// D/2: 6h odprac., půl den vol.
     if(t==='P'){prop+=h;if(!off){days++;if(night)nightH+=8;if(isWknd)weH+=12;}continue;}// Propuska: odprac. den + noční/víkend příplatky
     if(t==='ot'){// weekday OT 25%
-      otW+=h;if(!off){days++;if(night)nightH+=8;}continue;}
+      otW+=h;if(!off&&h<12){days++;if(night)nightH+=8;}// full 12h shift = no extra day
+      if(!off&&h>=12&&night)nightH+=h;// but still add night bonus for full night shift
+      continue;}
     if(t==='otso'){// Saturday OT 25% → weH + otSo
-      weH+=h;otSo+=h;if(!off&&night)nightH+=8;continue;}
+      weH+=h;otSo+=h;if(!off&&night)nightH+=h>=12?h:8;continue;}
     if(t==='otne'){// Sunday OT 50% → weH + otNe
-      weH+=h;otNe+=h;if(!off&&night)nightH+=8;continue;}
+      weH+=h;otNe+=h;if(!off&&night)nightH+=h>=12?h:8;continue;}
     if(t==='otsv'){// Holiday OT → otSv + svatekH
       otSv+=h;if(sv)svatekH+=h;continue;}
     if(t==='sv'){// Manual holiday hours (4sm only)
