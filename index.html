@@ -761,7 +761,7 @@ function makeSubHeader(n,prov){
   }
   // summary col headers
   const sumCols=['Dny','D','N','Noční h','Víkend h','Př 25%','Př So','Př Ne','Př sv','Mínus','P h','Svátek','Kum.−','CELKEM'];
-  row+=`<td class="cn" style="border-left:3px solid var(--b2);font-size:9px;font-weight:700;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.06em">Jméno</td>`;
+  row+=`<td class="cn day-col" style="border-left:3px solid var(--b2);font-size:9px;font-weight:700;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.06em">Jméno</td>`;
   sumCols.forEach((lbl,i)=>{
     const bg=i===13?'background:#dbeafe;color:#1d4ed8;':i===12?'background:#ffe4e6;color:#be123c;':i===11?'background:#fff7ed;color:#7c2d12;':'background:var(--bg3);color:var(--tx3);';
     row+=`<td style="${bg};text-align:center;font-size:8px;font-weight:700;padding:3px 1px;font-family:'DM Mono',monospace;white-space:nowrap">${lbl}</td>`;
