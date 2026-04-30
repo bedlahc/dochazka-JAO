@@ -148,10 +148,6 @@ tr:hover td.cn{filter:none;background:var(--bg4)!important;box-shadow:4px 0 8px 
 .print-grp-btn{padding:5px 12px;border-radius:5px;border:1px solid var(--b2);font-size:12px;font-weight:500;cursor:pointer;background:var(--bg3);color:var(--tx2);transition:all .15s}
 .print-grp-btn.sel{border-color:var(--acc);background:#dbeafe;color:#1d4ed8;font-weight:700}
 .print-nodays .day-col{ display:none !important; }
-.print-nodays th.cp{ display:none !important; }
-.print-nodays td.cp{ display:none !important; }
-.print-nodays td.cn.day-col{ display:none !important; }
-.print-nodays th.cn.day-col{ display:none !important; }
 @media print{
   body{height:auto;overflow:visible;font-size:9px}
   .topbar,.sbar,.leg-bar,#loginScreen,.badd,button{display:none!important}
@@ -763,7 +759,7 @@ function makeSubHeader(n,prov){
   }
   // summary col headers
   const sumCols=['Dny','D','N','Noční h','Víkend h','Př 25%','Př So','Př Ne','Př sv','Mínus','P h','Svátek','Kum.−','CELKEM'];
-  row+=`<td class="cn day-col" style="border-left:3px solid var(--b2);font-size:9px;font-weight:700;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.06em">Jméno</td>`;
+  row+=`<td class="cn" style="border-left:3px solid var(--b2);font-size:9px;font-weight:700;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.06em">Jméno</td>`;
   sumCols.forEach((lbl,i)=>{
     const bg=i===13?'background:#dbeafe;color:#1d4ed8;':i===12?'background:#ffe4e6;color:#be123c;':i===11?'background:#fff7ed;color:#7c2d12;':'background:var(--bg3);color:var(--tx3);';
     row+=`<td style="${bg};text-align:center;font-size:8px;font-weight:700;padding:3px 1px;font-family:'DM Mono',monospace;white-space:nowrap">${lbl}</td>`;
@@ -1787,7 +1783,7 @@ function render(){
       const s=calcSums(emp);const isBr=emp.prov==='brigada';const is2=emp.prov==='2sm';
       const grpColor=gcol(emp.grp);
       const grpBg=emp.grp==='blue'?'rgba(59,130,246,.07)':emp.grp==='black'?'rgba(100,116,139,.07)':emp.grp==='green'?'rgba(34,197,94,.07)':emp.grp==='red'?'rgba(239,68,68,.07)':'';
-      html+=`<tr data-prov="${emp.prov}" data-grp="${emp.grp}"><td class="cn day-col" style="border-left:3px solid ${grpColor};${grpBg?'background:'+grpBg:''}">${emp.name}</td>`;
+      html+=`<tr data-prov="${emp.prov}" data-grp="${emp.grp}"><td class="cn" style="border-left:3px solid ${grpColor};${grpBg?'background:'+grpBg:''}">${emp.name}</td>`;
       html+=`<td class="cp"><span class="pos ${pCls(emp.pos)}">${emp.pos}</span></td>`;
       const _today=new Date();
       const _todayD=ST.y===_today.getFullYear()&&ST.m===(_today.getMonth()+1)?_today.getDate():-1;
@@ -1806,7 +1802,7 @@ function render(){
       // Second name column before summary
       const grpColor2=gcol(emp.grp);
       const grpBg2=emp.grp==='blue'?'rgba(59,130,246,.07)':emp.grp==='black'?'rgba(100,116,139,.07)':emp.grp==='green'?'rgba(34,197,94,.07)':emp.grp==='red'?'rgba(239,68,68,.07)':'';
-      html+=`<td class="cn day-col" style="border-left:3px solid ${grpColor2};${grpBg2?'background:'+grpBg2:''}">${emp.name}</td>`;
+      html+=`<td class="cn" style="border-left:3px solid ${grpColor2};${grpBg2?'background:'+grpBg2:''}">${emp.name}</td>`;
       if(isBr){
         // Dny | D | N | Noční | Víkend | Př25% | PřSo | PřNe | PřSv | Mínus | Ph | Svátek | CELKEM
         html+=`<td class="ts">—</td>`;// Dny
@@ -2215,6 +2211,116 @@ function togglePG(grp,btn){
   btn.classList.toggle('sel');
   printSel.groups[grp]=btn.classList.contains('sel');
 }
+function printNodays(show4sm,show2sm,showBrig,showSum,grps){
+  const n=dInM(ST.m,ST.y);
+  const MCZ2=MCZ;
+  let html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <title>Docházka souhrn — ${MCZ2[ST.m]} ${ST.y}</title>
+    <style>
+      body{font-family:'Calibri',Arial;font-size:9pt;margin:8mm}
+      h2{font-size:12pt;margin-bottom:6px;color:#1E3A5F}
+      table{border-collapse:collapse}
+      td,th{border:0.5pt solid #CBD5E1;padding:3px 6px;font-size:8pt;white-space:nowrap}
+      th{background:#1E3A5F;color:#fff;font-weight:bold;text-align:center}
+      .nm{font-weight:bold;text-align:left}.pos{color:#64748B;font-size:7pt}
+      .grp{font-weight:bold;font-size:9pt;text-align:left;padding:4px 8px}
+      .num{text-align:right}.neg{color:#DC2626;font-weight:bold}
+      .cN{background:#FECACA}.cD{background:#BBF7D0}.cP{background:#DDD6FE}
+      .sn{background:#E2E8F0}.swe{background:#DCFCE7}.sv{background:#FFF7ED}
+      .celkem{background:#DBEAFE;color:#1D4ED8;font-weight:bold}
+      .cumNeg{background:#FFE4E6;color:#BE123C;font-weight:bold}
+      @media print{@page{size:A4 landscape;margin:6mm}}
+    </style></head><body>
+    <h2>Docházka souhrn — ${MCZ2[ST.m]} ${ST.y} — Damco Jaroměř</h2>
+    <table><thead><tr>
+      <th style="text-align:left">Jméno</th>
+      <th>Dny</th><th class="cD">D</th><th class="cN">N</th>
+      <th class="sn">Noční h</th><th class="swe">Víkend h</th>
+      <th>Př 25%</th><th>Př So</th><th>Př Ne</th><th>Př sv</th>
+      <th class="neg">Mínus</th><th class="cP">P h</th><th class="sv">Svátek h</th>
+      <th class="cumNeg">Kum.−</th><th class="celkem">CELKEM h</th>
+    </tr></thead><tbody>`;
+
+  const grpColors={blue:'#DBEAFE',black:'#E2E8F0',green:'#DCFCE7',red:'#FEE2E2'};
+  const GL={blue:'MODRÁ',black:'ČERNÁ',green:'ZELENÁ',red:'ČERVENÁ'};
+
+  function addRow(emp){
+    const s=calcSums(emp);
+    const isBr=emp.prov==='brigada';
+    const bg=grpColors[emp.grp]||'';
+    html+=`<tr>`;
+    html+=`<td class="nm" style="background:${bg}">${emp.name}</td>`;
+    if(isBr){
+      html+=`<td colspan="13" style="text-align:center;color:#6d28d9;font-weight:bold">${r2(s.brig-s.negH)||''}</td>`;
+      html+=`<td></td>`;
+    } else {
+      html+=`<td class="num">${s.days||''}</td>`;
+      html+=`<td class="num cD">${s.dov||''}</td>`;
+      html+=`<td class="num cN">${s.nem||''}</td>`;
+      html+=`<td class="num sn">${s.nightH>0?s.nightH:''}</td>`;
+      html+=`<td class="num swe">${s.weH>0?s.weH:''}</td>`;
+      html+=`<td class="num">${s.otW>0?s.otW:''}</td>`;
+      html+=`<td class="num">${s.otSo>0?s.otSo:''}</td>`;
+      html+=`<td class="num">${s.otNe>0?s.otNe:''}</td>`;
+      html+=`<td class="num sv">${s.otSv>0?s.otSv:''}</td>`;
+      html+=`<td class="num neg">${s.negH>0?'-'+s.negH:''}</td>`;
+      html+=`<td class="num cP">${s.prop||''}</td>`;
+      html+=`<td class="num sv">${s.svatekH>0?s.svatekH:''}</td>`;
+      if(emp.prov==='4sm'){const cn=calcCumMinus(emp);html+=`<td class="num cumNeg">${cn>0?'-'+cn:''}</td>`;}
+      else html+=`<td></td>`;
+      html+=`<td class="num celkem"></td>`;
+    }
+    html+=`</tr>`;
+  }
+
+  const G4=['blue','black','green','red'];
+  if(show4sm){
+    G4.forEach(g=>{
+      if(!grps[g]) return;
+      const list=ST.emps.filter(e=>e.prov==='4sm'&&e.grp===g);
+      if(!list.length) return;
+      html+=`<tr><td colspan="15" class="grp" style="background:${grpColors[g]}">4-SMĚNNÝ — ${GL[g]}</td></tr>`;
+      list.forEach(addRow);
+    });
+  }
+  if(show2sm){
+    const f2=ST.emps.filter(e=>e.prov==='2sm');
+    if(f2.length){
+      html+=`<tr><td colspan="15" class="grp" style="background:#FED7AA">2-SMĚNNÝ PROVOZ</td></tr>`;
+      f2.forEach(addRow);
+    }
+  }
+  if(showBrig){
+    const fB=ST.emps.filter(e=>e.prov==='brigada');
+    if(fB.length){
+      html+=`<tr><td colspan="15" class="grp" style="background:#EDE9FE">BRIGÁDNÍCI</td></tr>`;
+      fB.forEach(addRow);
+    }
+  }
+  if(showSum){
+    // CELKEM row
+    let tD=0,tN=0,tW=0,tOtW=0,tOtSo=0,tOtNe=0,tOtSv=0,tM=0,tNem=0,tDov=0,tPr=0,tSv=0;
+    ST.emps.forEach(e=>{const s=calcSums(e);if(e.prov!=='brigada'){tD+=s.days;tN+=s.nightH;tW+=s.weH;tOtW+=s.otW||0;tOtSo+=s.otSo||0;tOtNe+=s.otNe||0;tOtSv+=s.otSv||0;tM+=s.negH;tNem+=s.nem;tDov+=s.dov;tPr+=s.prop;tSv+=s.svatekH||0;}});
+    html+=`<tr style="font-weight:bold;background:#F1F5F9">
+      <td class="nm">CELKEM</td>
+      <td class="num">${tD||''}</td><td class="num cD">${tDov||''}</td><td class="num cN">${tNem||''}</td>
+      <td class="num sn">${tN>0?r2(tN):''}</td><td class="num swe">${tW>0?r2(tW):''}</td>
+      <td class="num">${tOtW>0?r2(tOtW):''}</td><td class="num">${tOtSo>0?r2(tOtSo):''}</td>
+      <td class="num">${tOtNe>0?r2(tOtNe):''}</td><td class="num sv">${tOtSv>0?r2(tOtSv):''}</td>
+      <td class="num neg">${tM>0?'-'+r2(tM):''}</td><td class="num cP">${tPr>0?r2(tPr):''}</td>
+      <td class="num sv">${tSv>0?r2(tSv):''}</td><td></td><td class="num celkem"></td>
+    </tr>`;
+  }
+
+  html+=`</tbody></table>
+    <script>window.onload=()=>{window.print();}<\/script>
+    </body></html>`;
+
+  closePrintMod();
+  const w=window.open('','_blank','width=1200,height=800');
+  w.document.write(html);w.document.close();
+}
+
 function executePrint(){
   // Read selections
   const show4sm=document.getElementById('po4sm').checked;
@@ -2235,10 +2341,6 @@ function executePrint(){
   if(!existStyle){existStyle=document.createElement('style');existStyle.id='printPageStyle';document.head.appendChild(existStyle);}
   const sizes={A3L:'A3 landscape',A4L:'A4 landscape',A4P:'A4 portrait'};
   existStyle.textContent=`.print-nodays .day-col{ display:none !important; }
-.print-nodays th.cp{ display:none !important; }
-.print-nodays td.cp{ display:none !important; }
-.print-nodays td.cn.day-col{ display:none !important; }
-.print-nodays th.cn.day-col{ display:none !important; }
 @media print{@page{size:${sizes[fmt]};margin:6mm}}`;
 
   // Mark rows to hide/show using print-hide class
@@ -2254,17 +2356,19 @@ function executePrint(){
     tr.style.display=hide?'none':'';
   });
 
-  // Apply nodays mode
+  // Apply nodays mode - generate clean print window
+  if(nodays){
+    printNodays(show4sm,show2sm,showBrig,showSum,grps);
+    return;
+  }
   const tableEl = document.querySelector('.tw table');
-  if(nodays) tableEl && tableEl.classList.add('print-nodays');
   
   closePrintMod();
   setTimeout(()=>{
     window.print();
-    // Restore all rows and remove nodays class after print
+    // Restore all rows after print
     setTimeout(()=>{
       document.querySelectorAll('tr[data-prov]').forEach(tr=>tr.style.display='');
-      tableEl && tableEl.classList.remove('print-nodays');
     },500);
   },100);
 }
