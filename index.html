@@ -3555,7 +3555,7 @@ function loadScript(src){
   };
 
   // Listen for changes from other users
-  db.ref('dochazka2026').on('value', snapshot=>{
+  db.ref('dochazka2026').once('value').then(snapshot=>{
     if(localChange){ localChange=false; return; }
     const data = snapshot.val();
     if(data && (data.monthData || data.manualRows)){
@@ -3567,7 +3567,7 @@ function loadScript(src){
   });
 
   // Initial load
-  db.ref('dochazka2026').on('value', snapshot=>{
+  db.ref('dochazka2026').once('value').then(snapshot=>{
     const data = snapshot.val();
     if(data && (data.monthData || data.manualRows)){
       restoreState(data);
@@ -3595,10 +3595,16 @@ function loadScript(src){
       updateNameDropdown();
       showSyncStatus('● Online', '#16a34a');
       loadBonusData();
+      // Restore app after Firebase data loaded
+      document.getElementById('app').style.opacity='1';
+      document.getElementById('app').style.pointerEvents='';
     } else {
       // Firebase empty — save local import data
       showSyncStatus('● Online', '#16a34a');
       setTimeout(()=>{ if(window.fbSave) fbSave(); }, 1000);
+      render();updateNameDropdown();
+      document.getElementById('app').style.opacity='1';
+      document.getElementById('app').style.pointerEvents='';
     }
     }).catch(()=>{ showSyncStatus('○ Offline', '#dc2626'); });
   }).catch(()=>{
