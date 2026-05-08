@@ -3264,12 +3264,12 @@ if(!ST.monthData) ST.monthData={};
 
 // ── IMPORT: LEDEN AŽ BŘEZEN 2026 ──
 (function importQ1(){
-  if(!ST.monthData) ST.monthData={};
+  // Only store to _localImport - Firebase data takes priority
+  if(!window._localImport) window._localImport={};
   const se=(id,m,day,rec)=>{
-    const e=ST.emps.find(x=>x.id===id);if(!e)return;
-    if(!ST.monthData[m])ST.monthData[m]={};
-    if(!ST.monthData[m][id])ST.monthData[m][id]={};
-    ST.monthData[m][id][day]=rec;
+    if(!window._localImport[m]) window._localImport[m]={};
+    if(!window._localImport[m][id]) window._localImport[m][id]={};
+    window._localImport[m][id][day]=rec;
   };
   // Měsíc 1
   se(7,1,7,{t:'ot',h:8.0});
@@ -3420,12 +3420,11 @@ if(!ST.monthData) ST.monthData={};
 window._localImport = window._localImport || {};
 if(!ST.monthData) ST.monthData={};
 (function importNovDec(){
-  if(!ST.monthData) ST.monthData={};
+  if(!window._localImport) window._localImport={};
   const se=(id,m,day,rec)=>{
-    const e=ST.emps.find(x=>x.id===id);if(!e)return;
-    if(!ST.monthData[m])ST.monthData[m]={};
-    if(!ST.monthData[m][id])ST.monthData[m][id]={};
-    ST.monthData[m][id][day]=rec;
+    if(!window._localImport[m]) window._localImport[m]={};
+    if(!window._localImport[m][id]) window._localImport[m][id]={};
+    window._localImport[m][id][day]=rec;
   };
   // Měsíc 11 - Listopad
   se(26,11,17,{t:'D'});
