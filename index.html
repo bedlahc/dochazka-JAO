@@ -3567,7 +3567,7 @@ function loadScript(src){
   });
 
   // Initial load
-  db.ref('dochazka2026').once('value').then(snapshot=>{
+  db.ref('dochazka2026').on('value', snapshot=>{
     const data = snapshot.val();
     if(data && (data.monthData || data.manualRows)){
       restoreState(data);
