@@ -3574,23 +3574,20 @@ function loadScript(src){
       restoreState(data);
       // Merge local import data for months not yet in Firebase
       let needsSave = false;
+      // Only add local import data for months completely missing from Firebase
       [1,2,3,5,6,7,8,9,10,11,12].forEach(m=>{
         const importData = window._localImport?.[m];
         if(!importData || Object.keys(importData).length===0) return;
         const firebaseMonth = data.monthData?.[m];
-        const fbCount = firebaseMonth ? Object.keys(firebaseMonth).length : 0;
-        const localCount = Object.keys(importData).length;
-        // Merge if Firebase has fewer employees for this month than local import
-        if(fbCount < localCount){
-          // Deep merge: for each employee, merge days
+        // ONLY merge if month is completely absent from Firebase
+        if(!firebaseMonth || Object.keys(firebaseMonth).length===0){
           if(!ST.monthData[m]) ST.monthData[m] = {};
           Object.keys(importData).forEach(eid=>{
-            if(!ST.monthData[m][eid] || Object.keys(ST.monthData[m][eid]).length === 0){
-              ST.monthData[m][eid] = importData[eid];
-            }
+            ST.monthData[m][eid] = importData[eid];
           });
           needsSave = true;
         }
+        // Firebase data always takes priority - no overwriting
       });
       if(needsSave){
         setTimeout(()=>{ if(window.fbSave) fbSave(); showSyncStatus('☁ Nová data uložena', '#16a34a'); }, 800);
