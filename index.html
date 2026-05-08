@@ -1424,10 +1424,7 @@ function saveBonusData(){
     }
   });
   console.log('Saving bonus payload:', JSON.stringify(payload).slice(0,200));
-  // Save bonusNotes too
-  if(ST.bonusNotes && Object.keys(ST.bonusNotes).length>0){
-    if(window._fbDB) window._fbDB.ref('bonusNotes2026').set(ST.bonusNotes).catch(()=>{});
-  }
+  // bonusNotes saved via main fbSave (included in serializeState)
   const syncEl=document.getElementById('syncStatus');
   const setStat=(msg,col)=>{if(syncEl){syncEl.textContent=msg;syncEl.style.color=col;syncEl.style.opacity='1';}};
   window._fbDB.ref('bonus2026').set(payload)
@@ -1793,13 +1790,7 @@ function loadBonusData(){
       console.log('Bonus data loaded:', Object.keys(ST.bonusData));
     }
   }).catch(err=>console.error('Bonus load error:',err));
-  // Load bonus notes
-  if(window._fbDB){
-    window._fbDB.ref('bonusNotes2026').once('value').then(snap=>{
-      const d=snap.val();
-      if(d){ST.bonusNotes={};Object.keys(d).forEach(k=>{ST.bonusNotes[String(k)]=d[k];});}
-    }).catch(()=>{});
-  }
+  // bonusNotes loaded via main restoreState (included in dochazka2026)
 }
 
 function getNoteKey(m,empId,day){ return `${m}_${empId}_${day}`; }
@@ -3519,6 +3510,7 @@ function loadScript(src){
         data.emps_shiftOv[String(e.id)] = e.shiftOv;
     });
     if(ST.notes && Object.keys(ST.notes).length>0) data.notes=ST.notes;
+    if(ST.bonusNotes && Object.keys(ST.bonusNotes).length>0) data.bonusNotes=ST.bonusNotes;
     return data;
   }
 
@@ -3528,6 +3520,7 @@ function loadScript(src){
     else if(data.manualRows) ST.monthManualRows[ST.m] = data.manualRows;// backwards compat
     if(data.monthData)  ST.monthData  = data.monthData;
     if(data.notes) ST.notes=data.notes;
+    if(data.bonusNotes) ST.bonusNotes=data.bonusNotes;
     const cm = String(ST.m);
     ST.emps.forEach(e=>{
       const saved = data.monthData?.[cm]?.[String(e.id)];
@@ -3567,12 +3560,15 @@ function loadScript(src){
   });
 
   // Initial load
-  db.ref('dochazka2026').once('value').then(snapshot=>{
+  let _fbFirstLoad=true;
+  db.ref('dochazka2026').on('value', snapshot=>{
     const data = snapshot.val();
     if(data && (data.monthData || data.manualRows)){
       restoreState(data);
-      // Merge local import data for months not yet in Firebase
+      // Merge local import data only on first load
       let needsSave = false;
+      if(!_fbFirstLoad) { render(); updateNameDropdown(); return; }
+      _fbFirstLoad=false;
       // Only add local import data for months completely missing from Firebase
       [1,2,3,5,6,7,8,9,10,11,12].forEach(m=>{
         const importData = window._localImport?.[m];
