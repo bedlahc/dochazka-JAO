@@ -3511,6 +3511,7 @@ function loadScript(src){
     });
     if(ST.notes && Object.keys(ST.notes).length>0) data.notes=ST.notes;
     if(ST.bonusNotes && Object.keys(ST.bonusNotes).length>0) data.bonusNotes=ST.bonusNotes;
+    if(ST.bonusData && Object.keys(ST.bonusData).length>0) data.bonusData=ST.bonusData;
     return data;
   }
 
@@ -3521,6 +3522,7 @@ function loadScript(src){
     if(data.monthData)  ST.monthData  = data.monthData;
     if(data.notes) ST.notes=data.notes;
     if(data.bonusNotes) ST.bonusNotes=data.bonusNotes;
+    if(data.bonusData){ ST.bonusData={}; Object.keys(data.bonusData).forEach(k=>{ST.bonusData[String(k)]=data.bonusData[k];}); }
     const cm = String(ST.m);
     ST.emps.forEach(e=>{
       const saved = data.monthData?.[cm]?.[String(e.id)];
