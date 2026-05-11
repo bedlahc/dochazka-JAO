@@ -593,7 +593,19 @@ function calcSums(emp){
     const isWknd=we; // Sat or Sun
     if(t==='N'){nem++;continue;}
     if(t==='D'){dov++;continue;}
-    if(t==='D2'){dov+=0.5;if(!off){days+=0.5;if(night)nightH+=6;if(isWknd)weH+=6;}continue;}// D/2: 6h odprac., půl den vol.
+    if(t==='D2'){
+      dov+=0.5;
+      if(!off){
+        days+=0.5;
+        if(night){
+          // D2 at start of shift: -2h night bonus; D2 at end: -6h night bonus
+          const d2Start=rec?.start===true;
+          nightH+=d2Start?10:6;// 12h shift - 2h = 10h OR 12h - 6h = 6h
+        }
+        if(isWknd)weH+=6;
+      }
+      continue;
+    }// D/2
     if(t==='P'){prop+=h;if(!off){days++;if(night)nightH+=8;if(isWknd)weH+=12;}continue;}// Propuska: odprac. den + noční/víkend příplatky
     if(t==='ot'){// weekday OT 25%
       otW+=h;
@@ -685,7 +697,7 @@ function cellDisp(emp,d,rec){
     if(!isOffT(sh)) return 11;
   }
   if(!t) return null;
-  if(t==='N') return'N';if(t==='D') return'D';if(t==='D2') return'D/2';if(t==='P') return(h||'')+'/P';
+  if(t==='N') return'N';if(t==='D') return'D';if(t==='D2') return rec?.start?'D/2↑':'D/2';if(t==='P') return(h||'')+'/P';
   if(t==='ot') return h||'';if(t==='neg') return'-'+(h||'');
   if(t==='otso') return h||'';if(t==='otne') return h||'';
   if(t==='otsv') return h||'';if(t==='sv') return h||11;
