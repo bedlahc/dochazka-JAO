@@ -3562,15 +3562,18 @@ function loadScript(src){
   });
 
   // Initial load
-  let _fbFirstLoad=true;
   db.ref('dochazka2026').on('value', snapshot=>{
     const data = snapshot.val();
     if(data && (data.monthData || data.manualRows)){
       restoreState(data);
-      // Merge local import data only on first load
+      // Only merge local imports if month completely missing (first load only)
       let needsSave = false;
-      if(!_fbFirstLoad) { render(); updateNameDropdown(); return; }
-      _fbFirstLoad=false;
+      if(window._fbLoaded) { render(); updateNameDropdown();
+        const appElR=document.getElementById('app');
+        if(appElR){appElR.style.opacity='1';appElR.style.pointerEvents='';}
+        return;
+      }
+      window._fbLoaded=true;
       // Only add local import data for months completely missing from Firebase
       [1,2,3,5,6,7,8,9,10,11,12].forEach(m=>{
         const importData = window._localImport?.[m];
