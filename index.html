@@ -2941,6 +2941,10 @@ function doBackup(){
     if(e.shiftOv && Object.keys(e.shiftOv).length>0)
       backup.emps_shiftOv[String(e.id)] = e.shiftOv;
   });
+  // Include notes and bonus data
+  if(ST.notes && Object.keys(ST.notes).length>0) backup.notes=ST.notes;
+  if(ST.bonusNotes && Object.keys(ST.bonusNotes).length>0) backup.bonusNotes=ST.bonusNotes;
+  if(ST.bonusData && Object.keys(ST.bonusData).length>0) backup.bonusData=ST.bonusData;
   const json = JSON.stringify(backup, null, 2);
   const blob = new Blob([json], {type:'application/json'});
   const url = URL.createObjectURL(blob);
@@ -2988,6 +2992,11 @@ function doRestore(event){
       }
       if(backup.monthManualRows) ST.monthManualRows = backup.monthManualRows;
       else if(backup.manualRows) ST.monthManualRows[ST.m] = backup.manualRows;
+      // Restore notes and bonus data
+      ST.notes = backup.notes||{};
+      ST.bonusNotes = backup.bonusNotes||{};
+      if(backup.bonusData){ ST.bonusData={}; Object.keys(backup.bonusData).forEach(k=>{ST.bonusData[String(k)]=backup.bonusData[k];}); }
+      else ST.bonusData = {};
       // Restore current month into emps
       const cm = String(ST.m);
       ST.emps.forEach(e=>{
@@ -3554,7 +3563,7 @@ function loadScript(src){
   let saveTimer = null;
   let localChange = false;
   window.fbSave = function(){
-    localChange = true;
+    localChange=true;
     clearTimeout(saveTimer);
     showSyncStatus('⏳ Ukládání...', '#d97706');
     saveTimer = setTimeout(()=>{
@@ -3564,65 +3573,40 @@ function loadScript(src){
     }, 700);
   };
 
-  // Listen for changes from other users
-  db.ref('dochazka2026').once('value').then(snapshot=>{
-    if(localChange){ localChange=false; return; }
-    const data = snapshot.val();
-    if(data && (data.monthData || data.manualRows)){
-      restoreState(data);
-      render();
-      updateNameDropdown();
-      showSyncStatus('↺ Sync', '#2563eb');
-    }
-  });
-
-  // Initial load
+  // Listen for real-time changes from other devices
+  let localChange=false;
+  window._fbLoaded=false;
   db.ref('dochazka2026').on('value', snapshot=>{
-    const data = snapshot.val();
-    if(data && (data.monthData || data.manualRows)){
-      restoreState(data);
-      // Only merge local imports if month completely missing (first load only)
-      let needsSave = false;
-      if(window._fbLoaded) { render(); updateNameDropdown();
-        const appElR=document.getElementById('app');
-        if(appElR){appElR.style.opacity='1';appElR.style.pointerEvents='';}
-        return;
-      }
+    if(localChange){localChange=false;return;}// skip own saves
+    const data=snapshot.val();
+    if(!data) return;
+    restoreState(data);
+    // Only merge local imports on first load
+    if(!window._fbLoaded){
       window._fbLoaded=true;
-      // Only add local import data for months completely missing from Firebase
+      let needsSave=false;
       [1,2,3,5,6,7,8,9,10,11,12].forEach(m=>{
-        const importData = window._localImport?.[m];
-        if(!importData || Object.keys(importData).length===0) return;
-        const firebaseMonth = data.monthData?.[m];
-        // ONLY merge if month is completely absent from Firebase
-        if(!firebaseMonth || Object.keys(firebaseMonth).length===0){
-          if(!ST.monthData[m]) ST.monthData[m] = {};
-          Object.keys(importData).forEach(eid=>{
-            ST.monthData[m][eid] = importData[eid];
-          });
-          needsSave = true;
+        const importData=window._localImport?.[m];
+        if(!importData||Object.keys(importData).length===0) return;
+        const firebaseMonth=data.monthData?.[m];
+        if(!firebaseMonth||Object.keys(firebaseMonth).length===0){
+          if(!ST.monthData[m]) ST.monthData[m]={};
+          Object.keys(importData).forEach(eid=>{ST.monthData[m][eid]=importData[eid];});
+          needsSave=true;
         }
-        // Firebase data always takes priority - no overwriting
       });
-      if(needsSave){
-        setTimeout(()=>{ if(window.fbSave) fbSave(); showSyncStatus('☁ Nová data uložena', '#16a34a'); }, 800);
-      }
-      render();
-      updateNameDropdown();
-      showSyncStatus('● Online', '#16a34a');
-      loadBonusData();
-      // Restore app after Firebase data loaded
-      const appEl=document.getElementById('app');
-      if(appEl){appEl.style.opacity='1';appEl.style.pointerEvents='';}
-    } else {
-      // Firebase empty — save local import data
-      showSyncStatus('● Online', '#16a34a');
-      setTimeout(()=>{ if(window.fbSave) fbSave(); }, 1000);
-      render();updateNameDropdown();
-      const appEl2=document.getElementById('app');
-      if(appEl2){appEl2.style.opacity='1';appEl2.style.pointerEvents='';}
+      if(needsSave) setTimeout(()=>{if(window.fbSave)fbSave();},2000);
     }
-    }).catch(()=>{ showSyncStatus('○ Offline', '#dc2626'); });
+    render();updateNameDropdown();
+    const appEl=document.getElementById('app');
+    if(appEl){appEl.style.opacity='1';appEl.style.pointerEvents='';}
+  }, ()=>{
+    showSyncStatus('○ Offline','#dc2626');
+    render();
+    const appEl=document.getElementById('app');
+    if(appEl){appEl.style.opacity='1';appEl.style.pointerEvents='';}
+  });
+  });
   }).catch(()=>{
     console.error('Firebase CDN load failed');
     const el=document.getElementById('syncStatus');
