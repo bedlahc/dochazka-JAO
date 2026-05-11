@@ -3086,11 +3086,12 @@ function doExport(){
 window._localImport = window._localImport || {};
 if(!ST.monthData) ST.monthData={};
 (function importAllMonths(){
+  // Only store to _localImport - Firebase data takes priority
+  if(!window._localImport) window._localImport={};
   const se=(id,m,day,rec)=>{
-    const e=ST.emps.find(x=>x.id===id);if(!e)return;
-    if(!ST.monthData[m])ST.monthData[m]={};
-    if(!ST.monthData[m][id])ST.monthData[m][id]={};
-    ST.monthData[m][id][day]=rec;
+    if(!window._localImport[m]) window._localImport[m]={};
+    if(!window._localImport[m][id]) window._localImport[m][id]={};
+    window._localImport[m][id][day]=rec;
   };
   // Měsíc 5
   se(11,5,4,{t:'D'});
