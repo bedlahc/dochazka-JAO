@@ -3601,6 +3601,8 @@ function loadScript(src){
       if(needsSave) setTimeout(()=>{if(window.fbSave)fbSave();},2000);
     }
     render();updateNameDropdown();
+    showSyncStatus('● Online','#16a34a');
+    loadBonusData();
     const appEl=document.getElementById('app');
     if(appEl){appEl.style.opacity='1';appEl.style.pointerEvents='';}
   }, ()=>{
