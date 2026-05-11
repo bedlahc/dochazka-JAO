@@ -3577,7 +3577,6 @@ function loadScript(src){
   };
 
   // Listen for real-time changes from other devices
-  let localChange=false;
   window._fbLoaded=false;
   db.ref('dochazka2026').on('value', snapshot=>{
     if(localChange){localChange=false;return;}// skip own saves
