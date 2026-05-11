@@ -3495,7 +3495,7 @@ function loadScript(src){
       // Reset loaded flag on each login
       window._fbLoaded=false;
       // Detach old listener and reattach
-      db.ref('dochazka2026').off();
+      try { db.ref('dochazka2026').off(); } catch(e){}
       db.ref('dochazka2026').on('value', snapshot=>{
         if(localChange){localChange=false;return;}
         const data=snapshot.val();
@@ -3523,10 +3523,11 @@ function loadScript(src){
         }
         render();updateNameDropdown();
         showSyncStatus('● Online','#16a34a');
-        loadBonusData();
+        if(window._isTomas) loadBonusData();
         const appEl=document.getElementById('app');
         if(appEl){appEl.style.opacity='1';appEl.style.pointerEvents='';}
-      }, ()=>{
+      }, (err)=>{
+        console.error('Firebase listener error:', err);
         showSyncStatus('○ Offline','#dc2626');
         render();
         const appEl3=document.getElementById('app');
