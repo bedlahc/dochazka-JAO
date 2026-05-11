@@ -2293,7 +2293,7 @@ function saveCell(){
   else{
     const t=document.getElementById('ct').value;
     if(!t)delete emp.data[ET.day];
-    else if(t==='N')emp.data[ET.day]={t:'N'};else if(t==='D')emp.data[ET.day]={t:'D'};else if(t==='D2')emp.data[ET.day]={t:'D2'};
+    else if(t==='N')emp.data[ET.day]={t:'N'};else if(t==='D')emp.data[ET.day]={t:'D'};else if(t==='D2')emp.data[ET.day]={t:'D2'};else if(t==='D2S')emp.data[ET.day]={t:'D2',start:true};
     else if(t==='P')emp.data[ET.day]={t:'P',h:parseFloat(document.getElementById('hP').value)||0};
     else if(t==='ot')emp.data[ET.day]={t:'ot',h:parseFloat(document.getElementById('hOT').value)||0};
     else if(t==='otso')emp.data[ET.day]={t:'otso',h:parseFloat(document.getElementById('hOTSO').value)||0};
