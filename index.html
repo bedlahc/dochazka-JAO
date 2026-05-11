@@ -598,9 +598,11 @@ function calcSums(emp){
       if(!off){
         days+=0.5;
         if(night){
-          // D2 at start of shift: -2h night bonus; D2 at end: -6h night bonus
+          // Noční příplatek 22:00-6:00 = 8h celkem
+          // D2 začátek směny (18-00 vol, 00-06 práce) → pracuje 6h z noci → příplatek 6h
+          // D2 konec směny (18-00 práce, 00-06 vol) → pracuje 2h z noci → příplatek 2h
           const d2Start=rec?.start===true;
-          nightH+=d2Start?10:6;// 12h shift - 2h = 10h OR 12h - 6h = 6h
+          nightH+=d2Start?6:2;
         }
         if(isWknd)weH+=6;
       }
