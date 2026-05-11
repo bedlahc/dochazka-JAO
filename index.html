@@ -3608,7 +3608,6 @@ function loadScript(src){
     const appEl=document.getElementById('app');
     if(appEl){appEl.style.opacity='1';appEl.style.pointerEvents='';}
   });
-  });
   }).catch(()=>{
     console.error('Firebase CDN load failed');
     const el=document.getElementById('syncStatus');
