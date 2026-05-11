@@ -2204,7 +2204,7 @@ function openCell(empId,day){
     const sel=document.getElementById('ct');
     ['hOT','hOTSO','hOTNE','hOTSV','hSV','hNEG','hP'].forEach(id=>document.getElementById(id).value='');
     if(!rec?.t)sel.value='';
-    else if(rec.t==='N')sel.value='N';else if(rec.t==='D')sel.value='D';else if(rec.t==='D2')sel.value='D2';
+    else if(rec.t==='N')sel.value='N';else if(rec.t==='D')sel.value='D';else if(rec.t==='D2')sel.value=rec.start?'D2S':'D2';
     else if(rec.t==='P'){sel.value='P';document.getElementById('hP').value=rec.h||'';}
     else if(rec.t==='ot'){sel.value='ot';document.getElementById('hOT').value=rec.h||'';}
     else if(rec.t==='otso'){sel.value='otso';document.getElementById('hOTSO').value=rec.h||'';}
