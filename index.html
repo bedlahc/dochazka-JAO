@@ -3594,15 +3594,15 @@ function loadScript(src){
       showSyncStatus('● Online', '#16a34a');
       loadBonusData();
       // Restore app after Firebase data loaded
-      document.getElementById('app').style.opacity='1';
-      document.getElementById('app').style.pointerEvents='';
+      const appEl=document.getElementById('app');
+      if(appEl){appEl.style.opacity='1';appEl.style.pointerEvents='';}
     } else {
       // Firebase empty — save local import data
       showSyncStatus('● Online', '#16a34a');
       setTimeout(()=>{ if(window.fbSave) fbSave(); }, 1000);
       render();updateNameDropdown();
-      document.getElementById('app').style.opacity='1';
-      document.getElementById('app').style.pointerEvents='';
+      const appEl2=document.getElementById('app');
+      if(appEl2){appEl2.style.opacity='1';appEl2.style.pointerEvents='';}
     }
     }).catch(()=>{ showSyncStatus('○ Offline', '#dc2626'); });
   }).catch(()=>{
