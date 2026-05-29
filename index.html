@@ -3640,6 +3640,7 @@ function loadScript(src){
 
   // Listen for real-time changes from other devices
   // Listener moved to auth handler
+  }
   }).catch(()=>{
     console.error('Firebase CDN load failed');
     const el=document.getElementById('syncStatus');
