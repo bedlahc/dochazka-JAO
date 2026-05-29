@@ -2532,6 +2532,7 @@ function printNodays(show4sm,show2sm,showBrig,showSum,grps){
     setTimeout(()=>pf.remove(),2000);
   },500);
 }
+}
 
 function executePrint(){
   // Read selections
@@ -3639,8 +3640,7 @@ function loadScript(src){
   };
 
   // Listen for real-time changes from other devices
-  // Listener moved to auth handler
-  }
+  // Listener is in auth handler above
   }).catch(()=>{
     console.error('Firebase CDN load failed');
     const el=document.getElementById('syncStatus');
