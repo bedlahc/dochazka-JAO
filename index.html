@@ -1789,9 +1789,11 @@ function doPrintBonus(){
     <script>window.onload=()=>{window.print();}<\/script>
     </body></html>`;
 
-  const w=window.open('','_blank','width=1400,height=800');
-  w.document.write(html);
-  w.document.close();
+  const blobB=new Blob([html],{type:'text/html;charset=utf-8'});
+  const urlB=URL.createObjectURL(blobB);
+  const w=window.open(urlB,'_blank');
+  if(!w){const a=document.createElement('a');a.href=urlB;a.target='_blank';a.click();}
+  setTimeout(()=>URL.revokeObjectURL(urlB),10000);
 }
 
 function loadBonusData(){
@@ -2509,8 +2511,16 @@ function printNodays(show4sm,show2sm,showBrig,showSum,grps){
     </body></html>`;
 
   closePrintMod();
-  const w=window.open('','_blank','width=1200,height=800');
-  w.document.write(html);w.document.close();
+  // Use blob URL to avoid popup blocker
+  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const w=window.open(url,'_blank');
+  if(!w){
+    // Popup blocked - fallback: open in same tab temporarily
+    const a=document.createElement('a');
+    a.href=url;a.target='_blank';a.click();
+  }
+  setTimeout(()=>URL.revokeObjectURL(url),10000);
 }
 
 function executePrint(){
