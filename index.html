@@ -2462,13 +2462,13 @@ function printNodays(show4sm,show2sm,showBrig,showSum,grps){
   // Bonus totals row
   {
     let totPred=0,totZdoch=0,totBonus=0,totZaplatit=0,totExtra=0,totCelkem=0,totDoprava=0;
-    const bdataP=getBonusData(m);
+    const bdataP=getBonusData(ST.m);
     ST.emps.filter(e=>e.prov==='4sm'||e.prov==='2sm').forEach(emp=>{
       if(emp.prov==='4sm'&&!grps[emp.grp]) return;
       const base=BONUS_BASE[emp.id];if(!base)return;
-      const bd=bdataP[emp.id]||{};
+      const bdP=bdataP[emp.id]||{};
       const s=calcSums(emp);
-      const planned=plannedDays(y,m,emp.prov,emp.grp);
+      const planned=plannedDays(ST.y,ST.m,emp.prov,emp.grp);
       const actual=Math.max(0,planned-(s.nem||0)-(s.dov||0));
       const dochPct=planned>0?Math.min(1,actual/planned):1;
       const kpiPct=bd.kpiPct!==undefined?bd.kpiPct:1;
