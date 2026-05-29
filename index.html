@@ -1789,11 +1789,21 @@ function doPrintBonus(){
     <script>window.onload=()=>{window.print();}<\/script>
     </body></html>`;
 
-  const blobB=new Blob([html],{type:'text/html;charset=utf-8'});
-  const urlB=URL.createObjectURL(blobB);
-  const w=window.open(urlB,'_blank');
-  if(!w){const a=document.createElement('a');a.href=urlB;a.target='_blank';a.click();}
-  setTimeout(()=>URL.revokeObjectURL(urlB),10000);
+  // Print via hidden iframe
+  let pfB=document.getElementById('_printFrameBonus');
+  if(pfB) pfB.remove();
+  pfB=document.createElement('iframe');
+  pfB.id='_printFrameBonus';
+  pfB.style.cssText='position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;border:none';
+  document.body.appendChild(pfB);
+  pfB.contentDocument.open();
+  pfB.contentDocument.write(html);
+  pfB.contentDocument.close();
+  setTimeout(()=>{
+    pfB.contentWindow.focus();
+    pfB.contentWindow.print();
+    setTimeout(()=>pfB.remove(),2000);
+  },500);
 }
 
 function loadBonusData(){
@@ -2511,16 +2521,21 @@ function printNodays(show4sm,show2sm,showBrig,showSum,grps){
     </body></html>`;
 
   closePrintMod();
-  // Use blob URL to avoid popup blocker
-  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
-  const url=URL.createObjectURL(blob);
-  const w=window.open(url,'_blank');
-  if(!w){
-    // Popup blocked - fallback: open in same tab temporarily
-    const a=document.createElement('a');
-    a.href=url;a.target='_blank';a.click();
-  }
-  setTimeout(()=>URL.revokeObjectURL(url),10000);
+  // Print via hidden iframe - works without popup blocker
+  let pf=document.getElementById('_printFrame');
+  if(pf) pf.remove();
+  pf=document.createElement('iframe');
+  pf.id='_printFrame';
+  pf.style.cssText='position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;border:none';
+  document.body.appendChild(pf);
+  pf.contentDocument.open();
+  pf.contentDocument.write(html);
+  pf.contentDocument.close();
+  setTimeout(()=>{
+    pf.contentWindow.focus();
+    pf.contentWindow.print();
+    setTimeout(()=>pf.remove(),2000);
+  },500);
 }
 
 function executePrint(){
