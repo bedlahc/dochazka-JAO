@@ -1665,6 +1665,7 @@ function doPrintBonus(){
     html+=`<thead><tr>
       <th class="hdr">Jméno</th><th class="hdr">Pozice</th>
       <th class="hdr">Plán</th><th class="hdr">Cíl</th><th class="hdr">% doch.</th>
+      <th class="hdr">Zaplatit dle doch.</th>
       <th class="hdr">Bonus</th><th class="hdr">Zaplatit</th>
       <th class="hdr">Extra bonus</th><th class="hdr">Celkem zaplatit</th>
       <th class="hdr">Doprava</th>
@@ -1673,7 +1674,7 @@ function doPrintBonus(){
 
   html+=`<tbody>`;
   [['4sm','4-SMĚNNÝ PROVOZ','#BFDBFE'],['2sm','2-SMĚNNÝ PROVOZ','#FED7AA']].forEach(([prov,lbl,bg])=>{
-    const cols=fullCols?24:10;
+    const cols=fullCols?24:11;
     html+=`<tr><td colspan="${cols}" class="grp" style="background:${bg}">${lbl}</td></tr>`;
     ST.emps.filter(e=>e.prov===prov).forEach(emp=>{
       const base=BONUS_BASE[emp.id];if(!base)return;
@@ -1718,6 +1719,7 @@ function doPrintBonus(){
           <td class="nm">${emp.name}</td><td class="pos">${emp.pos||''}</td>
           <td class="dochbg">${planned}</td><td class="dochbg" style="font-weight:bold">${actual}</td>
           <td class="dochbg" style="color:${dColor};font-weight:bold">${dPct}%</td>
+          <td class="zdoch">${zaplatDoch}</td>
           <td class="num">${bonus||''}</td><td class="zap">${zaplatit}</td>
           <td class="num">${extra||''}</td><td class="celkem">${celkem}</td>
           <td class="dop">${doprava||''}</td>
