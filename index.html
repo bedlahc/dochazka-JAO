@@ -111,7 +111,7 @@ tr:hover td.cn{filter:none;background:var(--bg4)!important;box-shadow:4px 0 8px 
 .fr label{font-size:10px;color:var(--tx2);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.05em}
 .fr input,.fr select{height:34px;background:#f8fafc;border:1px solid var(--b2);border-radius:6px;color:var(--tx);font-family:'DM Sans',sans-serif;font-size:13px;padding:0 11px}
 .fr input:focus,.fr select:focus{outline:none;border-color:var(--acc)}
-.mbtns{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+.mbtns{display:flex;gap:6px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap}
 .bsv{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:700;height:34px;border-radius:6px;padding:0 16px}
 .bdl{background:#fee2e2;border:1px solid #fca5a5;color:#b91c1c;height:34px;border-radius:6px;padding:0 12px}
 .bcl{background:var(--bg3);border:1px solid var(--b2);color:var(--tx2);height:34px;border-radius:6px;padding:0 12px}
@@ -470,7 +470,7 @@ function pCls(p){
   return'pC';
 }
 
-let ST={m:4,y:2026,fp:'all',fg:'all',fn:'',emps:[
+let ST={m:new Date().getMonth()+1,y:new Date().getFullYear(),fp:'all',fg:'all',fn:'',emps:[
   // === 4-SMĚNNÝ ===
   // MODRÁ: Zilvar Jakub, Hradecký Jaroslav, Base Roman, Rýdzi Jaroslav, Karel Martin
   {id:1,name:'Zilvar Jakub',pos:'Mistr',prov:'4sm',grp:'blue',data:{}},
