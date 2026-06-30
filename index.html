@@ -1073,7 +1073,7 @@ function renderBonusTable(){
       const planned=plannedDays(y,m,emp.prov,emp.grp);
       // Cíl = planned - sick days - vacation days (same for both 4sm and 2sm)
       const actual=Math.max(0, planned-(s.nem||0)-(s.dov||0));
-      const dochPct=planned>0?Math.min(1,actual/planned):1;
+      const dochPct=planned>0?Math.round(Math.min(1,actual/planned)*100)/100:1;
       const kpiPct=bd.kpiPct!==undefined?bd.kpiPct:1;
       const pskPct=bd.pskPct!==undefined?bd.pskPct:1;
       const bozpPct=bd.bozpPct!==undefined?bd.bozpPct:1;
@@ -1122,7 +1122,7 @@ function renderBonusTable(){
       const s=calcSums(emp);
       const actual=Math.max(0,plannedDays(y,m,emp.prov,emp.grp)-(s.nem||0)-(s.dov||0));
       const planned=plannedDays(y,m,emp.prov,emp.grp);
-      const dochPct=planned>0?Math.min(1,actual/planned):1;
+      const dochPct=planned>0?Math.round(Math.min(1,actual/planned)*100)/100:1;
       const kpiPct=bd.kpiPct!==undefined?bd.kpiPct:1;
       const pskPct=bd.pskPct!==undefined?bd.pskPct:1;
       const bozpPct=bd.bozpPct!==undefined?bd.bozpPct:1;
@@ -1229,7 +1229,7 @@ function renderBonusTable(){
     const bd=bdata['off_'+off.id]||{};
     const actualDays=bd.actualDays||0;
     const planned2sm=plannedDays(y,m,'2sm',null);
-    const dochPct=planned2sm>0?Math.min(1,actualDays/planned2sm):0;
+    const dochPct=planned2sm>0?Math.round(Math.min(1,actualDays/planned2sm)*100)/100:0;
     const dPct=Math.round(dochPct*100);
     const dColor=dochPct<0.9?'#DC2626':dochPct<1?'#D97706':'#059669';
     const zaplatDoch=off.pred>0?Math.round(off.pred*dochPct):0;
@@ -1338,7 +1338,7 @@ function updateOfficeBonus(){
     const actualDays=gv(oid+'days');
     const bonus=gv(oid+'bonus');
     const extra=gv(oid+'extra');
-    const dochPct=planned2sm>0?Math.min(1,actualDays/planned2sm):0;
+    const dochPct=planned2sm>0?Math.round(Math.min(1,actualDays/planned2sm)*100)/100:0;
     const zaplatDoch=off.pred>0?Math.round(off.pred*dochPct):0;
     const zaplatit=zaplatDoch+bonus;
     const celkem=zaplatit+extra;
@@ -1549,7 +1549,7 @@ table{border-collapse:collapse}td,th{font-family:Calibri;font-size:9pt;border:0.
       const planned=plannedDays(y,m,emp.prov,emp.grp);
       // Cíl = planned - sick days - vacation days (same for both 4sm and 2sm)
       const actual=Math.max(0, planned-(s.nem||0)-(s.dov||0));
-      const dochPct=planned>0?Math.min(1,actual/planned):1;
+      const dochPct=planned>0?Math.round(Math.min(1,actual/planned)*100)/100:1;
       const kpiPct=bd.kpiPct!==undefined?bd.kpiPct:1;
       const pskPct=bd.pskPct!==undefined?bd.pskPct:1;
       const bozpPct=bd.bozpPct!==undefined?bd.bozpPct:1;
@@ -1586,7 +1586,7 @@ table{border-collapse:collapse}td,th{font-family:Calibri;font-size:9pt;border:0.
    {id:'renata',name:'Renata Hornychova',pos:'Client Coordinator',pred:0,dist:10}].forEach(off=>{
     const bd2=bdata2['off_'+off.id]||{};
     const actualDays=bd2.actualDays||0;
-    const dochPct2=planned2sm>0?Math.min(1,actualDays/planned2sm):0;
+    const dochPct2=planned2sm>0?Math.round(Math.min(1,actualDays/planned2sm)*100)/100:0;
     const zaplatDoch2=off.pred>0?Math.round(off.pred*dochPct2):0;
     const bonus2=bd2.bonus||0,extra2=bd2.extraBonus||0;
     const zaplatit2=zaplatDoch2+bonus2,celkem2=zaplatit2+extra2;
@@ -1685,7 +1685,7 @@ function doPrintBonus(){
       const planned=plannedDays(y,m,emp.prov,emp.grp);
       // Cíl = planned - sick days - vacation days (same for both 4sm and 2sm)
       const actual=Math.max(0, planned-(s.nem||0)-(s.dov||0));
-      const dochPct=planned>0?Math.min(1,actual/planned):1;
+      const dochPct=planned>0?Math.round(Math.min(1,actual/planned)*100)/100:1;
       const kpiPct=bd.kpiPct!==undefined?bd.kpiPct:1;
       const pskPct=bd.pskPct!==undefined?bd.pskPct:1;
       const bozpPct=bd.bozpPct!==undefined?bd.bozpPct:1;
@@ -1740,7 +1740,7 @@ function doPrintBonus(){
       const s=calcSums(emp);
       const planned=plannedDays(y,m,emp.prov,emp.grp);
       const actual=Math.max(0,planned-(s.nem||0)-(s.dov||0));
-      const dochPct=planned>0?Math.min(1,actual/planned):1;
+      const dochPct=planned>0?Math.round(Math.min(1,actual/planned)*100)/100:1;
       const kpiPct=bd.kpiPct!==undefined?bd.kpiPct:1;
       const pskPct=bd.pskPct!==undefined?bd.pskPct:1;
       const bozpPct=bd.bozpPct!==undefined?bd.bozpPct:1;
@@ -2533,7 +2533,7 @@ function printNodays(show4sm,show2sm,showBrig,showSum,grps){
       const s=calcSums(emp);
       const planned=plannedDays(ST.y,ST.m,emp.prov,emp.grp);
       const actual=Math.max(0,planned-(s.nem||0)-(s.dov||0));
-      const dochPct=planned>0?Math.min(1,actual/planned):1;
+      const dochPct=planned>0?Math.round(Math.min(1,actual/planned)*100)/100:1;
       const kpiPct=bdP.kpiPct!==undefined?bdP.kpiPct:1;
       const pskPct=bdP.pskPct!==undefined?bdP.pskPct:1;
       const bozpPct=bdP.bozpPct!==undefined?bdP.bozpPct:1;
