@@ -1072,7 +1072,18 @@ function renderBonusTable(){
       const s=calcSums(emp);
       const planned=plannedDays(y,m,emp.prov,emp.grp);
       // Cíl = planned - sick days - vacation days (same for both 4sm and 2sm)
-      const actual=Math.max(0, planned-(s.nem||0)-(s.dov||0));
+      // P snižuje Cíl jen při celé směně: 4sm=12h, 2sm=8h
+      // Méně hodin (např. 4/P) se do snížení nepočítá
+      const propDays=(()=>{
+        let days=0;
+        const shiftH=emp.prov==='4sm'?12:8;
+        for(let dd=1;dd<=dInM(ST.m,ST.y);dd++){
+          const rec=emp.data[dd];
+          if(rec?.t==='P'&&(rec.h||0)>=shiftH) days++;
+        }
+        return days;
+      })();
+      const actual=Math.max(0, planned-(s.nem||0)-(s.dov||0)-propDays);
       const dochPct=planned>0?Math.round(Math.min(1,actual/planned)*100)/100:1;
       const kpiPct=bd.kpiPct!==undefined?bd.kpiPct:1;
       const pskPct=bd.pskPct!==undefined?bd.pskPct:1;
@@ -1291,7 +1302,15 @@ function updateBonus(){
 
     const s=calcSums(emp);
     const planned=plannedDays(ST.y,m,emp.prov,emp.grp);
-    const actual2=Math.max(0,planned-(s.nem||0)-(s.dov||0));
+    const propDays2=(()=>{
+      let days=0;const shiftH2=emp.prov==='4sm'?12:8;
+      for(let dd=1;dd<=dInM(ST.m,ST.y);dd++){
+        const rec=emp.data[dd];
+        if(rec?.t==='P'&&(rec.h||0)>=shiftH2) days++;
+      }
+      return days;
+    })();
+    const actual2=Math.max(0,planned-(s.nem||0)-(s.dov||0)-propDays2);
     const dochPct=planned>0?Math.min(1,actual2/planned):1;
 
     const kpiV=Math.round(base.kpi*kpiPct);
@@ -1548,7 +1567,18 @@ table{border-collapse:collapse}td,th{font-family:Calibri;font-size:9pt;border:0.
       const s=calcSums(emp);
       const planned=plannedDays(y,m,emp.prov,emp.grp);
       // Cíl = planned - sick days - vacation days (same for both 4sm and 2sm)
-      const actual=Math.max(0, planned-(s.nem||0)-(s.dov||0));
+      // P snižuje Cíl jen při celé směně: 4sm=12h, 2sm=8h
+      // Méně hodin (např. 4/P) se do snížení nepočítá
+      const propDays=(()=>{
+        let days=0;
+        const shiftH=emp.prov==='4sm'?12:8;
+        for(let dd=1;dd<=dInM(ST.m,ST.y);dd++){
+          const rec=emp.data[dd];
+          if(rec?.t==='P'&&(rec.h||0)>=shiftH) days++;
+        }
+        return days;
+      })();
+      const actual=Math.max(0, planned-(s.nem||0)-(s.dov||0)-propDays);
       const dochPct=planned>0?Math.round(Math.min(1,actual/planned)*100)/100:1;
       const kpiPct=bd.kpiPct!==undefined?bd.kpiPct:1;
       const pskPct=bd.pskPct!==undefined?bd.pskPct:1;
@@ -1684,7 +1714,18 @@ function doPrintBonus(){
       const s=calcSums(emp);
       const planned=plannedDays(y,m,emp.prov,emp.grp);
       // Cíl = planned - sick days - vacation days (same for both 4sm and 2sm)
-      const actual=Math.max(0, planned-(s.nem||0)-(s.dov||0));
+      // P snižuje Cíl jen při celé směně: 4sm=12h, 2sm=8h
+      // Méně hodin (např. 4/P) se do snížení nepočítá
+      const propDays=(()=>{
+        let days=0;
+        const shiftH=emp.prov==='4sm'?12:8;
+        for(let dd=1;dd<=dInM(ST.m,ST.y);dd++){
+          const rec=emp.data[dd];
+          if(rec?.t==='P'&&(rec.h||0)>=shiftH) days++;
+        }
+        return days;
+      })();
+      const actual=Math.max(0, planned-(s.nem||0)-(s.dov||0)-propDays);
       const dochPct=planned>0?Math.round(Math.min(1,actual/planned)*100)/100:1;
       const kpiPct=bd.kpiPct!==undefined?bd.kpiPct:1;
       const pskPct=bd.pskPct!==undefined?bd.pskPct:1;
