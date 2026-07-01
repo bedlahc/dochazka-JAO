@@ -1131,8 +1131,9 @@ function renderBonusTable(){
       const base=BONUS_BASE[emp.id];if(!base)return;
       const bd=bdata2[emp.id]||{};
       const s=calcSums(emp);
-      const actual=Math.max(0,plannedDays(y,m,emp.prov,emp.grp)-(s.nem||0)-(s.dov||0));
       const planned=plannedDays(y,m,emp.prov,emp.grp);
+      const propDaysT=(()=>{let d=0;const sH=emp.prov==='4sm'?12:8;for(let dd=1;dd<=dInM(m,y);dd++){const r=emp.data[dd];if(r?.t==='P'&&(r.h||0)>=sH)d++;}return d;})();
+      const actual=Math.max(0,planned-(s.nem||0)-(s.dov||0)-propDaysT);
       const dochPct=planned>0?Math.round(Math.min(1,actual/planned)*100)/100:1;
       const kpiPct=bd.kpiPct!==undefined?bd.kpiPct:1;
       const pskPct=bd.pskPct!==undefined?bd.pskPct:1;
