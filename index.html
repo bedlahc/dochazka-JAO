@@ -249,7 +249,7 @@ tr:hover td.cn{filter:none;background:var(--bg4)!important;box-shadow:4px 0 8px 
   <div class="ctrls">
     <select id="msel" onchange="onMC()">
       <option value="1">Leden 2026</option><option value="2">Únor 2026</option><option value="3">Březen 2026</option>
-      <option value="4" selected>Duben 2026</option><option value="5">Květen 2026</option><option value="6">Červen 2026</option>
+      <option value="4">Duben 2026</option><option value="5">Květen 2026</option><option value="6">Červen 2026</option>
       <option value="7">Červenec 2026</option><option value="8">Srpen 2026</option><option value="9">Září 2026</option>
       <option value="10">Říjen 2026</option><option value="11">Listopad 2026</option><option value="12">Prosinec 2026</option>
     </select>
@@ -1972,6 +1972,9 @@ function twScroll(px){
 }
 
 function render(){
+  // Sync month select with ST.m
+  const mselEl=document.getElementById('msel');
+  if(mselEl&&mselEl.value!=String(ST.m)) mselEl.value=ST.m;
   const n=dInM(ST.m,ST.y);
   document.getElementById('ptitle').textContent=`Docházka — ${MCZ[ST.m]} ${ST.y}`;
   let emps=ST.emps.filter(e=>ST.fp==='all'||e.prov===ST.fp);
