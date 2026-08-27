@@ -2133,7 +2133,7 @@ function render(){
 
   // TOTALS row — per day: manual row sums; end: sum of all 5 manual rows + grand total
   {
-    let tD=0,tN=0,tW=0,tOtW=0,tOtSo=0,tOtNe=0,tOtSv=0,tM=0,tNem=0,tDov=0,tPr=0;
+    let tD=0,tN=0,tW=0,tOtW=0,tOtSo=0,tOtNe=0,tOtSv=0,tM=0,tNem=0,tOcr=0,tDov=0,tPr=0;
     emps.forEach(e=>{
       const s=calcSums(e);
       if(e.prov!=='brigada'){tD+=s.days;tN+=s.nightH;tW+=s.weH;tOtW+=s.otW||0;tOtSo+=s.otSo||0;tOtNe+=s.otNe||0;tOtSv+=s.otSv||0;tM+=s.negH;tNem+=s.nem;tOcr+=s.ocr||0;tDov+=s.dov;tPr+=s.prop;}
@@ -2199,8 +2199,8 @@ function render(){
   document.getElementById('tb').innerHTML=html;
 
   // STATS
-  let tD=0,tN=0,tW=0,tOT=0,tNeg=0,tNem=0,tDov=0,tBr=0,tSv=0;
-  ST.emps.forEach(e=>{const s=calcSums(e);if(e.prov==='brigada')tBr+=s.brig;else{tD+=s.days;tN+=s.nightH;tW+=s.weH;tOT+=r2((s.otW||0)+(s.otSo||0)+(s.otNe||0)+(s.otSv||0));tNeg+=s.negH;tNem+=s.nem;tDov+=s.dov;tSv+=s.svatekH||0;}});
+  let tD=0,tN=0,tW=0,tOT=0,tNeg=0,tNem=0,tOcr=0,tDov=0,tBr=0,tSv=0;
+  ST.emps.forEach(e=>{const s=calcSums(e);if(e.prov==='brigada')tBr+=s.brig;else{tD+=s.days;tN+=s.nightH;tW+=s.weH;tOT+=r2((s.otW||0)+(s.otSo||0)+(s.otNe||0)+(s.otSv||0));tNeg+=s.negH;tNem+=s.nem;tOcr+=s.ocr||0;tDov+=s.dov;tSv+=s.svatekH||0;}});
   document.getElementById('sbar').innerHTML=`
     <div class="si"><div class="sl">Odprac. dny</div><div class="sv" style="color:var(--day-tx)">${tD}</div></div>
     <div class="si"><div class="sl">Noční hodiny</div><div class="sv" style="color:var(--ngt-tx)">${r2(tN)}</div></div>
@@ -2612,8 +2612,8 @@ function printNodays(show4sm,show2sm,showBrig,showSum,grps){
 
   if(showSum){
     // CELKEM row
-    let tD=0,tN=0,tW=0,tOtW=0,tOtSo=0,tOtNe=0,tOtSv=0,tM=0,tNem=0,tDov=0,tPr=0,tSv=0;
-    ST.emps.forEach(e=>{const s=calcSums(e);if(e.prov!=='brigada'){tD+=s.days;tN+=s.nightH;tW+=s.weH;tOtW+=s.otW||0;tOtSo+=s.otSo||0;tOtNe+=s.otNe||0;tOtSv+=s.otSv||0;tM+=s.negH;tNem+=s.nem;tDov+=s.dov;tPr+=s.prop;tSv+=s.svatekH||0;}});
+    let tD=0,tN=0,tW=0,tOtW=0,tOtSo=0,tOtNe=0,tOtSv=0,tM=0,tNem=0,tOcr=0,tDov=0,tPr=0,tSv=0;
+    ST.emps.forEach(e=>{const s=calcSums(e);if(e.prov!=='brigada'){tD+=s.days;tN+=s.nightH;tW+=s.weH;tOtW+=s.otW||0;tOtSo+=s.otSo||0;tOtNe+=s.otNe||0;tOtSv+=s.otSv||0;tM+=s.negH;tNem+=s.nem;tOcr+=s.ocr||0;tDov+=s.dov;tPr+=s.prop;tSv+=s.svatekH||0;}});
     html+=`<tr style="font-weight:bold;background:#F1F5F9">
       <td class="nm">CELKEM</td>
       <td class="num">${tD||''}</td><td class="num cD">${tDov||''}</td><td class="num cN">${tNem||''}</td>
