@@ -339,6 +339,7 @@ tr:hover td.cn{filter:none;background:var(--bg4)!important;box-shadow:4px 0 8px 
       <select id="ct" onchange="ctChg()">
         <option value="">— odpracovaný den —</option>
         <option value="N">N – nemoc</option>
+        <option value="OCR">OČR – ošetřování</option>
         <option value="D">D – dovolená (celý den)</option>
         <option value="D2">D/2 – konec směny (−2h noc)</option>
         <option value="D2S">D/2 – začátek směny (−6h noc)</option>
@@ -540,7 +541,7 @@ function calcSums(emp){
   // otSo=OT 25% saturday h, otNe=OT 50% sunday h, otSv=OT holiday h,
   // negH=minus h, nem=sick days, dov=vacation days, prop=leave h,
   // svatekH=holiday worked h (auto 11h or manual), brig=brigada total h
-  let days=0,nightH=0,weH=0,otW=0,otSo=0,otNe=0,otSv=0,negH=0,nem=0,dov=0,prop=0,brig=0,svatekH=0;
+  let days=0,nightH=0,weH=0,otW=0,otSo=0,otNe=0,otSv=0,negH=0,nem=0,ocr=0,dov=0,prop=0,brig=0,svatekH=0;
   for(let d=1;d<=n;d++){
     const rec=emp.data[d],t=rec?.t||null;
     const h=rec?.h||0;
@@ -573,6 +574,7 @@ function calcSums(emp){
     if(emp.prov==='2sm'){
       // 2sm: no auto-holiday hours, only manual overtime on holiday
       if(t==='N'){nem++;continue;}
+    if(t==='OCR'){ocr++;continue;}
       if(t==='D'){dov++;continue;}
       if(t==='D2'){dov+=0.5;if(!we)days+=0.5;continue;}// D/2: půl den vol., 4h odprac.
       if(t==='P'){prop+=h;if(!we&&!sv)days++;continue;}// Propuska: odprac. den (ne svátek)
@@ -595,6 +597,7 @@ function calcSums(emp){
     const night=isNightT(sh),off=isOffT(sh);
     const isWknd=we; // Sat or Sun
     if(t==='N'){nem++;continue;}
+    if(t==='OCR'){ocr++;continue;}
     if(t==='D'){dov++;continue;}
     if(t==='D2'){
       dov+=0.5;
@@ -664,7 +667,7 @@ function cellCls(emp,d,rec){
     return'cbr';
   }
   const t=rec?.t||null;
-  if(t==='N') return'cN';if(t==='D') return'cD';if(t==='D2') return'cD2';if(t==='P') return'cP';if(t==='we') return'cWE';
+  if(t==='N'||t==='OCR') return'cN';if(t==='D') return'cD';if(t==='D2') return'cD2';if(t==='P') return'cP';if(t==='we') return'cWE';
   const sv=isSv(ST.m,d);
   if(emp.prov==='2sm'){
     const we=isWE(ST.y,ST.m,d);
@@ -702,7 +705,7 @@ function cellDisp(emp,d,rec){
     if(!isOffT(sh)) return 11;
   }
   if(!t) return null;
-  if(t==='N') return'N';if(t==='D') return'D';if(t==='D2') return rec?.start?'D/2↑':'D/2';if(t==='P') return(h||'')+'/P';
+  if(t==='N') return'N';if(t==='OCR') return'OČR';if(t==='D') return'D';if(t==='D2') return rec?.start?'D/2↑':'D/2';if(t==='P') return(h||'')+'/P';
   if(t==='ot') return h||'';if(t==='neg') return'-'+(h||'');
   if(t==='otso') return h||'';if(t==='otne') return h||'';
   if(t==='otsv') return h||'';if(t==='sv') return h||11;
@@ -783,7 +786,7 @@ function makeSubHeader(n,prov){
     row+=`<td class="day-col" style="${wbg}${wbl};text-align:center;font-size:9px;font-weight:700;padding:4px 1px;font-family:'DM Mono',monospace"><div>${d}</div><div style="opacity:.7">${DN2[w]}</div></td>`;
   }
   // summary col headers
-  const sumCols=['Dny','D','N','Noční h','Víkend h','Př 25%','Př So','Př Ne','Př sv','Mínus','P h','Svátek','Kum.−','CELKEM'];
+  const sumCols=['Dny','D','N','OČR','Noční h','Víkend h','Př 25%','Př So','Př Ne','Př sv','Mínus','P h','Svátek','Kum.−','CELKEM'];
   row+=`<td class="cn" style="border-left:3px solid var(--b2);font-size:9px;font-weight:700;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.06em">Jméno</td>`;
   sumCols.forEach((lbl,i)=>{
     const bg=i===13?'background:#dbeafe;color:#1d4ed8;':i===12?'background:#ffe4e6;color:#be123c;':i===11?'background:#fff7ed;color:#7c2d12;':'background:var(--bg3);color:var(--tx3);';
@@ -1083,7 +1086,7 @@ function renderBonusTable(){
         }
         return days;
       })();
-      const actual=Math.max(0, planned-(s.nem||0)-(s.dov||0)-propDays);
+      const actual=Math.max(0, planned-(s.nem||0)-(s.ocr||0)-(s.dov||0)-propDays);
       const dochPct=planned>0?Math.round(Math.min(1,actual/planned)*100)/100:1;
       const kpiPct=bd.kpiPct!==undefined?bd.kpiPct:1;
       const pskPct=bd.pskPct!==undefined?bd.pskPct:1;
@@ -1133,7 +1136,7 @@ function renderBonusTable(){
       const s=calcSums(emp);
       const planned=plannedDays(y,m,emp.prov,emp.grp);
       const propDaysT=(()=>{let d=0;const sH=emp.prov==='4sm'?12:8;for(let dd=1;dd<=dInM(m,y);dd++){const r=emp.data[dd];if(r?.t==='P'&&(r.h||0)>=sH)d++;}return d;})();
-      const actual=Math.max(0,planned-(s.nem||0)-(s.dov||0)-propDaysT);
+      const actual=Math.max(0,planned-(s.nem||0)-(s.ocr||0)-(s.dov||0)-propDaysT);
       const dochPct=planned>0?Math.round(Math.min(1,actual/planned)*100)/100:1;
       const kpiPct=bd.kpiPct!==undefined?bd.kpiPct:1;
       const pskPct=bd.pskPct!==undefined?bd.pskPct:1;
@@ -1579,7 +1582,7 @@ table{border-collapse:collapse}td,th{font-family:Calibri;font-size:9pt;border:0.
         }
         return days;
       })();
-      const actual=Math.max(0, planned-(s.nem||0)-(s.dov||0)-propDays);
+      const actual=Math.max(0, planned-(s.nem||0)-(s.ocr||0)-(s.dov||0)-propDays);
       const dochPct=planned>0?Math.round(Math.min(1,actual/planned)*100)/100:1;
       const kpiPct=bd.kpiPct!==undefined?bd.kpiPct:1;
       const pskPct=bd.pskPct!==undefined?bd.pskPct:1;
@@ -1726,7 +1729,7 @@ function doPrintBonus(){
         }
         return days;
       })();
-      const actual=Math.max(0, planned-(s.nem||0)-(s.dov||0)-propDays);
+      const actual=Math.max(0, planned-(s.nem||0)-(s.ocr||0)-(s.dov||0)-propDays);
       const dochPct=planned>0?Math.round(Math.min(1,actual/planned)*100)/100:1;
       const kpiPct=bd.kpiPct!==undefined?bd.kpiPct:1;
       const pskPct=bd.pskPct!==undefined?bd.pskPct:1;
@@ -1998,6 +2001,7 @@ function render(){
   ths+=`<th style="color:var(--day-tx);min-width:32px">Dny</th>`;
   ths+=`<th style="color:var(--D-tx);min-width:22px">D</th>`;
   ths+=`<th style="color:var(--N-tx);min-width:22px">N</th>`;
+  ths+=`<th style="color:var(--N-tx);min-width:28px">OČR</th>`;
   ths+=`<th style="color:var(--ngt-tx);min-width:36px">Noční h</th>`;
   ths+=`<th style="color:var(--wed-tx);min-width:36px">Víkend h</th>`;
   ths+=`<th style="color:#d97706;min-width:36px;font-size:9px">Přesčas 25%</th>`;
@@ -2069,6 +2073,7 @@ function render(){
         html+=`<td class="ts" style="color:var(--day-tx)">${s.days||''}</td>`;
         html+=`<td class="ts" style="color:var(--D-tx)">${s.dov||''}</td>`;
         html+=`<td class="ts" style="color:var(--N-tx)">${s.nem||''}</td>`;
+        html+=`<td class="ts" style="color:var(--N-tx)">${s.ocr||''}</td>`;
         html+=`<td class="ts" style="color:var(--ngt-tx)">${!is2&&s.nightH>0?s.nightH:is2?'':''}</td>`;
         html+=`<td class="ts" style="color:var(--wed-tx)">${s.weH>0?s.weH:''}</td>`;
         html+=`<td class="ts" style="color:#d97706">${s.otW>0?s.otW:''}</td>`;
@@ -2174,6 +2179,8 @@ function render(){
     html+=`<td class="ts" style="color:var(--day-tx)">${tD||''}</td>`;
     html+=`<td class="ts" style="color:var(--D-tx)">${tDov||''}</td>`;
     html+=`<td class="ts" style="color:var(--N-tx)">${tNem||''}</td>`;
+    let tOcr=0;ST.emps.forEach(e=>{if(e.prov!=='brigada'){const s2=calcSums(e);tOcr+=s2.ocr||0;}});
+    html+=`<td class="ts" style="color:var(--N-tx)">${tOcr||''}</td>`;
     html+=`<td class="ts" style="color:var(--ngt-tx)">${tN>0?r2(tN):''}</td>`;
     html+=`<td class="ts" style="color:var(--wed-tx)">${tW>0?r2(tW):''}</td>`;
     html+=`<td class="ts" style="color:#d97706">${tOtW>0?r2(tOtW):''}</td>`;
@@ -2324,7 +2331,7 @@ function openCell(empId,day){
     const sel=document.getElementById('ct');
     ['hOT','hOTSO','hOTNE','hOTSV','hSV','hNEG','hP'].forEach(id=>document.getElementById(id).value='');
     if(!rec?.t)sel.value='';
-    else if(rec.t==='N')sel.value='N';else if(rec.t==='D')sel.value='D';else if(rec.t==='D2')sel.value=rec.start?'D2S':'D2';
+    else if(rec.t==='N')sel.value='N';else if(rec.t==='OCR')sel.value='OCR';else if(rec.t==='D')sel.value='D';else if(rec.t==='D2')sel.value=rec.start?'D2S':'D2';
     else if(rec.t==='P'){sel.value='P';document.getElementById('hP').value=rec.h||'';}
     else if(rec.t==='ot'){sel.value='ot';document.getElementById('hOT').value=rec.h||'';}
     else if(rec.t==='otso'){sel.value='otso';document.getElementById('hOTSO').value=rec.h||'';}
@@ -2413,7 +2420,7 @@ function saveCell(){
   else{
     const t=document.getElementById('ct').value;
     if(!t)delete emp.data[ET.day];
-    else if(t==='N')emp.data[ET.day]={t:'N'};else if(t==='D')emp.data[ET.day]={t:'D'};else if(t==='D2')emp.data[ET.day]={t:'D2'};else if(t==='D2S')emp.data[ET.day]={t:'D2',start:true};
+    else if(t==='N')emp.data[ET.day]={t:'N'};else if(t==='OCR')emp.data[ET.day]={t:'OCR'};else if(t==='D')emp.data[ET.day]={t:'D'};else if(t==='D2')emp.data[ET.day]={t:'D2'};else if(t==='D2S')emp.data[ET.day]={t:'D2',start:true};
     else if(t==='P')emp.data[ET.day]={t:'P',h:parseFloat(document.getElementById('hP').value)||0};
     else if(t==='ot')emp.data[ET.day]={t:'ot',h:parseFloat(document.getElementById('hOT').value)||0};
     else if(t==='otso')emp.data[ET.day]={t:'otso',h:parseFloat(document.getElementById('hOTSO').value)||0};
