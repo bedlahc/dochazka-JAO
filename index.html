@@ -2136,7 +2136,7 @@ function render(){
     let tD=0,tN=0,tW=0,tOtW=0,tOtSo=0,tOtNe=0,tOtSv=0,tM=0,tNem=0,tDov=0,tPr=0;
     emps.forEach(e=>{
       const s=calcSums(e);
-      if(e.prov!=='brigada'){tD+=s.days;tN+=s.nightH;tW+=s.weH;tOtW+=s.otW||0;tOtSo+=s.otSo||0;tOtNe+=s.otNe||0;tOtSv+=s.otSv||0;tM+=s.negH;tNem+=s.nem;tDov+=s.dov;tPr+=s.prop;}
+      if(e.prov!=='brigada'){tD+=s.days;tN+=s.nightH;tW+=s.weH;tOtW+=s.otW||0;tOtSo+=s.otSo||0;tOtNe+=s.otNe||0;tOtSv+=s.otSv||0;tM+=s.negH;tNem+=s.nem;tOcr+=s.ocr||0;tDov+=s.dov;tPr+=s.prop;}
     });
 
     // Per-day manual sums (4sm + 2sm + brigada_auto + offwc + offceln)
@@ -2179,7 +2179,6 @@ function render(){
     html+=`<td class="ts" style="color:var(--day-tx)">${tD||''}</td>`;
     html+=`<td class="ts" style="color:var(--D-tx)">${tDov||''}</td>`;
     html+=`<td class="ts" style="color:var(--N-tx)">${tNem||''}</td>`;
-    let tOcr=0;ST.emps.forEach(e=>{if(e.prov!=='brigada'){const s2=calcSums(e);tOcr+=s2.ocr||0;}});
     html+=`<td class="ts" style="color:var(--N-tx)">${tOcr||''}</td>`;
     html+=`<td class="ts" style="color:var(--ngt-tx)">${tN>0?r2(tN):''}</td>`;
     html+=`<td class="ts" style="color:var(--wed-tx)">${tW>0?r2(tW):''}</td>`;
