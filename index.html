@@ -2510,7 +2510,7 @@ function printNodays(show4sm,show2sm,showBrig,showSum,grps){
     <h2>Docházka souhrn — ${MCZ2[ST.m]} ${ST.y} — Damco Jaroměř</h2>
     <table><thead><tr>
       <th style="text-align:left">Jméno</th>
-      <th>Dny</th><th class="cD">D</th><th class="cN">N</th>
+      <th>Dny</th><th class="cD">D</th><th class="cN">N</th><th class="cN">OČR</th>
       <th class="sn">Noční h</th><th class="swe">Víkend h</th>
       <th>Př 25%</th><th>Př So</th><th>Př Ne</th><th>Př sv</th>
       <th class="neg">Mínus</th><th class="cP">P h</th><th class="sv">Svátek h</th>
@@ -2533,6 +2533,7 @@ function printNodays(show4sm,show2sm,showBrig,showSum,grps){
       html+=`<td class="num">${s.days||''}</td>`;
       html+=`<td class="num cD">${s.dov||''}</td>`;
       html+=`<td class="num cN">${s.nem||''}</td>`;
+      html+=`<td class="num cN">${s.ocr||''}</td>`;
       html+=`<td class="num sn">${s.nightH>0?s.nightH:''}</td>`;
       html+=`<td class="num swe">${s.weH>0?s.weH:''}</td>`;
       html+=`<td class="num">${s.otW>0?s.otW:''}</td>`;
@@ -2555,21 +2556,21 @@ function printNodays(show4sm,show2sm,showBrig,showSum,grps){
       if(!grps[g]) return;
       const list=ST.emps.filter(e=>e.prov==='4sm'&&e.grp===g);
       if(!list.length) return;
-      html+=`<tr><td colspan="15" class="grp" style="background:${grpColors[g]}">4-SMĚNNÝ — ${GL[g]}</td></tr>`;
+      html+=`<tr><td colspan="16" class="grp" style="background:${grpColors[g]}">4-SMĚNNÝ — ${GL[g]}</td></tr>`;
       list.forEach(addRow);
     });
   }
   if(show2sm){
     const f2=ST.emps.filter(e=>e.prov==='2sm');
     if(f2.length){
-      html+=`<tr><td colspan="15" class="grp" style="background:#FED7AA">2-SMĚNNÝ PROVOZ</td></tr>`;
+      html+=`<tr><td colspan="16" class="grp" style="background:#FED7AA">2-SMĚNNÝ PROVOZ</td></tr>`;
       f2.forEach(addRow);
     }
   }
   if(showBrig){
     const fB=ST.emps.filter(e=>e.prov==='brigada');
     if(fB.length){
-      html+=`<tr><td colspan="15" class="grp" style="background:#EDE9FE">BRIGÁDNÍCI</td></tr>`;
+      html+=`<tr><td colspan="16" class="grp" style="background:#EDE9FE">BRIGÁDNÍCI</td></tr>`;
       fB.forEach(addRow);
     }
   }
@@ -2616,7 +2617,7 @@ function printNodays(show4sm,show2sm,showBrig,showSum,grps){
     ST.emps.forEach(e=>{const s=calcSums(e);if(e.prov!=='brigada'){tD+=s.days;tN+=s.nightH;tW+=s.weH;tOtW+=s.otW||0;tOtSo+=s.otSo||0;tOtNe+=s.otNe||0;tOtSv+=s.otSv||0;tM+=s.negH;tNem+=s.nem;tOcr+=s.ocr||0;tDov+=s.dov;tPr+=s.prop;tSv+=s.svatekH||0;}});
     html+=`<tr style="font-weight:bold;background:#F1F5F9">
       <td class="nm">CELKEM</td>
-      <td class="num">${tD||''}</td><td class="num cD">${tDov||''}</td><td class="num cN">${tNem||''}</td>
+      <td class="num">${tD||''}</td><td class="num cD">${tDov||''}</td><td class="num cN">${tNem||''}</td><td class="num cN">${tOcr||''}</td>
       <td class="num sn">${tN>0?r2(tN):''}</td><td class="num swe">${tW>0?r2(tW):''}</td>
       <td class="num">${tOtW>0?r2(tOtW):''}</td><td class="num">${tOtSo>0?r2(tOtSo):''}</td>
       <td class="num">${tOtNe>0?r2(tOtNe):''}</td><td class="num sv">${tOtSv>0?r2(tOtSv):''}</td>
