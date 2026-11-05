@@ -627,7 +627,10 @@ function calcSums(emp){
       }
       continue;
     }// D/2
-    if(t==='P'){prop+=h;if(!off){days++;if(night)nightH+=8;if(isWknd)weH+=12;}continue;}// Propuska: odprac. den + noční/víkend příplatky
+    if(t==='P'){// Propustka: odprac. den, ale hodiny propustky snižují noční (8 h) i víkendové (12 h) hodiny směny
+      prop+=h;
+      if(!off){days++;if(night)nightH+=Math.max(0,8-h);if(isWknd)weH+=Math.max(0,12-h);}
+      continue;}
     if(t==='ot'){// weekday OT 25%
       otW+=h;
       if(!off&&h<12){days++;if(night)nightH+=8;}// partial OT: add day + 8h night bonus
