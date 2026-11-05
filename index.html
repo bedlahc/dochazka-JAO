@@ -363,6 +363,7 @@ tr:hover td.cn{filter:none;background:var(--bg4)!important;box-shadow:4px 0 8px 
     <div class="fr" id="rSV" style="display:none"><label>Svátek – odpracované hodiny</label><input type="number" id="hSV" step="0.5" min="0" value="11" placeholder="11"></div>
     <div class="fr" id="rNEG" style="display:none"><label>Mínus – hodin</label><input type="number" id="hNEG" step="0.5" min="0.5" placeholder="3"></div>
     <div class="fr" id="rP" style="display:none"><label>Hodin propusky</label><input type="number" id="hP" step="0.5" min="0" placeholder="2"></div>
+    <div class="fr" id="rPpos" style="display:none"><label>Propustka na</label><select id="pPos"><option value="end">konci směny (odchod dříve)</option><option value="start">začátku směny (příchod později)</option></select></div>
   </div>
   <div class="mbtns">
     <button class="bcl" onclick="closeMod()">Zrušit</button>
@@ -629,7 +630,18 @@ function calcSums(emp){
     }// D/2
     if(t==='P'){// Propustka: odprac. den, ale hodiny propustky snižují noční (8 h) i víkendové (12 h) hodiny směny
       prop+=h;
-      if(!off){days++;if(night)nightH+=Math.max(0,8-h);if(isWknd)weH+=Math.max(0,12-h);}
+      if(!off){
+        days++;
+        if(night){
+          // Noční příplatek = 22:00–6:00, tj. posledních 8 h z 12h noční směny (18:00–6:00).
+          // Propustka na KONCI směny (odchod dříve) ubere min(h,8) nočních h;
+          // propustka na ZAČÁTKU směny (příchod později) ubere noční h až po 22:00 → max(0,h−4).
+          // (stejné jako D/2: 6 h na začátku = 6 noční h, 6 h na konci = 2 noční h)
+          const lostN=rec?.start===true?Math.max(0,Math.min(h,12)-4):Math.min(h,8);
+          nightH+=8-lostN;
+        }
+        if(isWknd)weH+=Math.max(0,12-h);
+      }
       continue;}
     if(t==='ot'){// weekday OT 25%
       otW+=h;
@@ -721,7 +733,7 @@ function cellDisp(emp,d,rec){
     if(!isOffT(sh)) return 11;
   }
   if(!t) return null;
-  if(t==='N') return'N';if(t==='OCR') return'OČR';if(t==='D') return'D';if(t==='D2') return rec?.start?'D/2↑':'D/2';if(t==='P') return(h||'')+'/P';
+  if(t==='N') return'N';if(t==='OCR') return'OČR';if(t==='D') return'D';if(t==='D2') return rec?.start?'D/2↑':'D/2';if(t==='P') return(h||'')+'/P'+(rec?.start?'↑':'');
   if(t==='ot') return h||'';if(t==='neg') return'-'+(h||'');
   if(t==='otso') return h||'';if(t==='otne') return h||'';
   if(t==='otsv') return h||'';if(t==='sv') return h||11;
@@ -2346,9 +2358,10 @@ function openCell(empId,day){
   else{
     const sel=document.getElementById('ct');
     ['hOT','hOTSO','hOTNE','hOTSV','hSV','hNEG','hP'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('pPos').value='end';
     if(!rec?.t)sel.value='';
     else if(rec.t==='N')sel.value='N';else if(rec.t==='OCR')sel.value='OCR';else if(rec.t==='D')sel.value='D';else if(rec.t==='D2')sel.value=rec.start?'D2S':'D2';
-    else if(rec.t==='P'){sel.value='P';document.getElementById('hP').value=rec.h||'';}
+    else if(rec.t==='P'){sel.value='P';document.getElementById('hP').value=rec.h||'';document.getElementById('pPos').value=rec.start?'start':'end';}
     else if(rec.t==='ot'){sel.value='ot';document.getElementById('hOT').value=rec.h||'';}
     else if(rec.t==='otso'){sel.value='otso';document.getElementById('hOTSO').value=rec.h||'';}
     else if(rec.t==='otne'){sel.value='otne';document.getElementById('hOTNE').value=rec.h||'';}
@@ -2361,14 +2374,19 @@ function openCell(empId,day){
 }
 function ctChg(){
   const t=document.getElementById('ct').value;
-  ['rOT','rOTSO','rOTNE','rOTSV','rSV','rNEG','rP'].forEach(id=>document.getElementById(id).style.display='none');
+  ['rOT','rOTSO','rOTNE','rOTSV','rSV','rNEG','rP','rPpos'].forEach(id=>document.getElementById(id).style.display='none');
   if(t==='ot')document.getElementById('rOT').style.display='flex';
   else if(t==='otso')document.getElementById('rOTSO').style.display='flex';
   else if(t==='otne')document.getElementById('rOTNE').style.display='flex';
   else if(t==='otsv')document.getElementById('rOTSV').style.display='flex';
   else if(t==='sv'){document.getElementById('rSV').style.display='flex';}
   else if(t==='neg')document.getElementById('rNEG').style.display='flex';
-  else if(t==='P')document.getElementById('rP').style.display='flex';
+  else if(t==='P'){
+    document.getElementById('rP').style.display='flex';
+    // začátek / konec směny má smysl jen u 4směnného provozu (noční hodiny)
+    const empP=ET&&ST.emps.find(e=>e.id===ET.empId);
+    if(empP&&empP.prov==='4sm') document.getElementById('rPpos').style.display='flex';
+  }
 }
 function setShiftOverride(type){
   if(!ET) return;
@@ -2437,7 +2455,11 @@ function saveCell(){
     const t=document.getElementById('ct').value;
     if(!t)delete emp.data[ET.day];
     else if(t==='N')emp.data[ET.day]={t:'N'};else if(t==='OCR')emp.data[ET.day]={t:'OCR'};else if(t==='D')emp.data[ET.day]={t:'D'};else if(t==='D2')emp.data[ET.day]={t:'D2'};else if(t==='D2S')emp.data[ET.day]={t:'D2',start:true};
-    else if(t==='P')emp.data[ET.day]={t:'P',h:parseFloat(document.getElementById('hP').value)||0};
+    else if(t==='P'){
+      const pRec={t:'P',h:parseFloat(document.getElementById('hP').value)||0};
+      if(emp.prov==='4sm'&&document.getElementById('pPos').value==='start') pRec.start=true;// propustka na začátku směny (jinak na konci)
+      emp.data[ET.day]=pRec;
+    }
     else if(t==='ot')emp.data[ET.day]={t:'ot',h:parseFloat(document.getElementById('hOT').value)||0};
     else if(t==='otso')emp.data[ET.day]={t:'otso',h:parseFloat(document.getElementById('hOTSO').value)||0};
     else if(t==='otne')emp.data[ET.day]={t:'otne',h:parseFloat(document.getElementById('hOTNE').value)||0};
