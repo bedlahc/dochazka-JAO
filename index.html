@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Docházka — Damco Jaroměř</title>
+<title>Docházka — Maersk Jaroměř</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -234,7 +234,7 @@ tr:hover td.cn{filter:none;background:var(--bg4)!important;box-shadow:4px 0 8px 
 </head>
 <body>
 <div class="topbar">
-  <div class="logo">DAMCO <b>JAROMĚŘ</b></div>
+  <div class="logo">MAERSK <b>JAROMĚŘ</b></div>
   <div style="display:flex;align-items:center;gap:6px;margin-left:4px">
     <span id="userEmail" style="font-size:11px;color:var(--tx3);font-family:'DM Mono',monospace"></span>
     <button id="bonusTabBtn" onclick="showBonusPage()" style="display:none;height:24px;padding:0 10px;font-size:11px;background:#fef3c7;border:1px solid #fbbf24;border-radius:4px;color:#92400e;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600">💰 Bonusy</button>
@@ -252,6 +252,10 @@ tr:hover td.cn{filter:none;background:var(--bg4)!important;box-shadow:4px 0 8px 
       <option value="4">Duben 2026</option><option value="5">Květen 2026</option><option value="6">Červen 2026</option>
       <option value="7">Červenec 2026</option><option value="8">Srpen 2026</option><option value="9">Září 2026</option>
       <option value="10">Říjen 2026</option><option value="11">Listopad 2026</option><option value="12">Prosinec 2026</option>
+      <option value="13">Leden 2027</option><option value="14">Únor 2027</option><option value="15">Březen 2027</option>
+      <option value="16">Duben 2027</option><option value="17">Květen 2027</option><option value="18">Červen 2027</option>
+      <option value="19">Červenec 2027</option><option value="20">Srpen 2027</option><option value="21">Září 2027</option>
+      <option value="22">Říjen 2027</option><option value="23">Listopad 2027</option><option value="24">Prosinec 2027</option>
     </select>
     <select id="psel" onchange="onFC()"><option value="all">Všechny provozy</option><option value="4sm">4-směnný</option><option value="2sm">2-směnný</option><option value="brigada">Brigádníci</option></select>
     <select id="gsel" onchange="onFC()">
@@ -413,21 +417,29 @@ tr:hover td.cn{filter:none;background:var(--bg4)!important;box-shadow:4px 0 8px 
 </div></div>
 
 <script>
-const MCZ=['','Leden','Únor','Březen','Duben','Květen','Červen','Červenec','Srpen','Září','Říjen','Listopad','Prosinec'];
+// ── ROKY: souvislé číslování měsíců → 1–12 = rok 2026, 13–24 = rok 2027 ──
+// (ST.m je pořadí měsíce od ledna 2026; skutečný měsíc a rok se odvozují níže)
+const MBASE=2026, MMAX=24;
+const realM=m=>((m-1)%12)+1;                         // skutečný měsíc 1–12
+const yOf=m=>MBASE+Math.floor((m-1)/12);            // skutečný rok měsíce
+const MCZ=['','Leden','Únor','Březen','Duben','Květen','Červen','Červenec','Srpen','Září','Říjen','Listopad','Prosinec',
+  'Leden','Únor','Březen','Duben','Květen','Červen','Červenec','Srpen','Září','Říjen','Listopad','Prosinec'];
 const DN=['Ne','Po','Út','St','Čt','Pá','So'];
 const DM=[0,31,28,31,30,31,30,31,31,30,31,30,31];
-const dInM=(m,y)=>m===2&&y%4===0?29:DM[m];
-const dow=(y,m,d)=>new Date(y,m-1,d).getDay();
+const dInM=(m,y)=>{const r=realM(m),yy=yOf(m);return r===2&&((yy%4===0&&yy%100!==0)||yy%400===0)?29:DM[r];};
+const dow=(y,m,d)=>new Date(yOf(m),realM(m)-1,d).getDay();
 const isWE=(y,m,d)=>{const w=dow(y,m,d);return w===0||w===6;};
 const r2=v=>Math.round(v*10)/10;
 
-// Czech public holidays 2026
+// Czech public holidays 2026 (klíče 'měsíc-den'; pro rok 2027 je měsíc posunutý o 12)
 const SVATKY={'1-1':'Den obnovy samostatného českého státu','4-3':'Velký pátek','4-6':'Velikonoční pondělí','5-1':'Svátek práce','5-8':'Den vítězství','7-5':'Den slovanských věrozvěstů','7-6':'Den upálení M.J.Husa','9-28':'Den české státnosti','10-28':'Den vzniku Československa','11-17':'Den boje za svobodu','12-24':'Štědrý den','12-25':'1. svátek vánoční','12-26':'2. svátek vánoční'};
+// Svátky 2027 (měsíce 13–24): Velký pátek 26. 3., Velikonoční pondělí 29. 3.
+Object.assign(SVATKY,{'13-1':'Den obnovy samostatného českého státu','15-26':'Velký pátek','15-29':'Velikonoční pondělí','17-1':'Svátek práce','17-8':'Den vítězství','19-5':'Den slovanských věrozvěstů','19-6':'Den upálení M.J.Husa','21-28':'Den české státnosti','22-28':'Den vzniku Československa','23-17':'Den boje za svobodu','24-24':'Štědrý den','24-25':'1. svátek vánoční','24-26':'2. svátek vánoční'});
 function isSv(m,d){return !!SVATKY[m+'-'+d];}
 function svName(m,d){return SVATKY[m+'-'+d]||'';}
 
 // SCHEDULES extracted from Excel (both sheets identical pattern)
-const SS={"1":{"1":{"den":"red","noc":"dark"},"2":{"den":"blue","noc":"green"},"3":{"den":"blue","noc":"green"},"4":{"den":"blue","noc":"green"},"5":{"den":"dark","noc":"red"},"6":{"den":"dark","noc":"red"},"7":{"den":"green","noc":"blue"},"8":{"den":"green","noc":"blue"},"9":{"den":"red","noc":"dark"},"10":{"1":{"den":"blue","noc":"green"},"2":{"den":"dark","noc":"red"},"3":{"den":"dark","noc":"red"},"4":{"den":"dark","noc":"red"},"5":{"den":"green","noc":"blue"},"6":{"den":"green","noc":"blue"},"7":{"den":"red","noc":"dark"},"8":{"den":"red","noc":"dark"},"9":{"den":"blue","noc":"green"},"10":{"den":"blue","noc":"green"},"11":{"den":"blue","noc":"green"},"12":{"den":"dark","noc":"red"},"13":{"den":"dark","noc":"red"},"14":{"den":"green","noc":"blue"},"15":{"den":"green","noc":"blue"},"16":{"den":"red","noc":"dark"},"17":{"den":"red","noc":"dark"},"18":{"den":"red","noc":"dark"},"19":{"den":"blue","noc":"green"},"20":{"den":"blue","noc":"green"},"21":{"den":"dark","noc":"red"},"22":{"den":"dark","noc":"red"},"23":{"den":"green","noc":"blue"},"24":{"den":"green","noc":"blue"},"25":{"den":"green","noc":"blue"},"26":{"den":"red","noc":"dark"},"27":{"den":"red","noc":"dark"},"28":{"den":"blue","noc":"green"},"29":{"den":"blue","noc":"green"},"30":{"den":"dark","noc":"red"},"31":{"den":"dark","noc":"red"}},"11":{"den":"red","noc":"dark"},"12":{"den":"blue","noc":"green"},"13":{"den":"blue","noc":"green"},"14":{"den":"dark","noc":"red"},"15":{"den":"dark","noc":"red"},"16":{"den":"green","noc":"blue"},"17":{"den":"green","noc":"blue"},"18":{"den":"green","noc":"blue"},"19":{"den":"red","noc":"dark"},"20":{"den":"red","noc":"dark"},"21":{"den":"blue","noc":"green"},"22":{"den":"blue","noc":"green"},"23":{"den":"dark","noc":"red"},"24":{"den":"dark","noc":"red"},"25":{"den":"dark","noc":"red"},"26":{"den":"green","noc":"blue"},"27":{"den":"green","noc":"blue"},"28":{"den":"red","noc":"dark"},"29":{"den":"red","noc":"dark"},"30":{"den":"blue","noc":"green"},"31":{"den":"blue","noc":"green"}},"2":{"1":{"den":"blue","noc":"green"},"2":{"den":"dark","noc":"red"},"3":{"den":"dark","noc":"red"},"4":{"den":"green","noc":"blue"},"5":{"den":"green","noc":"blue"},"6":{"den":"red","noc":"dark"},"7":{"den":"red","noc":"dark"},"8":{"den":"red","noc":"dark"},"9":{"den":"blue","noc":"green"},"10":{"den":"blue","noc":"green"},"11":{"den":"dark","noc":"red"},"12":{"den":"dark","noc":"red"},"13":{"den":"green","noc":"blue"},"14":{"den":"green","noc":"blue"},"15":{"den":"green","noc":"blue"},"16":{"den":"red","noc":"dark"},"17":{"den":"red","noc":"dark"},"18":{"den":"blue","noc":"green"},"19":{"den":"blue","noc":"green"},"20":{"den":"dark","noc":"red"},"21":{"den":"dark","noc":"red"},"22":{"den":"dark","noc":"red"},"23":{"den":"green","noc":"blue"},"24":{"den":"green","noc":"blue"},"25":{"den":"red","noc":"dark"},"26":{"den":"red","noc":"dark"},"27":{"den":"blue","noc":"green"},"28":{"den":"blue","noc":"green"}},"3":{"1":{"den":"blue","noc":"green"},"2":{"den":"dark","noc":"red"},"3":{"den":"dark","noc":"red"},"4":{"den":"green","noc":"blue"},"5":{"den":"green","noc":"blue"},"6":{"den":"red","noc":"dark"},"7":{"den":"red","noc":"dark"},"8":{"den":"red","noc":"dark"},"9":{"den":"blue","noc":"green"},"10":{"den":"blue","noc":"green"},"11":{"den":"dark","noc":"red"},"12":{"den":"dark","noc":"red"},"13":{"den":"green","noc":"blue"},"14":{"den":"green","noc":"blue"},"15":{"den":"green","noc":"blue"},"16":{"den":"red","noc":"dark"},"17":{"den":"red","noc":"dark"},"18":{"den":"blue","noc":"green"},"19":{"den":"blue","noc":"green"},"20":{"den":"dark","noc":"red"},"21":{"den":"dark","noc":"red"},"22":{"den":"dark","noc":"red"},"23":{"den":"green","noc":"blue"},"24":{"den":"green","noc":"blue"},"25":{"den":"red","noc":"dark"},"26":{"den":"red","noc":"dark"},"27":{"den":"blue","noc":"green"},"28":{"den":"blue","noc":"green"},"29":{"den":"blue","noc":"green"},"30":{"den":"dark","noc":"red"},"31":{"den":"dark","noc":"red"}},"4":{"1":{"den":"green","noc":"blue"},"2":{"den":"green","noc":"blue"},"3":{"den":"red","noc":"dark"},"4":{"den":"red","noc":"dark"},"5":{"den":"red","noc":"dark"},"6":{"den":"blue","noc":"green"},"7":{"den":"blue","noc":"green"},"8":{"den":"dark","noc":"red"},"9":{"den":"dark","noc":"red"},"10":{"den":"green","noc":"blue"},"11":{"den":"green","noc":"blue"},"12":{"den":"green","noc":"blue"},"13":{"den":"red","noc":"dark"},"14":{"den":"red","noc":"dark"},"15":{"den":"blue","noc":"green"},"16":{"den":"blue","noc":"green"},"17":{"den":"dark","noc":"red"},"18":{"den":"dark","noc":"red"},"19":{"den":"dark","noc":"red"},"20":{"den":"green","noc":"blue"},"21":{"den":"green","noc":"blue"},"22":{"den":"red","noc":"dark"},"23":{"den":"red","noc":"dark"},"24":{"den":"blue","noc":"green"},"25":{"den":"blue","noc":"green"},"26":{"den":"blue","noc":"green"},"27":{"den":"dark","noc":"red"},"28":{"den":"dark","noc":"red"},"29":{"den":"green","noc":"blue"},"30":{"den":"green","noc":"blue"}},"5":{"1":{"den":"red","noc":"dark"},"2":{"den":"red","noc":"dark"},"3":{"den":"red","noc":"dark"},"4":{"den":"blue","noc":"green"},"5":{"den":"blue","noc":"green"},"6":{"den":"dark","noc":"red"},"7":{"den":"dark","noc":"red"},"8":{"den":"green","noc":"blue"},"9":{"den":"green","noc":"blue"},"10":{"den":"green","noc":"blue"},"11":{"den":"red","noc":"dark"},"12":{"den":"red","noc":"dark"},"13":{"den":"blue","noc":"green"},"14":{"den":"blue","noc":"green"},"15":{"den":"dark","noc":"red"},"16":{"den":"dark","noc":"red"},"17":{"den":"dark","noc":"red"},"18":{"den":"green","noc":"blue"},"19":{"den":"green","noc":"blue"},"20":{"den":"red","noc":"dark"},"21":{"den":"red","noc":"dark"},"22":{"den":"blue","noc":"green"},"23":{"den":"blue","noc":"green"},"24":{"den":"blue","noc":"green"},"25":{"den":"dark","noc":"red"},"26":{"den":"dark","noc":"red"},"27":{"den":"green","noc":"blue"},"28":{"den":"green","noc":"blue"},"29":{"den":"red","noc":"dark"},"30":{"den":"red","noc":"dark"},"31":{"den":"red","noc":"dark"}},"6":{"1":{"den":"blue","noc":"green"},"2":{"den":"blue","noc":"green"},"3":{"den":"dark","noc":"red"},"4":{"den":"dark","noc":"red"},"5":{"den":"green","noc":"blue"},"6":{"den":"green","noc":"blue"},"7":{"den":"green","noc":"blue"},"8":{"den":"red","noc":"dark"},"9":{"den":"red","noc":"dark"},"10":{"den":"blue","noc":"green"},"11":{"den":"blue","noc":"green"},"12":{"den":"dark","noc":"red"},"13":{"den":"dark","noc":"red"},"14":{"den":"dark","noc":"red"},"15":{"den":"green","noc":"blue"},"16":{"den":"green","noc":"blue"},"17":{"den":"red","noc":"dark"},"18":{"den":"red","noc":"dark"},"19":{"den":"blue","noc":"green"},"20":{"den":"blue","noc":"green"},"21":{"den":"blue","noc":"green"},"22":{"den":"dark","noc":"red"},"23":{"den":"dark","noc":"red"},"24":{"den":"green","noc":"blue"},"25":{"den":"green","noc":"blue"},"26":{"den":"red","noc":"dark"},"27":{"den":"red","noc":"dark"},"28":{"den":"red","noc":"dark"},"29":{"den":"blue","noc":"green"},"30":{"den":"blue","noc":"green"}},"7":{"1":{"den":"dark","noc":"red"},"2":{"den":"dark","noc":"red"},"3":{"den":"green","noc":"blue"},"4":{"den":"green","noc":"blue"},"5":{"den":"green","noc":"blue"},"6":{"den":"red","noc":"dark"},"7":{"den":"red","noc":"dark"},"8":{"den":"blue","noc":"green"},"9":{"den":"blue","noc":"green"},"10":{"den":"dark","noc":"red"},"11":{"den":"dark","noc":"red"},"12":{"den":"dark","noc":"red"},"13":{"den":"green","noc":"blue"},"14":{"den":"green","noc":"blue"},"15":{"den":"red","noc":"dark"},"16":{"den":"red","noc":"dark"},"17":{"den":"blue","noc":"green"},"18":{"den":"blue","noc":"green"},"19":{"den":"blue","noc":"green"},"20":{"den":"dark","noc":"red"},"21":{"den":"dark","noc":"red"},"22":{"den":"green","noc":"blue"},"23":{"den":"green","noc":"blue"},"24":{"den":"red","noc":"dark"},"25":{"den":"red","noc":"dark"},"26":{"den":"red","noc":"dark"},"27":{"den":"blue","noc":"green"},"28":{"den":"blue","noc":"green"},"29":{"den":"dark","noc":"red"},"30":{"den":"dark","noc":"red"},"31":{"den":"green","noc":"blue"}},"8":{"1":{"den":"green","noc":"blue"},"2":{"den":"green","noc":"blue"},"3":{"den":"red","noc":"dark"},"4":{"den":"red","noc":"dark"},"5":{"den":"blue","noc":"green"},"6":{"den":"blue","noc":"green"},"7":{"den":"dark","noc":"red"},"8":{"den":"dark","noc":"red"},"9":{"den":"dark","noc":"red"},"10":{"den":"green","noc":"blue"},"11":{"den":"green","noc":"blue"},"12":{"den":"red","noc":"dark"},"13":{"den":"red","noc":"dark"},"14":{"den":"blue","noc":"green"},"15":{"den":"blue","noc":"green"},"16":{"den":"blue","noc":"green"},"17":{"den":"dark","noc":"red"},"18":{"den":"dark","noc":"red"},"19":{"den":"green","noc":"blue"},"20":{"den":"green","noc":"blue"},"21":{"den":"red","noc":"dark"},"22":{"den":"red","noc":"dark"},"23":{"den":"red","noc":"dark"},"24":{"den":"blue","noc":"green"},"25":{"den":"blue","noc":"green"},"26":{"den":"dark","noc":"red"},"27":{"den":"dark","noc":"red"},"28":{"den":"green","noc":"blue"},"29":{"den":"green","noc":"blue"},"30":{"den":"green","noc":"blue"},"31":{"den":"red","noc":"dark"}},"9":{"1":{"den":"red","noc":"dark"},"2":{"den":"blue","noc":"green"},"3":{"den":"blue","noc":"green"},"4":{"den":"dark","noc":"red"},"5":{"den":"dark","noc":"red"},"6":{"den":"dark","noc":"red"},"7":{"den":"green","noc":"blue"},"8":{"den":"green","noc":"blue"},"9":{"den":"red","noc":"dark"},"10":{"den":"red","noc":"dark"},"11":{"den":"blue","noc":"green"},"12":{"den":"blue","noc":"green"},"13":{"den":"blue","noc":"green"},"14":{"den":"dark","noc":"red"},"15":{"den":"dark","noc":"red"},"16":{"den":"green","noc":"blue"},"17":{"den":"green","noc":"blue"},"18":{"den":"red","noc":"dark"},"19":{"den":"red","noc":"dark"},"20":{"den":"red","noc":"dark"},"21":{"den":"blue","noc":"green"},"22":{"den":"blue","noc":"green"},"23":{"den":"dark","noc":"red"},"24":{"den":"dark","noc":"red"},"25":{"den":"green","noc":"blue"},"26":{"den":"green","noc":"blue"},"27":{"den":"green","noc":"blue"},"28":{"den":"red","noc":"dark"},"29":{"den":"red","noc":"dark"},"30":{"den":"blue","noc":"green"}},"10":{"1":{"den":"blue","noc":"green"},"2":{"den":"dark","noc":"red"},"3":{"den":"dark","noc":"red"},"4":{"den":"dark","noc":"red"},"5":{"den":"green","noc":"blue"},"6":{"den":"green","noc":"blue"},"7":{"den":"red","noc":"dark"},"8":{"den":"red","noc":"dark"},"9":{"den":"blue","noc":"green"},"10":{"den":"blue","noc":"green"},"11":{"den":"blue","noc":"green"},"12":{"den":"dark","noc":"red"},"13":{"den":"dark","noc":"red"},"14":{"den":"green","noc":"blue"},"15":{"den":"green","noc":"blue"},"16":{"den":"red","noc":"dark"},"17":{"den":"red","noc":"dark"},"18":{"den":"red","noc":"dark"},"19":{"den":"blue","noc":"green"},"20":{"den":"blue","noc":"green"},"21":{"den":"dark","noc":"red"},"22":{"den":"dark","noc":"red"},"23":{"den":"green","noc":"blue"},"24":{"den":"green","noc":"blue"},"25":{"den":"green","noc":"blue"},"26":{"den":"red","noc":"dark"},"27":{"den":"red","noc":"dark"},"28":{"den":"blue","noc":"green"},"29":{"den":"blue","noc":"green"},"30":{"den":"dark","noc":"red"},"31":{"den":"dark","noc":"red"}},"11":{"1":{"den":"dark","noc":"red"},"2":{"den":"green","noc":"blue"},"3":{"den":"green","noc":"blue"},"4":{"den":"red","noc":"dark"},"5":{"den":"red","noc":"dark"},"6":{"den":"blue","noc":"green"},"7":{"den":"blue","noc":"green"},"8":{"den":"blue","noc":"green"},"9":{"den":"dark","noc":"red"},"10":{"den":"dark","noc":"red"},"11":{"den":"green","noc":"blue"},"12":{"den":"green","noc":"blue"},"13":{"den":"red","noc":"dark"},"14":{"den":"red","noc":"dark"},"15":{"den":"red","noc":"dark"},"16":{"den":"blue","noc":"green"},"17":{"den":"blue","noc":"green"},"18":{"den":"dark","noc":"red"},"19":{"den":"dark","noc":"red"},"20":{"den":"green","noc":"blue"},"21":{"den":"green","noc":"blue"},"22":{"den":"green","noc":"blue"},"23":{"den":"red","noc":"dark"},"24":{"den":"red","noc":"dark"},"25":{"den":"blue","noc":"green"},"26":{"den":"blue","noc":"green"},"27":{"den":"dark","noc":"red"},"28":{"den":"dark","noc":"red"},"29":{"den":"dark","noc":"red"},"30":{"den":"green","noc":"blue"}},"12":{"1":{"den":"green","noc":"blue"},"2":{"den":"red","noc":"dark"},"3":{"den":"red","noc":"dark"},"4":{"den":"blue","noc":"green"},"5":{"den":"blue","noc":"green"},"6":{"den":"blue","noc":"green"},"7":{"den":"dark","noc":"red"},"8":{"den":"dark","noc":"red"},"9":{"den":"green","noc":"blue"},"10":{"den":"green","noc":"blue"},"11":{"den":"red","noc":"dark"},"12":{"den":"red","noc":"dark"},"13":{"den":"red","noc":"dark"},"14":{"den":"blue","noc":"green"},"15":{"den":"blue","noc":"green"},"16":{"den":"dark","noc":"red"},"17":{"den":"dark","noc":"red"},"18":{"den":"green","noc":"blue"},"19":{"den":"green","noc":"blue"},"20":{"den":"green","noc":"blue"},"21":{"den":"red","noc":"dark"},"22":{"den":"red","noc":"dark"},"23":{"den":"blue","noc":"green"},"24":{"den":"blue","noc":"green"},"25":{"den":"dark","noc":"red"},"26":{"den":"dark","noc":"red"},"27":{"den":"dark","noc":"red"},"28":{"den":"green","noc":"blue"},"29":{"den":"green","noc":"blue"},"30":{"den":"red","noc":"dark"},"31":{"den":"red","noc":"dark"}}};;;;
+const SS={"1":{"1":{"den":"red","noc":"dark"},"2":{"den":"blue","noc":"green"},"3":{"den":"blue","noc":"green"},"4":{"den":"blue","noc":"green"},"5":{"den":"dark","noc":"red"},"6":{"den":"dark","noc":"red"},"7":{"den":"green","noc":"blue"},"8":{"den":"green","noc":"blue"},"9":{"den":"red","noc":"dark"},"10":{"den":"red","noc":"dark"},"11":{"den":"red","noc":"dark"},"12":{"den":"blue","noc":"green"},"13":{"den":"blue","noc":"green"},"14":{"den":"dark","noc":"red"},"15":{"den":"dark","noc":"red"},"16":{"den":"green","noc":"blue"},"17":{"den":"green","noc":"blue"},"18":{"den":"green","noc":"blue"},"19":{"den":"red","noc":"dark"},"20":{"den":"red","noc":"dark"},"21":{"den":"blue","noc":"green"},"22":{"den":"blue","noc":"green"},"23":{"den":"dark","noc":"red"},"24":{"den":"dark","noc":"red"},"25":{"den":"dark","noc":"red"},"26":{"den":"green","noc":"blue"},"27":{"den":"green","noc":"blue"},"28":{"den":"red","noc":"dark"},"29":{"den":"red","noc":"dark"},"30":{"den":"blue","noc":"green"},"31":{"den":"blue","noc":"green"}},"2":{"1":{"den":"blue","noc":"green"},"2":{"den":"dark","noc":"red"},"3":{"den":"dark","noc":"red"},"4":{"den":"green","noc":"blue"},"5":{"den":"green","noc":"blue"},"6":{"den":"red","noc":"dark"},"7":{"den":"red","noc":"dark"},"8":{"den":"red","noc":"dark"},"9":{"den":"blue","noc":"green"},"10":{"den":"blue","noc":"green"},"11":{"den":"dark","noc":"red"},"12":{"den":"dark","noc":"red"},"13":{"den":"green","noc":"blue"},"14":{"den":"green","noc":"blue"},"15":{"den":"green","noc":"blue"},"16":{"den":"red","noc":"dark"},"17":{"den":"red","noc":"dark"},"18":{"den":"blue","noc":"green"},"19":{"den":"blue","noc":"green"},"20":{"den":"dark","noc":"red"},"21":{"den":"dark","noc":"red"},"22":{"den":"dark","noc":"red"},"23":{"den":"green","noc":"blue"},"24":{"den":"green","noc":"blue"},"25":{"den":"red","noc":"dark"},"26":{"den":"red","noc":"dark"},"27":{"den":"blue","noc":"green"},"28":{"den":"blue","noc":"green"}},"3":{"1":{"den":"blue","noc":"green"},"2":{"den":"dark","noc":"red"},"3":{"den":"dark","noc":"red"},"4":{"den":"green","noc":"blue"},"5":{"den":"green","noc":"blue"},"6":{"den":"red","noc":"dark"},"7":{"den":"red","noc":"dark"},"8":{"den":"red","noc":"dark"},"9":{"den":"blue","noc":"green"},"10":{"den":"blue","noc":"green"},"11":{"den":"dark","noc":"red"},"12":{"den":"dark","noc":"red"},"13":{"den":"green","noc":"blue"},"14":{"den":"green","noc":"blue"},"15":{"den":"green","noc":"blue"},"16":{"den":"red","noc":"dark"},"17":{"den":"red","noc":"dark"},"18":{"den":"blue","noc":"green"},"19":{"den":"blue","noc":"green"},"20":{"den":"dark","noc":"red"},"21":{"den":"dark","noc":"red"},"22":{"den":"dark","noc":"red"},"23":{"den":"green","noc":"blue"},"24":{"den":"green","noc":"blue"},"25":{"den":"red","noc":"dark"},"26":{"den":"red","noc":"dark"},"27":{"den":"blue","noc":"green"},"28":{"den":"blue","noc":"green"},"29":{"den":"blue","noc":"green"},"30":{"den":"dark","noc":"red"},"31":{"den":"dark","noc":"red"}},"4":{"1":{"den":"green","noc":"blue"},"2":{"den":"green","noc":"blue"},"3":{"den":"red","noc":"dark"},"4":{"den":"red","noc":"dark"},"5":{"den":"red","noc":"dark"},"6":{"den":"blue","noc":"green"},"7":{"den":"blue","noc":"green"},"8":{"den":"dark","noc":"red"},"9":{"den":"dark","noc":"red"},"10":{"den":"green","noc":"blue"},"11":{"den":"green","noc":"blue"},"12":{"den":"green","noc":"blue"},"13":{"den":"red","noc":"dark"},"14":{"den":"red","noc":"dark"},"15":{"den":"blue","noc":"green"},"16":{"den":"blue","noc":"green"},"17":{"den":"dark","noc":"red"},"18":{"den":"dark","noc":"red"},"19":{"den":"dark","noc":"red"},"20":{"den":"green","noc":"blue"},"21":{"den":"green","noc":"blue"},"22":{"den":"red","noc":"dark"},"23":{"den":"red","noc":"dark"},"24":{"den":"blue","noc":"green"},"25":{"den":"blue","noc":"green"},"26":{"den":"blue","noc":"green"},"27":{"den":"dark","noc":"red"},"28":{"den":"dark","noc":"red"},"29":{"den":"green","noc":"blue"},"30":{"den":"green","noc":"blue"}},"5":{"1":{"den":"red","noc":"dark"},"2":{"den":"red","noc":"dark"},"3":{"den":"red","noc":"dark"},"4":{"den":"blue","noc":"green"},"5":{"den":"blue","noc":"green"},"6":{"den":"dark","noc":"red"},"7":{"den":"dark","noc":"red"},"8":{"den":"green","noc":"blue"},"9":{"den":"green","noc":"blue"},"10":{"den":"green","noc":"blue"},"11":{"den":"red","noc":"dark"},"12":{"den":"red","noc":"dark"},"13":{"den":"blue","noc":"green"},"14":{"den":"blue","noc":"green"},"15":{"den":"dark","noc":"red"},"16":{"den":"dark","noc":"red"},"17":{"den":"dark","noc":"red"},"18":{"den":"green","noc":"blue"},"19":{"den":"green","noc":"blue"},"20":{"den":"red","noc":"dark"},"21":{"den":"red","noc":"dark"},"22":{"den":"blue","noc":"green"},"23":{"den":"blue","noc":"green"},"24":{"den":"blue","noc":"green"},"25":{"den":"dark","noc":"red"},"26":{"den":"dark","noc":"red"},"27":{"den":"green","noc":"blue"},"28":{"den":"green","noc":"blue"},"29":{"den":"red","noc":"dark"},"30":{"den":"red","noc":"dark"},"31":{"den":"red","noc":"dark"}},"6":{"1":{"den":"blue","noc":"green"},"2":{"den":"blue","noc":"green"},"3":{"den":"dark","noc":"red"},"4":{"den":"dark","noc":"red"},"5":{"den":"green","noc":"blue"},"6":{"den":"green","noc":"blue"},"7":{"den":"green","noc":"blue"},"8":{"den":"red","noc":"dark"},"9":{"den":"red","noc":"dark"},"10":{"den":"blue","noc":"green"},"11":{"den":"blue","noc":"green"},"12":{"den":"dark","noc":"red"},"13":{"den":"dark","noc":"red"},"14":{"den":"dark","noc":"red"},"15":{"den":"green","noc":"blue"},"16":{"den":"green","noc":"blue"},"17":{"den":"red","noc":"dark"},"18":{"den":"red","noc":"dark"},"19":{"den":"blue","noc":"green"},"20":{"den":"blue","noc":"green"},"21":{"den":"blue","noc":"green"},"22":{"den":"dark","noc":"red"},"23":{"den":"dark","noc":"red"},"24":{"den":"green","noc":"blue"},"25":{"den":"green","noc":"blue"},"26":{"den":"red","noc":"dark"},"27":{"den":"red","noc":"dark"},"28":{"den":"red","noc":"dark"},"29":{"den":"blue","noc":"green"},"30":{"den":"blue","noc":"green"}},"7":{"1":{"den":"dark","noc":"red"},"2":{"den":"dark","noc":"red"},"3":{"den":"green","noc":"blue"},"4":{"den":"green","noc":"blue"},"5":{"den":"green","noc":"blue"},"6":{"den":"red","noc":"dark"},"7":{"den":"red","noc":"dark"},"8":{"den":"blue","noc":"green"},"9":{"den":"blue","noc":"green"},"10":{"den":"dark","noc":"red"},"11":{"den":"dark","noc":"red"},"12":{"den":"dark","noc":"red"},"13":{"den":"green","noc":"blue"},"14":{"den":"green","noc":"blue"},"15":{"den":"red","noc":"dark"},"16":{"den":"red","noc":"dark"},"17":{"den":"blue","noc":"green"},"18":{"den":"blue","noc":"green"},"19":{"den":"blue","noc":"green"},"20":{"den":"dark","noc":"red"},"21":{"den":"dark","noc":"red"},"22":{"den":"green","noc":"blue"},"23":{"den":"green","noc":"blue"},"24":{"den":"red","noc":"dark"},"25":{"den":"red","noc":"dark"},"26":{"den":"red","noc":"dark"},"27":{"den":"blue","noc":"green"},"28":{"den":"blue","noc":"green"},"29":{"den":"dark","noc":"red"},"30":{"den":"dark","noc":"red"},"31":{"den":"green","noc":"blue"}},"8":{"1":{"den":"green","noc":"blue"},"2":{"den":"green","noc":"blue"},"3":{"den":"red","noc":"dark"},"4":{"den":"red","noc":"dark"},"5":{"den":"blue","noc":"green"},"6":{"den":"blue","noc":"green"},"7":{"den":"dark","noc":"red"},"8":{"den":"dark","noc":"red"},"9":{"den":"dark","noc":"red"},"10":{"den":"green","noc":"blue"},"11":{"den":"green","noc":"blue"},"12":{"den":"red","noc":"dark"},"13":{"den":"red","noc":"dark"},"14":{"den":"blue","noc":"green"},"15":{"den":"blue","noc":"green"},"16":{"den":"blue","noc":"green"},"17":{"den":"dark","noc":"red"},"18":{"den":"dark","noc":"red"},"19":{"den":"green","noc":"blue"},"20":{"den":"green","noc":"blue"},"21":{"den":"red","noc":"dark"},"22":{"den":"red","noc":"dark"},"23":{"den":"red","noc":"dark"},"24":{"den":"blue","noc":"green"},"25":{"den":"blue","noc":"green"},"26":{"den":"dark","noc":"red"},"27":{"den":"dark","noc":"red"},"28":{"den":"green","noc":"blue"},"29":{"den":"green","noc":"blue"},"30":{"den":"green","noc":"blue"},"31":{"den":"red","noc":"dark"}},"9":{"1":{"den":"red","noc":"dark"},"2":{"den":"blue","noc":"green"},"3":{"den":"blue","noc":"green"},"4":{"den":"dark","noc":"red"},"5":{"den":"dark","noc":"red"},"6":{"den":"dark","noc":"red"},"7":{"den":"green","noc":"blue"},"8":{"den":"green","noc":"blue"},"9":{"den":"red","noc":"dark"},"10":{"den":"red","noc":"dark"},"11":{"den":"blue","noc":"green"},"12":{"den":"blue","noc":"green"},"13":{"den":"blue","noc":"green"},"14":{"den":"dark","noc":"red"},"15":{"den":"dark","noc":"red"},"16":{"den":"green","noc":"blue"},"17":{"den":"green","noc":"blue"},"18":{"den":"red","noc":"dark"},"19":{"den":"red","noc":"dark"},"20":{"den":"red","noc":"dark"},"21":{"den":"blue","noc":"green"},"22":{"den":"blue","noc":"green"},"23":{"den":"dark","noc":"red"},"24":{"den":"dark","noc":"red"},"25":{"den":"green","noc":"blue"},"26":{"den":"green","noc":"blue"},"27":{"den":"green","noc":"blue"},"28":{"den":"red","noc":"dark"},"29":{"den":"red","noc":"dark"},"30":{"den":"blue","noc":"green"}},"10":{"1":{"den":"blue","noc":"green"},"2":{"den":"dark","noc":"red"},"3":{"den":"dark","noc":"red"},"4":{"den":"dark","noc":"red"},"5":{"den":"green","noc":"blue"},"6":{"den":"green","noc":"blue"},"7":{"den":"red","noc":"dark"},"8":{"den":"red","noc":"dark"},"9":{"den":"blue","noc":"green"},"10":{"den":"blue","noc":"green"},"11":{"den":"blue","noc":"green"},"12":{"den":"dark","noc":"red"},"13":{"den":"dark","noc":"red"},"14":{"den":"green","noc":"blue"},"15":{"den":"green","noc":"blue"},"16":{"den":"red","noc":"dark"},"17":{"den":"red","noc":"dark"},"18":{"den":"red","noc":"dark"},"19":{"den":"blue","noc":"green"},"20":{"den":"blue","noc":"green"},"21":{"den":"dark","noc":"red"},"22":{"den":"dark","noc":"red"},"23":{"den":"green","noc":"blue"},"24":{"den":"green","noc":"blue"},"25":{"den":"green","noc":"blue"},"26":{"den":"red","noc":"dark"},"27":{"den":"red","noc":"dark"},"28":{"den":"blue","noc":"green"},"29":{"den":"blue","noc":"green"},"30":{"den":"dark","noc":"red"},"31":{"den":"dark","noc":"red"}},"11":{"1":{"den":"dark","noc":"red"},"2":{"den":"green","noc":"blue"},"3":{"den":"green","noc":"blue"},"4":{"den":"red","noc":"dark"},"5":{"den":"red","noc":"dark"},"6":{"den":"blue","noc":"green"},"7":{"den":"blue","noc":"green"},"8":{"den":"blue","noc":"green"},"9":{"den":"dark","noc":"red"},"10":{"den":"dark","noc":"red"},"11":{"den":"green","noc":"blue"},"12":{"den":"green","noc":"blue"},"13":{"den":"red","noc":"dark"},"14":{"den":"red","noc":"dark"},"15":{"den":"red","noc":"dark"},"16":{"den":"blue","noc":"green"},"17":{"den":"blue","noc":"green"},"18":{"den":"dark","noc":"red"},"19":{"den":"dark","noc":"red"},"20":{"den":"green","noc":"blue"},"21":{"den":"green","noc":"blue"},"22":{"den":"green","noc":"blue"},"23":{"den":"red","noc":"dark"},"24":{"den":"red","noc":"dark"},"25":{"den":"blue","noc":"green"},"26":{"den":"blue","noc":"green"},"27":{"den":"dark","noc":"red"},"28":{"den":"dark","noc":"red"},"29":{"den":"dark","noc":"red"},"30":{"den":"green","noc":"blue"}},"12":{"1":{"den":"green","noc":"blue"},"2":{"den":"red","noc":"dark"},"3":{"den":"red","noc":"dark"},"4":{"den":"blue","noc":"green"},"5":{"den":"blue","noc":"green"},"6":{"den":"blue","noc":"green"},"7":{"den":"dark","noc":"red"},"8":{"den":"dark","noc":"red"},"9":{"den":"green","noc":"blue"},"10":{"den":"green","noc":"blue"},"11":{"den":"red","noc":"dark"},"12":{"den":"red","noc":"dark"},"13":{"den":"red","noc":"dark"},"14":{"den":"blue","noc":"green"},"15":{"den":"blue","noc":"green"},"16":{"den":"dark","noc":"red"},"17":{"den":"dark","noc":"red"},"18":{"den":"green","noc":"blue"},"19":{"den":"green","noc":"blue"},"20":{"den":"green","noc":"blue"},"21":{"den":"red","noc":"dark"},"22":{"den":"red","noc":"dark"},"23":{"den":"blue","noc":"green"},"24":{"den":"blue","noc":"green"},"25":{"den":"dark","noc":"red"},"26":{"den":"dark","noc":"red"},"27":{"den":"dark","noc":"red"},"28":{"den":"green","noc":"blue"},"29":{"den":"green","noc":"blue"},"30":{"den":"red","noc":"dark"},"31":{"den":"red","noc":"dark"}},"13":{"1":{"den":"blue","noc":"green"},"2":{"den":"blue","noc":"green"},"3":{"den":"blue","noc":"green"},"4":{"den":"dark","noc":"red"},"5":{"den":"dark","noc":"red"},"6":{"den":"green","noc":"blue"},"7":{"den":"green","noc":"blue"},"8":{"den":"red","noc":"dark"},"9":{"den":"red","noc":"dark"},"10":{"den":"red","noc":"dark"},"11":{"den":"blue","noc":"green"},"12":{"den":"blue","noc":"green"},"13":{"den":"dark","noc":"red"},"14":{"den":"dark","noc":"red"},"15":{"den":"green","noc":"blue"},"16":{"den":"green","noc":"blue"},"17":{"den":"green","noc":"blue"},"18":{"den":"red","noc":"dark"},"19":{"den":"red","noc":"dark"},"20":{"den":"blue","noc":"green"},"21":{"den":"blue","noc":"green"},"22":{"den":"dark","noc":"red"},"23":{"den":"dark","noc":"red"},"24":{"den":"dark","noc":"red"},"25":{"den":"green","noc":"blue"},"26":{"den":"green","noc":"blue"},"27":{"den":"red","noc":"dark"},"28":{"den":"red","noc":"dark"},"29":{"den":"blue","noc":"green"},"30":{"den":"blue","noc":"green"},"31":{"den":"blue","noc":"green"}},"14":{"1":{"den":"dark","noc":"red"},"2":{"den":"dark","noc":"red"},"3":{"den":"green","noc":"blue"},"4":{"den":"green","noc":"blue"},"5":{"den":"red","noc":"dark"},"6":{"den":"red","noc":"dark"},"7":{"den":"red","noc":"dark"},"8":{"den":"blue","noc":"green"},"9":{"den":"blue","noc":"green"},"10":{"den":"dark","noc":"red"},"11":{"den":"dark","noc":"red"},"12":{"den":"green","noc":"blue"},"13":{"den":"green","noc":"blue"},"14":{"den":"green","noc":"blue"},"15":{"den":"red","noc":"dark"},"16":{"den":"red","noc":"dark"},"17":{"den":"blue","noc":"green"},"18":{"den":"blue","noc":"green"},"19":{"den":"dark","noc":"red"},"20":{"den":"dark","noc":"red"},"21":{"den":"dark","noc":"red"},"22":{"den":"green","noc":"blue"},"23":{"den":"green","noc":"blue"},"24":{"den":"red","noc":"dark"},"25":{"den":"red","noc":"dark"},"26":{"den":"blue","noc":"green"},"27":{"den":"blue","noc":"green"},"28":{"den":"blue","noc":"green"}},"15":{"1":{"den":"dark","noc":"red"},"2":{"den":"dark","noc":"red"},"3":{"den":"green","noc":"blue"},"4":{"den":"green","noc":"blue"},"5":{"den":"red","noc":"dark"},"6":{"den":"red","noc":"dark"},"7":{"den":"red","noc":"dark"},"8":{"den":"blue","noc":"green"},"9":{"den":"blue","noc":"green"},"10":{"den":"dark","noc":"red"},"11":{"den":"dark","noc":"red"},"12":{"den":"green","noc":"blue"},"13":{"den":"green","noc":"blue"},"14":{"den":"green","noc":"blue"},"15":{"den":"red","noc":"dark"},"16":{"den":"red","noc":"dark"},"17":{"den":"blue","noc":"green"},"18":{"den":"blue","noc":"green"},"19":{"den":"dark","noc":"red"},"20":{"den":"dark","noc":"red"},"21":{"den":"dark","noc":"red"},"22":{"den":"green","noc":"blue"},"23":{"den":"green","noc":"blue"},"24":{"den":"red","noc":"dark"},"25":{"den":"red","noc":"dark"},"26":{"den":"blue","noc":"green"},"27":{"den":"blue","noc":"green"},"28":{"den":"blue","noc":"green"},"29":{"den":"dark","noc":"red"},"30":{"den":"dark","noc":"red"},"31":{"den":"green","noc":"blue"}},"16":{"1":{"den":"green","noc":"blue"},"2":{"den":"red","noc":"dark"},"3":{"den":"red","noc":"dark"},"4":{"den":"red","noc":"dark"},"5":{"den":"blue","noc":"green"},"6":{"den":"blue","noc":"green"},"7":{"den":"dark","noc":"red"},"8":{"den":"dark","noc":"red"},"9":{"den":"green","noc":"blue"},"10":{"den":"green","noc":"blue"},"11":{"den":"green","noc":"blue"},"12":{"den":"red","noc":"dark"},"13":{"den":"red","noc":"dark"},"14":{"den":"blue","noc":"green"},"15":{"den":"blue","noc":"green"},"16":{"den":"dark","noc":"red"},"17":{"den":"dark","noc":"red"},"18":{"den":"dark","noc":"red"},"19":{"den":"green","noc":"blue"},"20":{"den":"green","noc":"blue"},"21":{"den":"red","noc":"dark"},"22":{"den":"red","noc":"dark"},"23":{"den":"blue","noc":"green"},"24":{"den":"blue","noc":"green"},"25":{"den":"blue","noc":"green"},"26":{"den":"dark","noc":"red"},"27":{"den":"dark","noc":"red"},"28":{"den":"green","noc":"blue"},"29":{"den":"green","noc":"blue"},"30":{"den":"red","noc":"dark"}},"17":{"1":{"den":"red","noc":"dark"},"2":{"den":"red","noc":"dark"},"3":{"den":"blue","noc":"green"},"4":{"den":"blue","noc":"green"},"5":{"den":"dark","noc":"red"},"6":{"den":"dark","noc":"red"},"7":{"den":"green","noc":"blue"},"8":{"den":"green","noc":"blue"},"9":{"den":"green","noc":"blue"},"10":{"den":"red","noc":"dark"},"11":{"den":"red","noc":"dark"},"12":{"den":"blue","noc":"green"},"13":{"den":"blue","noc":"green"},"14":{"den":"dark","noc":"red"},"15":{"den":"dark","noc":"red"},"16":{"den":"dark","noc":"red"},"17":{"den":"green","noc":"blue"},"18":{"den":"green","noc":"blue"},"19":{"den":"red","noc":"dark"},"20":{"den":"red","noc":"dark"},"21":{"den":"blue","noc":"green"},"22":{"den":"blue","noc":"green"},"23":{"den":"blue","noc":"green"},"24":{"den":"dark","noc":"red"},"25":{"den":"dark","noc":"red"},"26":{"den":"green","noc":"blue"},"27":{"den":"green","noc":"blue"},"28":{"den":"red","noc":"dark"},"29":{"den":"red","noc":"dark"},"30":{"den":"red","noc":"dark"},"31":{"den":"blue","noc":"green"}},"18":{"1":{"den":"blue","noc":"green"},"2":{"den":"dark","noc":"red"},"3":{"den":"dark","noc":"red"},"4":{"den":"green","noc":"blue"},"5":{"den":"green","noc":"blue"},"6":{"den":"green","noc":"blue"},"7":{"den":"red","noc":"dark"},"8":{"den":"red","noc":"dark"},"9":{"den":"blue","noc":"green"},"10":{"den":"blue","noc":"green"},"11":{"den":"dark","noc":"red"},"12":{"den":"dark","noc":"red"},"13":{"den":"dark","noc":"red"},"14":{"den":"green","noc":"blue"},"15":{"den":"green","noc":"blue"},"16":{"den":"red","noc":"dark"},"17":{"den":"red","noc":"dark"},"18":{"den":"blue","noc":"green"},"19":{"den":"blue","noc":"green"},"20":{"den":"blue","noc":"green"},"21":{"den":"dark","noc":"red"},"22":{"den":"dark","noc":"red"},"23":{"den":"green","noc":"blue"},"24":{"den":"green","noc":"blue"},"25":{"den":"red","noc":"dark"},"26":{"den":"red","noc":"dark"},"27":{"den":"red","noc":"dark"},"28":{"den":"blue","noc":"green"},"29":{"den":"blue","noc":"green"},"30":{"den":"dark","noc":"red"}},"19":{"1":{"den":"dark","noc":"red"},"2":{"den":"green","noc":"blue"},"3":{"den":"green","noc":"blue"},"4":{"den":"green","noc":"blue"},"5":{"den":"red","noc":"dark"},"6":{"den":"red","noc":"dark"},"7":{"den":"blue","noc":"green"},"8":{"den":"blue","noc":"green"},"9":{"den":"dark","noc":"red"},"10":{"den":"dark","noc":"red"},"11":{"den":"dark","noc":"red"},"12":{"den":"green","noc":"blue"},"13":{"den":"green","noc":"blue"},"14":{"den":"red","noc":"dark"},"15":{"den":"red","noc":"dark"},"16":{"den":"blue","noc":"green"},"17":{"den":"blue","noc":"green"},"18":{"den":"blue","noc":"green"},"19":{"den":"dark","noc":"red"},"20":{"den":"dark","noc":"red"},"21":{"den":"green","noc":"blue"},"22":{"den":"green","noc":"blue"},"23":{"den":"red","noc":"dark"},"24":{"den":"red","noc":"dark"},"25":{"den":"red","noc":"dark"},"26":{"den":"blue","noc":"green"},"27":{"den":"blue","noc":"green"},"28":{"den":"dark","noc":"red"},"29":{"den":"dark","noc":"red"},"30":{"den":"green","noc":"blue"},"31":{"den":"green","noc":"blue"}},"20":{"1":{"den":"green","noc":"blue"},"2":{"den":"red","noc":"dark"},"3":{"den":"red","noc":"dark"},"4":{"den":"blue","noc":"green"},"5":{"den":"blue","noc":"green"},"6":{"den":"dark","noc":"red"},"7":{"den":"dark","noc":"red"},"8":{"den":"dark","noc":"red"},"9":{"den":"green","noc":"blue"},"10":{"den":"green","noc":"blue"},"11":{"den":"red","noc":"dark"},"12":{"den":"red","noc":"dark"},"13":{"den":"blue","noc":"green"},"14":{"den":"blue","noc":"green"},"15":{"den":"blue","noc":"green"},"16":{"den":"dark","noc":"red"},"17":{"den":"dark","noc":"red"},"18":{"den":"green","noc":"blue"},"19":{"den":"green","noc":"blue"},"20":{"den":"red","noc":"dark"},"21":{"den":"red","noc":"dark"},"22":{"den":"red","noc":"dark"},"23":{"den":"blue","noc":"green"},"24":{"den":"blue","noc":"green"},"25":{"den":"dark","noc":"red"},"26":{"den":"dark","noc":"red"},"27":{"den":"green","noc":"blue"},"28":{"den":"green","noc":"blue"},"29":{"den":"green","noc":"blue"},"30":{"den":"red","noc":"dark"},"31":{"den":"red","noc":"dark"}},"21":{"1":{"den":"blue","noc":"green"},"2":{"den":"blue","noc":"green"},"3":{"den":"dark","noc":"red"},"4":{"den":"dark","noc":"red"},"5":{"den":"dark","noc":"red"},"6":{"den":"green","noc":"blue"},"7":{"den":"green","noc":"blue"},"8":{"den":"red","noc":"dark"},"9":{"den":"red","noc":"dark"},"10":{"den":"blue","noc":"green"},"11":{"den":"blue","noc":"green"},"12":{"den":"blue","noc":"green"},"13":{"den":"dark","noc":"red"},"14":{"den":"dark","noc":"red"},"15":{"den":"green","noc":"blue"},"16":{"den":"green","noc":"blue"},"17":{"den":"red","noc":"dark"},"18":{"den":"red","noc":"dark"},"19":{"den":"red","noc":"dark"},"20":{"den":"blue","noc":"green"},"21":{"den":"blue","noc":"green"},"22":{"den":"dark","noc":"red"},"23":{"den":"dark","noc":"red"},"24":{"den":"green","noc":"blue"},"25":{"den":"green","noc":"blue"},"26":{"den":"green","noc":"blue"},"27":{"den":"red","noc":"dark"},"28":{"den":"red","noc":"dark"},"29":{"den":"blue","noc":"green"},"30":{"den":"blue","noc":"green"}},"22":{"1":{"den":"dark","noc":"red"},"2":{"den":"dark","noc":"red"},"3":{"den":"dark","noc":"red"},"4":{"den":"green","noc":"blue"},"5":{"den":"green","noc":"blue"},"6":{"den":"red","noc":"dark"},"7":{"den":"red","noc":"dark"},"8":{"den":"blue","noc":"green"},"9":{"den":"blue","noc":"green"},"10":{"den":"blue","noc":"green"},"11":{"den":"dark","noc":"red"},"12":{"den":"dark","noc":"red"},"13":{"den":"green","noc":"blue"},"14":{"den":"green","noc":"blue"},"15":{"den":"red","noc":"dark"},"16":{"den":"red","noc":"dark"},"17":{"den":"red","noc":"dark"},"18":{"den":"blue","noc":"green"},"19":{"den":"blue","noc":"green"},"20":{"den":"dark","noc":"red"},"21":{"den":"dark","noc":"red"},"22":{"den":"green","noc":"blue"},"23":{"den":"green","noc":"blue"},"24":{"den":"green","noc":"blue"},"25":{"den":"red","noc":"dark"},"26":{"den":"red","noc":"dark"},"27":{"den":"blue","noc":"green"},"28":{"den":"blue","noc":"green"},"29":{"den":"dark","noc":"red"},"30":{"den":"dark","noc":"red"},"31":{"den":"dark","noc":"red"}},"23":{"1":{"den":"green","noc":"blue"},"2":{"den":"green","noc":"blue"},"3":{"den":"red","noc":"dark"},"4":{"den":"red","noc":"dark"},"5":{"den":"blue","noc":"green"},"6":{"den":"blue","noc":"green"},"7":{"den":"blue","noc":"green"},"8":{"den":"dark","noc":"red"},"9":{"den":"dark","noc":"red"},"10":{"den":"green","noc":"blue"},"11":{"den":"green","noc":"blue"},"12":{"den":"red","noc":"dark"},"13":{"den":"red","noc":"dark"},"14":{"den":"red","noc":"dark"},"15":{"den":"blue","noc":"green"},"16":{"den":"blue","noc":"green"},"17":{"den":"dark","noc":"red"},"18":{"den":"dark","noc":"red"},"19":{"den":"green","noc":"blue"},"20":{"den":"green","noc":"blue"},"21":{"den":"green","noc":"blue"},"22":{"den":"red","noc":"dark"},"23":{"den":"red","noc":"dark"},"24":{"den":"blue","noc":"green"},"25":{"den":"blue","noc":"green"},"26":{"den":"dark","noc":"red"},"27":{"den":"dark","noc":"red"},"28":{"den":"dark","noc":"red"},"29":{"den":"green","noc":"blue"},"30":{"den":"green","noc":"blue"}},"24":{"1":{"den":"red","noc":"dark"},"2":{"den":"red","noc":"dark"},"3":{"den":"blue","noc":"green"},"4":{"den":"blue","noc":"green"},"5":{"den":"blue","noc":"green"},"6":{"den":"dark","noc":"red"},"7":{"den":"dark","noc":"red"},"8":{"den":"green","noc":"blue"},"9":{"den":"green","noc":"blue"},"10":{"den":"red","noc":"dark"},"11":{"den":"red","noc":"dark"},"12":{"den":"red","noc":"dark"},"13":{"den":"blue","noc":"green"},"14":{"den":"blue","noc":"green"},"15":{"den":"dark","noc":"red"},"16":{"den":"dark","noc":"red"},"17":{"den":"green","noc":"blue"},"18":{"den":"green","noc":"blue"},"19":{"den":"green","noc":"blue"},"20":{"den":"red","noc":"dark"},"21":{"den":"red","noc":"dark"},"22":{"den":"blue","noc":"green"},"23":{"den":"blue","noc":"green"},"24":{"den":"dark","noc":"red"},"25":{"den":"dark","noc":"red"},"26":{"den":"dark","noc":"red"},"27":{"den":"green","noc":"blue"},"28":{"den":"green","noc":"blue"},"29":{"den":"red","noc":"dark"},"30":{"den":"red","noc":"dark"},"31":{"den":"blue","noc":"green"}}};
 
 // Group color key mapping: Excel 'blue'=modrá, 'green'=zelená, 'red'=červená, 'dark'=černá
 // Employee group assignments from user's list
@@ -435,7 +447,7 @@ function getShift(emp,m,d){
   if(emp.prov==='brigada') return 'br';
   // Check for manual shift override
   const ov=emp.shiftOv&&emp.shiftOv[m]&&emp.shiftOv[m][d];
-  const we=isWE(2026,m,d);
+  const we=isWE(yOf(m),m,d);
   if(ov){
     if(ov==='off') return we?'woff':'off';
     if(ov==='day') return we?'wed':'day';
@@ -471,7 +483,7 @@ function pCls(p){
   return'pC';
 }
 
-let ST={m:new Date().getMonth()+1,y:new Date().getFullYear(),fp:'all',fg:'all',fn:'',emps:[
+let ST={m:(()=>{const t=new Date();return Math.min(MMAX,Math.max(1,(t.getFullYear()-MBASE)*12+t.getMonth()+1));})(),y:MBASE,fp:'all',fg:'all',fn:'',emps:[
   // === 4-SMĚNNÝ ===
   // MODRÁ: Zilvar Jakub, Hradecký Jaroslav, Base Roman, Rýdzi Jaroslav, Karel Martin
   {id:1,name:'Zilvar Jakub',pos:'Mistr',prov:'4sm',grp:'blue',data:{}},
@@ -512,6 +524,7 @@ let ST={m:new Date().getMonth()+1,y:new Date().getFullYear(),fp:'all',fg:'all',f
   {id:31,name:'Vrána Pavel',pos:'Brigádník',prov:'brigada',grp:'brigada',data:{}},
   {id:32,name:'Hetfleis David',pos:'Brigádník',prov:'brigada',grp:'brigada',data:{}},
 ]};
+ST.y = yOf(ST.m);// rok podle pořadí měsíce (1–12 = 2026, 13–24 = 2027)
 ST.monthData = {};
 ST.notes = {};
 ST.plan = {};
@@ -728,7 +741,7 @@ function renderManualRow(rowKey,label,sublabel,rowCls,n,autoData){
     const hasCls=typeof v==='number'&&v>0?'has-val':'';
     const disp=typeof v==='number'&&v>0?v:'';
     const w=dow(ST.y,ST.m,d);const wbl=w===6?'border-left:3px solid #16a34a;':'';
-    const _nt=new Date();const _isT=ST.y===_nt.getFullYear()&&ST.m===(_nt.getMonth()+1)&&d===_nt.getDate();
+    const _nt=new Date();const _isT=ST.y===_nt.getFullYear()&&realM(ST.m)===(_nt.getMonth()+1)&&d===_nt.getDate();
     const _tt=_isT?'outline:2px solid #fbbf24;outline-offset:-2px;':'';
     const isSatMr=w===6,isSunMr=w===0;
     const weBg=(!hasCls&&(isSatMr||isSunMr))?'background:#86efac;color:#14532d;':'';
@@ -755,7 +768,7 @@ function openManualCell(rowKey,day){
   const data=ST.manualRows[rowKey]||{};
   const v=data[day];
   const labels={'4sm':'4-směnný — ruční hodiny','2sm':'2-směnný — ruční hodiny','brigada':'Brigádníci — ruční hodiny','offwc':'Office WC','offceln':'Office Celní'};
-  document.getElementById('manT').textContent=`${labels[rowKey]} — den ${day}. ${ST.m}. ${ST.y}`;
+  document.getElementById('manT').textContent=`${labels[rowKey]} — den ${day}. ${realM(ST.m)}. ${ST.y}`;
   document.getElementById('manH').value=typeof v==='number'?v:'';
   document.getElementById('manMod').style.display='flex';
 }
@@ -798,9 +811,8 @@ function makeSubHeader(n,prov){
 
 // ── WEEKLY REPORT ──
 function getWeeksInMonth(y, m){
-  const dInM2=(m2,y2)=>m2===2&&y2%4===0?29:[0,31,28,31,30,31,30,31,31,30,31,30,31][m2];
-  const first=new Date(y,m-1,1);
-  const last=dInM2(m,y);
+  const first=new Date(yOf(m),realM(m)-1,1);
+  const last=dInM(m,y);
   // Monday of week containing day 1
   const firstDow=first.getDay()||7; // 1=Mon..7=Sun
   const weekStartDay=2-firstDow; // could be negative (days from prev month)
@@ -865,8 +877,8 @@ function renderWeeklyReport(){
   const wLabel=(w,idx)=>{
     const s=Math.max(w.days[0],1);
     const e=Math.min(w.days[w.days.length-1],n);
-    const sPad=s+'.'+ST.m+'.';
-    const ePad=e+'.'+ST.m+'.';
+    const sPad=s+'.'+realM(ST.m)+'.';
+    const ePad=e+'.'+realM(ST.m)+'.';
     return `T${idx+1}: ${sPad}–${ePad}`;
   };
 
@@ -943,11 +955,12 @@ function showWeeklyReport(){
 
 
 function calcCumMinus(emp){
-  // Sum negH for all months from 1 to current month (inclusive)
+  // Sum negH for all months from January of the current year to current month (inclusive)
   let total = 0;
-  for(let m = 1; m <= ST.m; m++){
+  const m0 = ST.m > 12 ? 13 : 1;// rok 2027 počítá kumulaci znovu od ledna 2027
+  for(let m = m0; m <= ST.m; m++){
     const monthData = m === ST.m ? emp.data : (ST.monthData[m]?.[emp.id] || ST.monthData[m]?.[String(emp.id)] || {});
-    const n = [0,31,28,31,30,31,30,31,31,30,31,30,31][m];
+    const n = dInM(m, yOf(m));
     for(let d = 1; d <= n; d++){
       const rec = monthData[d] || monthData[String(d)];
       if(rec?.t === 'neg') total += rec.h || 0;
@@ -1679,7 +1692,7 @@ function doPrintBonus(){
       .dochbg{background:#EEF2FF;text-align:right}
       @media print{@page{size:A3 landscape;margin:6mm}body{margin:0}}
     </style></head><body>
-    <h2>💰 Bonusy — ${MCZ[m]} ${y} — Damco Jaroměř</h2>
+    <h2>💰 Bonusy — ${MCZ[m]} ${y} — Maersk Jaroměř</h2>
     <table>`;
 
   if(fullCols){
@@ -1928,7 +1941,7 @@ function openPlanMod(){
   const emp=ST.emps.find(e=>e.id===ET.empId);
   const existing=getPlan(ST.m,ET.empId,ET.day);
   _planColor=existing?.color||'';
-  document.getElementById('planInfo').textContent=`${emp?.name||''} — ${ET.day}. ${ST.m}. ${ST.y}`;
+  document.getElementById('planInfo').textContent=`${emp?.name||''} — ${ET.day}. ${realM(ST.m)}. ${ST.y}`;
   document.getElementById('planNote').value=existing?.note||'';
   // Close cell modal first
   document.getElementById('cmMod').style.display='none';
@@ -1991,7 +2004,7 @@ function render(){
     const wbl=isSat?'border-left:3px solid #16a34a;':'';
     const sv=isSv(ST.m,d);
     const today=new Date();
-    const isToday=ST.y===today.getFullYear()&&ST.m===(today.getMonth()+1)&&d===today.getDate();
+    const isToday=ST.y===today.getFullYear()&&realM(ST.m)===(today.getMonth()+1)&&d===today.getDate();
     const wbg=isToday?'background:#fbbf24;color:#78350f;':sv?'background:#fed7aa;color:#7c2d12;':isSat?'background:#86efac;color:#14532d;':isSun?'background:#bbf7d0;color:#166534;':'';
     const svTitle=sv?` title="${svName(ST.m,d)}"` :'';
     const todayCls=isToday?' class="today-col-hdr"':'';
@@ -2033,7 +2046,7 @@ function render(){
       html+=`<tr data-prov="${emp.prov}" data-grp="${emp.grp}"><td class="cn" style="border-left:3px solid ${grpColor};${grpBg?'background:'+grpBg:''}">${emp.name}</td>`;
       html+=`<td class="cp"><span class="pos ${pCls(emp.pos)}">${emp.pos}</span></td>`;
       const _today=new Date();
-      const _todayD=ST.y===_today.getFullYear()&&ST.m===(_today.getMonth()+1)?_today.getDate():-1;
+      const _todayD=ST.y===_today.getFullYear()&&realM(ST.m)===(_today.getMonth()+1)?_today.getDate():-1;
       for(let d=1;d<=n;d++){
         const rec=emp.data[d];
         const cls=cellCls(emp,d,rec);
@@ -2087,7 +2100,7 @@ function render(){
       // Kumulativní mínus (jen 4sm) + empty CELKEM
       if(emp.prov==='4sm'){
         const cumNeg=calcCumMinus(emp);
-        html+=`<td class="ts cum-neg" title="Kumulativní mínus M1–M${ST.m}">${cumNeg>0?'-'+cumNeg:''}</td>`;
+        html+=`<td class="ts cum-neg" title="Kumulativní mínus M1–M${realM(ST.m)} ${ST.y}">${cumNeg>0?'-'+cumNeg:''}</td>`;
         html+=`<td class="ts"></td>`;// CELKEM h (empty for individual employees)
       } else {
         html+=`<td class="ts"></td>`;// spacer for cum-neg
@@ -2226,6 +2239,7 @@ function loadMonthData(m){
     e.data = saved ? Object.assign({}, saved) : {};
   });
   ST.m = m;
+  ST.y = yOf(m);
   if(window.fbSave) fbSave();
 }
 
@@ -2283,7 +2297,7 @@ function openCell(empId,day){
   const rec=emp.data[day],isBr=emp.prov==='brigada';
   const sh=getShift(emp,ST.m,day);
   const w=dow(ST.y,ST.m,day);
-  document.getElementById('cmT').textContent=`${emp.name} — ${day}. ${ST.m}. ${ST.y} (${DN[w]})`;
+  document.getElementById('cmT').textContent=`${emp.name} — ${day}. ${realM(ST.m)}. ${ST.y} (${DN[w]})`;
   const shBadge=document.getElementById('cmSh');
   if(!isBr){
     const night=isNightT(sh);
@@ -2507,7 +2521,7 @@ function printNodays(show4sm,show2sm,showBrig,showSum,grps){
       .cumNeg{background:#FFE4E6;color:#BE123C;font-weight:bold}
       @media print{@page{size:A4 landscape;margin:6mm}}
     </style></head><body>
-    <h2>Docházka souhrn — ${MCZ2[ST.m]} ${ST.y} — Damco Jaroměř</h2>
+    <h2>Docházka souhrn — ${MCZ2[ST.m]} ${ST.y} — Maersk Jaroměř</h2>
     <table><thead><tr>
       <th style="text-align:left">Jméno</th>
       <th>Dny</th><th class="cD">D</th><th class="cN">N</th><th class="cN">OČR</th>
@@ -2891,7 +2905,7 @@ ${styles}
   const blob=new Blob([xml],{type:'application/vnd.ms-excel;charset=utf-8'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');a.href=url;
-  a.download=`dochazka_${ST.y}_${ST.m}.xls`;
+  a.download=`dochazka_${ST.y}_${realM(ST.m)}.xls`;
   document.body.appendChild(a);a.click();
   document.body.removeChild(a);
   setTimeout(()=>URL.revokeObjectURL(url),2000);
@@ -2904,7 +2918,7 @@ function doExportExcel(){
   // Build HTML table that Excel can open
   let rows=[];
   // Header row 1: month title
-  rows.push(`<tr><td colspan="${n+14}" style="font-weight:bold;font-size:14px;background:#1d4ed8;color:white">Docházka — ${MCZ[ST.m]} ${ST.y} — Damco Jaroměř</td></tr>`);
+  rows.push(`<tr><td colspan="${n+14}" style="font-weight:bold;font-size:14px;background:#1d4ed8;color:white">Docházka — ${MCZ[ST.m]} ${ST.y} — Maersk Jaroměř</td></tr>`);
   // Header row 2: columns
   let hdr=`<tr style="background:#e2e8f0;font-weight:bold"><td>Jméno</td><td>Pozice</td>`;
   for(let d=1;d<=n;d++){
@@ -3025,7 +3039,7 @@ td,th{border:1px solid #cbd5e1;padding:2px 4px;white-space:nowrap}
   const blob=new Blob([html],{type:'application/vnd.ms-excel;charset=utf-8'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
-  a.href=url;a.download=`dochazka_${ST.y}_${ST.m}.xls`;a.click();
+  a.href=url;a.download=`dochazka_${ST.y}_${realM(ST.m)}.xls`;a.click();
   setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 
@@ -3176,7 +3190,7 @@ function doExport(){
   });
   const a=document.createElement('a');
   a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
-  a.download=`dochazka_damco_${ST.y}_${ST.m}.csv`;a.click();
+  a.download=`dochazka_maersk_${ST.y}_${realM(ST.m)}.csv`;a.click();
 }
 // ── IMPORTOVANÁ DATA: DUBEN 2026 ──
 // Tato data se použijí POUZE pokud Firebase je prázdná
@@ -3834,7 +3848,7 @@ function loadScript(src){
 <div id="loginScreen">
   <div class="login-box">
     <div class="login-logo">
-      <div class="login-logo-text">DAMCO <b>JAROMĚŘ</b></div>
+      <div class="login-logo-text">MAERSK <b>JAROMĚŘ</b></div>
     </div>
     <div class="login-dots">
       <div class="login-dot active"></div>
@@ -3853,7 +3867,7 @@ function loadScript(src){
     </div>
     <button class="login-btn" id="loginBtn" onclick="doFirebaseLogin()">Přihlásit se</button>
     <div class="login-error" id="loginErr"></div>
-    <div class="login-footer">Damco Jaroměř &nbsp;·&nbsp; 2026</div>
+    <div class="login-footer">Maersk Jaroměř &nbsp;·&nbsp; 2026–2027</div>
   </div>
 </div>
 
