@@ -133,6 +133,29 @@ tr:hover td.cn{filter:none;background:var(--bg4)!important;box-shadow:4px 0 8px 
 .wr-row-label{font-weight:600;color:var(--tx)}
 .wr-row-sub{font-size:10px;color:var(--tx3);margin-top:1px}
 .wr-section{margin-bottom:12px}
+/* DOVOLENÁ */
+.vac-ctl{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px;flex-shrink:0}
+.vac-ctl .fr{margin-bottom:0}
+.vac-ctl select{min-width:150px}
+.vac-sc{overflow:auto;flex:1;min-height:0;border:1px solid var(--b2);border-radius:8px}
+.vac-table{width:100%;min-width:0;border-collapse:separate;border-spacing:0;font-size:12px;font-family:'DM Sans',sans-serif}
+.vac-table th{position:sticky;top:0;z-index:2;background:var(--bg3);color:var(--tx3);font-size:10px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.05em;padding:7px 10px;text-align:center;border-bottom:1px solid var(--b2);white-space:nowrap;line-height:1.3}
+.vac-table th.vl{text-align:left;left:0;z-index:3}
+.vac-table th small{display:block;font-size:9px;font-weight:400;text-transform:none;letter-spacing:0;opacity:.85}
+.vac-table td{padding:5px 10px;border-bottom:1px solid var(--b1);color:var(--tx);text-align:center;font-family:'DM Mono',monospace;font-size:13px;font-weight:600}
+.vac-table td.vnm{text-align:left;font-family:'DM Sans',sans-serif;white-space:nowrap;position:sticky;left:0;z-index:1;background:var(--bg2)}
+.vac-table td.vnm small{display:block;font-weight:400;font-size:10px;color:var(--tx3)}
+.vac-table tr.vgh td{background:var(--bg4);color:var(--tx2);font-family:'DM Mono',monospace;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;text-align:left;padding:4px 10px}
+.vac-table tr.vgh td i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+.vac-table tr.vgh td .vgl{position:sticky;left:10px;display:inline-block}
+.vac-table tr:not(.vgh):hover td{background:var(--bg3)}
+.vac-table td.vleft{font-weight:800}
+.vac-table td.vneg{background:#fee2e2!important;color:#b91c1c}
+.vac-table td.vnone{color:var(--tx3);font-weight:400}
+.vac-in{width:76px;height:28px;text-align:center;font-family:'DM Mono',monospace;font-size:13px;font-weight:600;background:#f8fafc;border:1px solid var(--b2);border-radius:6px;color:var(--tx)}
+.vac-in:focus{outline:none;border-color:var(--acc)}
+.vac-hint{font-size:11px;color:#166534;padding:6px 9px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:5px;margin:-2px 0 10px;font-family:'DM Mono',monospace;line-height:1.45}
+.vac-hint.over{background:#fef2f2;border-color:#fecaca;color:#b91c1c}
 ::-webkit-scrollbar-track{background:var(--bg3)}
 ::-webkit-scrollbar-thumb{background:#c8ccd8;border-radius:3px}
 /* PRINT MODAL */
@@ -271,6 +294,7 @@ tr:hover td.cn{filter:none;background:var(--bg4)!important;box-shadow:4px 0 8px 
     <button onclick="doExportXLS()" style="color:#166534;background:#dcfce7;border-color:#86efac;font-weight:600">↓ Excel</button>
     <button onclick="doPrint()" style="color:#1e40af;background:#dbeafe;border-color:#93c5fd;font-weight:600">🖨 Tisk</button>
     <button onclick="showWeeklyReport()" style="color:#166534;background:#dcfce7;border-color:#86efac;font-weight:700">📊 Týdenní report</button>
+    <button onclick="openVac()" style="color:#92400e;background:#fef3c7;border-color:#fcd34d;font-weight:700">🏖️ Dovolená</button>
     <button onclick="uploadToFirebase()" style="color:#fff;background:#f97316;border-color:#ea580c;font-weight:700">☁ Uložit do cloudu</button>
     <button onclick="doBackup()" style="color:#1e40af;background:#eff6ff;border-color:#93c5fd;font-weight:600">⬇ Záloha JSON</button>
     <button onclick="document.getElementById('restoreInput').click()" style="color:#5b21b6;background:#f5f3ff;border-color:#c4b5fd;font-weight:600">⬆ Obnovit zálohu</button>
@@ -356,6 +380,7 @@ tr:hover td.cn{filter:none;background:var(--bg4)!important;box-shadow:4px 0 8px 
         <option value="neg">Mínus hodin</option>
       </select>
     </div>
+    <div class="vac-hint" id="vacHint" style="display:none"></div>
     <div class="fr" id="rOT" style="display:none"><label>Přesčas 25% – hodin navíc</label><input type="number" id="hOT" step="0.5" min="0.5" placeholder="2"></div>
     <div class="fr" id="rOTSO" style="display:none"><label>Přesčas So 25% – hodin</label><input type="number" id="hOTSO" step="0.5" min="0.5" placeholder="12"></div>
     <div class="fr" id="rOTNE" style="display:none"><label>Přesčas Ne 50% – hodin</label><input type="number" id="hOTNE" step="0.5" min="0.5" placeholder="12"></div>
@@ -529,6 +554,7 @@ ST.y = yOf(ST.m);// rok podle pořadí měsíce (1–12 = 2026, 13–24 = 2027)
 ST.monthData = {};
 ST.notes = {};
 ST.plan = {};
+ST.vac = {};// zůstatky dovolené: klíč "rok_idZaměstnance" → nárok ve dnech
 
 // Manual hour rows (keyed by row ID, value = {day: hours})
 if(!ST.monthManualRows) ST.monthManualRows={};
@@ -965,6 +991,165 @@ function renderWeeklyReport(){
 function showWeeklyReport(){
   renderWeeklyReport();
   document.getElementById('wrMod').style.display='flex';
+}
+
+// ── DOVOLENÁ: zůstatky a čerpání (ve dnech; D = 1 den, D/2 = 0,5 dne – stejně jako sloupec D) ──
+const VAC_MS=['','led','úno','bře','dub','kvě','čvn','čvc','srp','zář','říj','lis','pro'];
+let VAC_UI={year:MBASE,upto:12};
+const vacFmt=v=>String(Math.round(v*100)/100).replace('.',',');
+const vacEsc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const vacKey=(year,empId)=>year+'_'+empId;
+// zadaný nárok / zůstatek zaměstnance na rok (null = nezadáno)
+function vacBal(year,empId){
+  const v=ST.vac?ST.vac[vacKey(year,empId)]:undefined;
+  if(v===undefined||v===null||v==='')return null;
+  const n=Number(v);
+  return isFinite(n)?n:null;
+}
+// globální indexy měsíců daného roku (1–24)
+function vacYearMonths(year){
+  const base=(year-MBASE)*12;
+  return Array.from({length:12},(_,i)=>base+i+1).filter(m=>m>=1&&m<=MMAX);
+}
+// dny dovolené zaměstnance v měsíci m (aktuálně zobrazený měsíc bere živá data)
+function vacDaysInMonth(emp,m){
+  const store=(ST.monthData&&ST.monthData[m])||{};
+  const rows=(m===ST.m)?(emp.data||{}):(store[emp.id]||store[String(emp.id)]||{});
+  const n=dInM(m,yOf(m));
+  let t=0;
+  for(let d=1;d<=n;d++){
+    const rec=rows[d]||rows[String(d)];
+    if(rec&&rec.t==='D')t+=1;
+    else if(rec&&rec.t==='D2')t+=0.5;
+  }
+  return t;
+}
+// upto = skutečný měsíc 1–12, do kterého (včetně) se čerpání počítá jako „vybráno"; 0 = nic
+function vacCalc(emp,year,upto){
+  let taken=0,later=0;const perT=[],perL=[];
+  vacYearMonths(year).forEach(m=>{
+    const v=vacDaysInMonth(emp,m),rm=realM(m);
+    if(rm<=upto){taken+=v;if(v)perT.push(VAC_MS[rm]+' '+vacFmt(v));}
+    else{later+=v;if(v)perL.push(VAC_MS[rm]+' '+vacFmt(v));}
+  });
+  const bal=vacBal(year,emp.id);
+  return{bal,taken,later,perT,perL,left:bal===null?null:bal-taken,after:bal===null?null:bal-taken-later};
+}
+function vacDefUpto(year){
+  const cy=yOf(ST.m);
+  return year<cy?12:(year===cy?realM(ST.m):0);
+}
+function openVac(){
+  const sy=document.getElementById('vacYear'),su=document.getElementById('vacUpto');
+  sy.innerHTML='';
+  for(let y=MBASE;y<=yOf(MMAX);y++){const o=document.createElement('option');o.value=y;o.textContent=y;sy.appendChild(o);}
+  su.innerHTML='';
+  const o0=document.createElement('option');o0.value=0;o0.textContent='žádný (vše je plán)';su.appendChild(o0);
+  for(let i=1;i<=12;i++){const o=document.createElement('option');o.value=i;o.textContent=MCZ[i];su.appendChild(o);}
+  sy.value=yOf(ST.m);
+  su.value=vacDefUpto(yOf(ST.m));
+  document.getElementById('vacMod').style.display='flex';
+  renderVac();
+}
+function closeVac(){document.getElementById('vacMod').style.display='none';}
+function vacYearChg(){
+  document.getElementById('vacUpto').value=vacDefUpto(parseInt(document.getElementById('vacYear').value));
+  renderVac();
+}
+// obnovení otevřeného okna po příchodu dat z cloudu (rozepsané pole nepřepisujeme)
+function vacRefresh(){
+  const m=document.getElementById('vacMod');
+  if(!m||m.style.display!=='flex')return;
+  const a=document.activeElement;
+  if(a&&a.classList&&a.classList.contains('vac-in'))return;
+  renderVac();
+}
+// přepočet jednoho řádku (buňky mají id vac-t/l/p/a-{id zaměstnance})
+function vacApplyRow(emp){
+  const c=vacCalc(emp,VAC_UI.year,VAC_UI.upto),id=emp.id;
+  const put=(k,txt,cls,title)=>{
+    const el=document.getElementById('vac-'+k+'-'+id);if(!el)return;
+    el.textContent=txt;el.className=cls;el.title=title||'';
+  };
+  put('t',vacFmt(c.taken),c.taken?'':'vnone',c.perT.join(' · '));
+  put('p',vacFmt(c.later),c.later?'':'vnone',c.perL.join(' · '));
+  if(c.bal===null){
+    put('l','—','vnone','Zadej nárok na rok');
+    put('a','—','vnone','Zadej nárok na rok');
+  }else{
+    put('l',vacFmt(c.left),'vleft'+(c.left<0?' vneg':''),c.left<0?'Čerpání překračuje nárok':'');
+    put('a',vacFmt(c.after),'vleft'+(c.after<0?' vneg':''),c.after<0?'Se zapsaným plánem by nárok byl překročen':'');
+  }
+}
+function vacSet(empId,val){
+  const emp=ST.emps.find(e=>e.id===empId);if(!emp)return;
+  if(!ST.vac)ST.vac={};
+  const k=vacKey(VAC_UI.year,empId);
+  const s=String(val==null?'':val).trim().replace(',','.');
+  const n=s===''?NaN:parseFloat(s);
+  if(s===''||!isFinite(n))delete ST.vac[k];
+  else ST.vac[k]=Math.round(n*100)/100;
+  vacApplyRow(emp);
+  if(window.fbSave)fbSave();
+}
+function renderVac(){
+  const sy=document.getElementById('vacYear'),su=document.getElementById('vacUpto');
+  const y=parseInt(sy.value);VAC_UI.year=isNaN(y)?MBASE:y;
+  const u=parseInt(su.value);VAC_UI.upto=isNaN(u)?12:u;
+  const up=VAC_UI.upto;
+  const rngT=up===0?'zatím nic':(VAC_MS[1]+(up>1?'–'+VAC_MS[up]:''));
+  const rngL=up>=12?'—':(VAC_MS[up+1]+'–'+VAC_MS[12]);
+  const emps=ST.emps.filter(e=>e.prov!=='brigada');
+  const G=[
+    ['4-směnný — Modrá skupina',e=>e.prov==='4sm'&&e.grp==='blue','#3b82f6'],
+    ['4-směnný — Černá skupina',e=>e.prov==='4sm'&&e.grp==='black','#475569'],
+    ['4-směnný — Zelená skupina',e=>e.prov==='4sm'&&e.grp==='green','#22c55e'],
+    ['4-směnný — Červená skupina',e=>e.prov==='4sm'&&e.grp==='red','#ef4444'],
+    ['2-směnný provoz',e=>e.prov==='2sm','#f59e0b']
+  ];
+  const used=new Set();
+  const groups=G.map(g=>{const l=emps.filter(g[1]);l.forEach(e=>used.add(e.id));return{label:g[0],color:g[2],list:l};});
+  const rest=emps.filter(e=>!used.has(e.id));
+  if(rest.length)groups.push({label:'Ostatní',color:'#94a3b8',list:rest});
+  let h='<table class="vac-table"><thead><tr>'
+    +'<th class="vl">Zaměstnanec</th>'
+    +'<th>Nárok '+VAC_UI.year+'<small>dnů na rok</small></th>'
+    +'<th>Vybráno<small>'+rngT+'</small></th>'
+    +'<th>Zbývá<small>nárok − vybráno</small></th>'
+    +'<th>Naplánováno<small>'+rngL+'</small></th>'
+    +'<th>Zbývá po plánu<small>vč. naplánovaného</small></th>'
+    +'</tr></thead><tbody>';
+  groups.forEach(g=>{
+    if(!g.list.length)return;
+    h+='<tr class="vgh"><td colspan="6"><span class="vgl"><i style="background:'+g.color+'"></i>'+g.label+'</span></td></tr>';
+    g.list.forEach(e=>{
+      const bal=vacBal(VAC_UI.year,e.id);
+      h+='<tr><td class="vnm">'+vacEsc(e.name)+'<small>'+vacEsc(e.pos||'')+'</small></td>'
+        +'<td><input class="vac-in" type="number" step="0.5" inputmode="decimal" id="vac-b-'+e.id+'" value="'+(bal===null?'':bal)+'" placeholder="—" oninput="vacSet('+e.id+',this.value)"></td>'
+        +'<td id="vac-t-'+e.id+'"></td><td id="vac-l-'+e.id+'"></td><td id="vac-p-'+e.id+'"></td><td id="vac-a-'+e.id+'"></td></tr>';
+    });
+  });
+  h+='</tbody></table>';
+  document.getElementById('vacContent').innerHTML=h;
+  emps.forEach(vacApplyRow);
+}
+// nápověda v okně buňky: kolik dovolené zbývá po uložení (jen když je zadaný nárok)
+function updVacHint(){
+  const el=document.getElementById('vacHint');if(!el)return;
+  const t=document.getElementById('ct').value;
+  const emp=ET&&ST.emps.find(e=>e.id===ET.empId);
+  if(!emp||emp.prov==='brigada'||(t!=='D'&&t!=='D2'&&t!=='D2S')){el.style.display='none';return;}
+  const year=yOf(ST.m),bal=vacBal(year,emp.id);
+  if(bal===null){el.style.display='none';return;}
+  let used=0;
+  vacYearMonths(year).forEach(m=>{used+=vacDaysInMonth(emp,m);});
+  const cur=emp.data[ET.day];
+  const curV=cur&&cur.t==='D'?1:(cur&&cur.t==='D2'?0.5:0);
+  const after=used-curV+(t==='D'?1:0.5);
+  const left=bal-after;
+  el.className='vac-hint'+(left<0?' over':'');
+  el.textContent='🏖️ Dovolená '+year+': nárok '+vacFmt(bal)+' · po uložení zapsáno '+vacFmt(after)+' · '+(left<0?'překročeno o '+vacFmt(-left):'zbývá '+vacFmt(left));
+  el.style.display='block';
 }
 
 
@@ -2387,6 +2572,7 @@ function ctChg(){
     const empP=ET&&ST.emps.find(e=>e.id===ET.empId);
     if(empP&&empP.prov==='4sm') document.getElementById('rPpos').style.display='flex';
   }
+  updVacHint();
 }
 function setShiftOverride(type){
   if(!ET) return;
@@ -3119,6 +3305,7 @@ function doBackup(){
   // Include notes and bonus data
   if(ST.notes && Object.keys(ST.notes).length>0) backup.notes=ST.notes;
   if(ST.plan && Object.keys(ST.plan).length>0) backup.plan=ST.plan;
+  if(ST.vac && Object.keys(ST.vac).length>0) backup.vac=ST.vac;
   if(ST.bonusNotes && Object.keys(ST.bonusNotes).length>0) backup.bonusNotes=ST.bonusNotes;
   if(ST.bonusData && Object.keys(ST.bonusData).length>0) backup.bonusData=ST.bonusData;
   const json = JSON.stringify(backup, null, 2);
@@ -3171,6 +3358,7 @@ function doRestore(event){
       // Restore notes and bonus data
       ST.notes = backup.notes||{};
       ST.plan = backup.plan||{};
+      ST.vac = backup.vac ? Object.assign({}, backup.vac) : {};
       ST.bonusNotes = backup.bonusNotes||{};
       if(backup.bonusData){ ST.bonusData={}; Object.keys(backup.bonusData).forEach(k=>{ST.bonusData[String(k)]=backup.bonusData[k];}); }
       else ST.bonusData = {};
@@ -3699,6 +3887,7 @@ function loadScript(src){
           if(needsSave) setTimeout(()=>{if(window.fbSave)fbSave();},2000);
         }
         render();updateNameDropdown();
+        try{if(typeof vacRefresh==='function')vacRefresh();}catch(e){}
         showSyncStatus('● Online','#16a34a');
         if(window._isTomas) loadBonusData();
         const appEl=document.getElementById('app');
@@ -3759,6 +3948,7 @@ function loadScript(src){
     if(ST.plan && Object.keys(ST.plan).length>0) data.plan=ST.plan;
     if(ST.bonusNotes && Object.keys(ST.bonusNotes).length>0) data.bonusNotes=ST.bonusNotes;
     if(ST.bonusData && Object.keys(ST.bonusData).length>0) data.bonusData=ST.bonusData;
+    if(ST.vac && Object.keys(ST.vac).length>0) data.vac=ST.vac;
     return data;
   }
 
@@ -3769,6 +3959,7 @@ function loadScript(src){
     if(data.monthData)  ST.monthData  = data.monthData;
     if(data.notes) ST.notes=data.notes;
     if(data.plan) ST.plan=data.plan; else ST.plan={};
+    if(data.vac) ST.vac=Object.assign({},data.vac); else ST.vac={};
     if(data.bonusNotes) ST.bonusNotes=data.bonusNotes;
     if(data.bonusData){ ST.bonusData={}; Object.keys(data.bonusData).forEach(k=>{ST.bonusData[String(k)]=data.bonusData[k];}); }
     const cm = String(ST.m);
@@ -3866,6 +4057,22 @@ function loadScript(src){
     <button class="bcl" onclick="document.getElementById('wrMod').style.display='none'" style="height:28px;padding:0 12px">✕ Zavřít</button>
   </div>
   <div id="wrContent" style="overflow-x:auto"></div>
+</div>
+</div>
+
+<!-- VACATION OVERVIEW MODAL -->
+<div id="vacMod" style="display:none" class="mbg" onclick="if(event.target===this)closeVac()">
+<div class="md" style="width:94vw;max-width:920px;max-height:88vh;display:flex;flex-direction:column;overflow:hidden">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-shrink:0">
+    <h3 style="margin:0">🏖️ Dovolená — zůstatky a čerpání</h3>
+    <button class="bcl" onclick="closeVac()" style="height:28px;padding:0 12px">✕ Zavřít</button>
+  </div>
+  <div class="vac-ctl">
+    <div class="fr"><label>Rok</label><select id="vacYear" onchange="vacYearChg()"></select></div>
+    <div class="fr"><label>Vybráno do konce měsíce</label><select id="vacUpto" onchange="renderVac()"></select></div>
+  </div>
+  <div class="note" style="margin:0 0 10px;flex-shrink:0">Nárok = počet dní dovolené na celý rok včetně převedeného zůstatku (zadej do sloupce Nárok). Čerpání se bere z docházky: D = 1 den, D/2 = 0,5 dne. Naplánováno = dovolená zapsaná v dalších měsících.</div>
+  <div class="vac-sc" id="vacContent"></div>
 </div>
 </div>
 
