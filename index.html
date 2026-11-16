@@ -154,6 +154,8 @@ tr:hover td.cn{filter:none;background:var(--bg4)!important;box-shadow:4px 0 8px 
 .vac-table td.vnone{color:var(--tx3);font-weight:400}
 .vac-in{width:76px;height:28px;text-align:center;font-family:'DM Mono',monospace;font-size:13px;font-weight:600;background:#f8fafc;border:1px solid var(--b2);border-radius:6px;color:var(--tx)}
 .vac-in:focus{outline:none;border-color:var(--acc)}
+.vac-in.ovr{border-color:#93c5fd;background:#eff6ff;color:#1d4ed8}
+.vac-in::placeholder{color:var(--tx3);font-weight:400}
 .vac-hint{font-size:11px;color:#166534;padding:6px 9px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:5px;margin:-2px 0 10px;font-family:'DM Mono',monospace;line-height:1.45}
 .vac-hint.over{background:#fef2f2;border-color:#fecaca;color:#b91c1c}
 ::-webkit-scrollbar-track{background:var(--bg3)}
@@ -993,19 +995,27 @@ function showWeeklyReport(){
   document.getElementById('wrMod').style.display='flex';
 }
 
-// ── DOVOLENÁ: zůstatky a čerpání (ve dnech; D = 1 den, D/2 = 0,5 dne – stejně jako sloupec D) ──
+// ── DOVOLENÁ: nárok, zůstatky a čerpání (ve dnech; D = 1 den, D/2 = 0,5 dne – stejně jako sloupec D) ──
+// Výchozí roční nárok ve dnech podle provozu (4směnný má 12h směny, proto méně dní). U zaměstnance jde přepsat.
+const VAC_DEF={'4sm':17.5,'2sm':25};
 const VAC_MS=['','led','úno','bře','dub','kvě','čvn','čvc','srp','zář','říj','lis','pro'];
 let VAC_UI={year:MBASE,upto:12};
 const vacFmt=v=>String(Math.round(v*100)/100).replace('.',',');
 const vacEsc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 const vacKey=(year,empId)=>year+'_'+empId;
-// zadaný nárok / zůstatek zaměstnance na rok (null = nezadáno)
-function vacBal(year,empId){
-  const v=ST.vac?ST.vac[vacKey(year,empId)]:undefined;
-  if(v===undefined||v===null||v==='')return null;
-  const n=Number(v);
-  return isFinite(n)?n:null;
+const vacNum=v=>{if(v===undefined||v===null||v==='')return null;const n=Number(v);return isFinite(n)?n:null;};
+// ručně zadaný nárok na rok (přepíše výchozí; null = nezadáno)
+function vacOvr(year,empId){return vacNum(ST.vac?ST.vac[vacKey(year,empId)]:undefined);}
+// nárok na rok: ručně zadaný, jinak výchozí podle provozu (null = neznámý provoz)
+function vacNarok(year,emp){
+  const v=vacOvr(year,emp.id);
+  if(v!==null)return v;
+  return VAC_DEF[emp.prov]!==undefined?VAC_DEF[emp.prov]:null;
 }
+// zadaný zůstatek z minulého roku (null = nezadáno)
+function vacPreIn(year,empId){return vacNum(ST.vac?ST.vac[vacKey(year,empId)+'_z']:undefined);}
+// zůstatek převedený z minulého roku (nezadáno = 0)
+function vacPrev(year,empId){const v=vacPreIn(year,empId);return v===null?0:v;}
 // globální indexy měsíců daného roku (1–24)
 function vacYearMonths(year){
   const base=(year-MBASE)*12;
@@ -1032,8 +1042,9 @@ function vacCalc(emp,year,upto){
     if(rm<=upto){taken+=v;if(v)perT.push(VAC_MS[rm]+' '+vacFmt(v));}
     else{later+=v;if(v)perL.push(VAC_MS[rm]+' '+vacFmt(v));}
   });
-  const bal=vacBal(year,emp.id);
-  return{bal,taken,later,perT,perL,left:bal===null?null:bal-taken,after:bal===null?null:bal-taken-later};
+  const nar=vacNarok(year,emp),pre=vacPrev(year,emp.id);
+  const bal=nar===null?null:nar+pre;
+  return{nar,pre,bal,taken,later,perT,perL,left:bal===null?null:bal-taken,after:bal===null?null:bal-taken-later};
 }
 function vacDefUpto(year){
   const cy=yOf(ST.m);
@@ -1074,23 +1085,33 @@ function vacApplyRow(emp){
   put('t',vacFmt(c.taken),c.taken?'':'vnone',c.perT.join(' · '));
   put('p',vacFmt(c.later),c.later?'':'vnone',c.perL.join(' · '));
   if(c.bal===null){
-    put('l','—','vnone','Zadej nárok na rok');
-    put('a','—','vnone','Zadej nárok na rok');
+    put('l','—','vnone','Neznámý nárok – zadej ho ručně');
+    put('a','—','vnone','Neznámý nárok – zadej ho ručně');
   }else{
-    put('l',vacFmt(c.left),'vleft'+(c.left<0?' vneg':''),c.left<0?'Čerpání překračuje nárok':'');
-    put('a',vacFmt(c.after),'vleft'+(c.after<0?' vneg':''),c.after<0?'Se zapsaným plánem by nárok byl překročen':'');
+    const calc='nárok '+vacFmt(c.nar)+(c.pre?' + zůstatek '+vacFmt(c.pre):'')+' − vybráno '+vacFmt(c.taken);
+    put('l',vacFmt(c.left),'vleft'+(c.left<0?' vneg':''),calc+(c.left<0?' (překročeno)':''));
+    put('a',vacFmt(c.after),'vleft'+(c.after<0?' vneg':''),calc+' − naplánováno '+vacFmt(c.later)+(c.after<0?' (s plánem překročeno)':''));
   }
 }
-function vacSet(empId,val){
+// kind: 'n' = nárok na rok (prázdné = výchozí podle provozu), 'z' = zůstatek z minulého roku (prázdné = 0)
+function vacSet(empId,kind,val){
   const emp=ST.emps.find(e=>e.id===empId);if(!emp)return;
   if(!ST.vac)ST.vac={};
-  const k=vacKey(VAC_UI.year,empId);
+  const k=vacKey(VAC_UI.year,empId)+(kind==='z'?'_z':'');
   const s=String(val==null?'':val).trim().replace(',','.');
   const n=s===''?NaN:parseFloat(s);
   if(s===''||!isFinite(n))delete ST.vac[k];
   else ST.vac[k]=Math.round(n*100)/100;
+  if(kind!=='z'){const inp=document.getElementById('vac-b-'+empId);if(inp)inp.classList.toggle('ovr',ST.vac[k]!==undefined);}
   vacApplyRow(emp);
   if(window.fbSave)fbSave();
+}
+// po opuštění pole nároku: prázdné pole se vrátí na výchozí hodnotu
+function vacNorm(empId){
+  const emp=ST.emps.find(e=>e.id===empId),inp=document.getElementById('vac-b-'+empId);
+  if(!emp||!inp||inp.value!=='')return;
+  const d=vacNarok(VAC_UI.year,emp);
+  inp.value=d===null?'':d;
 }
 function renderVac(){
   const sy=document.getElementById('vacYear'),su=document.getElementById('vacUpto');
@@ -1114,18 +1135,20 @@ function renderVac(){
   let h='<table class="vac-table"><thead><tr>'
     +'<th class="vl">Zaměstnanec</th>'
     +'<th>Nárok '+VAC_UI.year+'<small>dnů na rok</small></th>'
+    +'<th>Zůstatek<small>z roku '+(VAC_UI.year-1)+'</small></th>'
     +'<th>Vybráno<small>'+rngT+'</small></th>'
-    +'<th>Zbývá<small>nárok − vybráno</small></th>'
+    +'<th>Zbývá<small>nárok + zůstatek<br>− vybráno</small></th>'
     +'<th>Naplánováno<small>'+rngL+'</small></th>'
     +'<th>Zbývá po plánu<small>vč. naplánovaného</small></th>'
     +'</tr></thead><tbody>';
   groups.forEach(g=>{
     if(!g.list.length)return;
-    h+='<tr class="vgh"><td colspan="6"><span class="vgl"><i style="background:'+g.color+'"></i>'+g.label+'</span></td></tr>';
+    h+='<tr class="vgh"><td colspan="7"><span class="vgl"><i style="background:'+g.color+'"></i>'+g.label+'</span></td></tr>';
     g.list.forEach(e=>{
-      const bal=vacBal(VAC_UI.year,e.id);
+      const nar=vacNarok(VAC_UI.year,e),ovr=vacOvr(VAC_UI.year,e.id)!==null,pre=vacPreIn(VAC_UI.year,e.id);
       h+='<tr><td class="vnm">'+vacEsc(e.name)+'<small>'+vacEsc(e.pos||'')+'</small></td>'
-        +'<td><input class="vac-in" type="number" step="0.5" inputmode="decimal" id="vac-b-'+e.id+'" value="'+(bal===null?'':bal)+'" placeholder="—" oninput="vacSet('+e.id+',this.value)"></td>'
+        +'<td><input class="vac-in'+(ovr?' ovr':'')+'" type="number" step="0.5" inputmode="decimal" id="vac-b-'+e.id+'" value="'+(nar===null?'':nar)+'" placeholder="—" oninput="vacSet('+e.id+',\'n\',this.value)" onchange="vacNorm('+e.id+')"></td>'
+        +'<td><input class="vac-in" type="number" step="0.5" inputmode="decimal" id="vac-z-'+e.id+'" value="'+(pre===null?'':pre)+'" placeholder="0" oninput="vacSet('+e.id+',\'z\',this.value)"></td>'
         +'<td id="vac-t-'+e.id+'"></td><td id="vac-l-'+e.id+'"></td><td id="vac-p-'+e.id+'"></td><td id="vac-a-'+e.id+'"></td></tr>';
     });
   });
@@ -1133,14 +1156,15 @@ function renderVac(){
   document.getElementById('vacContent').innerHTML=h;
   emps.forEach(vacApplyRow);
 }
-// nápověda v okně buňky: kolik dovolené zbývá po uložení (jen když je zadaný nárok)
+// nápověda v okně buňky: kolik dovolené zbývá po uložení
 function updVacHint(){
   const el=document.getElementById('vacHint');if(!el)return;
   const t=document.getElementById('ct').value;
   const emp=ET&&ST.emps.find(e=>e.id===ET.empId);
   if(!emp||emp.prov==='brigada'||(t!=='D'&&t!=='D2'&&t!=='D2S')){el.style.display='none';return;}
-  const year=yOf(ST.m),bal=vacBal(year,emp.id);
-  if(bal===null){el.style.display='none';return;}
+  const year=yOf(ST.m),nar=vacNarok(year,emp);
+  if(nar===null){el.style.display='none';return;}
+  const pre=vacPrev(year,emp.id),bal=nar+pre;
   let used=0;
   vacYearMonths(year).forEach(m=>{used+=vacDaysInMonth(emp,m);});
   const cur=emp.data[ET.day];
@@ -1148,7 +1172,7 @@ function updVacHint(){
   const after=used-curV+(t==='D'?1:0.5);
   const left=bal-after;
   el.className='vac-hint'+(left<0?' over':'');
-  el.textContent='🏖️ Dovolená '+year+': nárok '+vacFmt(bal)+' · po uložení zapsáno '+vacFmt(after)+' · '+(left<0?'překročeno o '+vacFmt(-left):'zbývá '+vacFmt(left));
+  el.textContent='🏖️ Dovolená '+year+': nárok '+vacFmt(nar)+(pre?' + zůstatek '+vacFmt(pre):'')+' · po uložení zapsáno '+vacFmt(after)+' · '+(left<0?'překročeno o '+vacFmt(-left):'zbývá '+vacFmt(left));
   el.style.display='block';
 }
 
@@ -4071,7 +4095,7 @@ function loadScript(src){
     <div class="fr"><label>Rok</label><select id="vacYear" onchange="vacYearChg()"></select></div>
     <div class="fr"><label>Vybráno do konce měsíce</label><select id="vacUpto" onchange="renderVac()"></select></div>
   </div>
-  <div class="note" style="margin:0 0 10px;flex-shrink:0">Nárok = počet dní dovolené na celý rok včetně převedeného zůstatku (zadej do sloupce Nárok). Čerpání se bere z docházky: D = 1 den, D/2 = 0,5 dne. Naplánováno = dovolená zapsaná v dalších měsících.</div>
+  <div class="note" style="margin:0 0 10px;flex-shrink:0">Nárok na rok je výchozí podle provozu (4směnný 17,5 dne, 2směnný 25 dnů); jde přepsat, upravená hodnota je modře. Zůstatek = dovolená převedená z minulého roku. Čerpání se bere z docházky: D = 1 den, D/2 = 0,5 dne. Naplánováno = dovolená zapsaná v dalších měsících.</div>
   <div class="vac-sc" id="vacContent"></div>
 </div>
 </div>
